@@ -1,205 +1,90 @@
-import {
-    Box,
-    FormControl,
-    InputBase,
-    InputLabel,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Stack,
-    Typography
-} from '@mui/material';
-// mui icon
+import { Box, FormControl, InputLabel, Menu, MenuItem, Stack, Typography, ListItemText, InputBase } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { useState } from 'react';
 
-import { SortSelect } from 'components/sort-select';
-import { useTranslate } from 'locales';
-import { FixedSizeList, ListChildComponentProps } from 'react-window';
-import { useEffect, useState } from 'react';
-import { ICryptoCurrency } from 'types/user';
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const VISIBLE_COUNT = 6;
-
-interface ICurrency {
-    id: number;
-    code: string;
-    name: string;
-    logo_url: string;
-}
+const CURRENCIES = [
+  { id: 1, code: 'GHS', name: 'Ghana Cedis', emoji: '🇬🇭' },
+  { id: 2, code: 'BTC', name: 'Bitcoin', emoji: '₿' },
+  { id: 3, code: 'ETH', name: 'Ethereum', emoji: 'Ξ' },
+  { id: 4, code: 'USDT', name: 'Tether USDT', emoji: '₮' },
+];
 
 interface ISelectNetwork {
-    networks: string[];
-    cryptoCurrencies: {
-        [key: string]: ICryptoCurrency[];
-    };
-    selectedValue: string;
-    setSelectedValue: (value: string) => void;
+  networks?: string[];
+  cryptoCurrencies?: any;
+  selectedValue: string;
+  setSelectedValue: (value: string) => void;
 }
 
-export const SelectNetwork = ({ networks, cryptoCurrencies, selectedValue, setSelectedValue }: ISelectNetwork) => {
-    const { t } = useTranslate();
-    const [selectedNetwork, setSelectedNetwork] = useState<string>(networks[0] || '');
-    const [isOpen, setIsOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [currencies, setCurrencies] = useState<ICurrency[]>([]);
-    const [providerSearch, setProviderSearch] = useState<string>('');
+export const SelectNetwork = ({ selectedValue, setSelectedValue }: ISelectNetwork) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        const cc = cryptoCurrencies || {};
-        if (selectedNetwork !== '' && Object.keys(cc).length > 0) {
-            setCurrencies(cc[selectedNetwork] || []);
-        } else {
-            setCurrencies([]);
-        }
-    }, [selectedNetwork, cryptoCurrencies]);
+  const filtered = CURRENCIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+  const selected = CURRENCIES.find(c => c.code === selectedValue) || CURRENCIES[0];
 
-    const filteredCurrencies =
-        currencies.length > 0
-            ? currencies.filter((item: any) => item?.name?.toLowerCase().includes(providerSearch.toLowerCase()))
-            : [];
+  const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(e.currentTarget);
+    setIsOpen(true);
+  };
 
-    const selectedItem = currencies.find((item: any) => item.code === selectedValue) || currencies[0];
+  const handleClose = () => {
+    setAnchorEl(null);
+    setIsOpen(false);
+    setSearch('');
+  };
 
-    const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setIsOpen((prev) => !prev);
-        setAnchorEl(event.currentTarget);
-    };
+  const handleSelect = (code: string) => {
+    setSelectedValue(code);
+    handleClose();
+  };
 
-    const handleSelect = (code: string) => {
-        setSelectedValue(code);
-        handleClose();
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
-        setIsOpen((prev) => !prev);
-        setProviderSearch('');
-    };
-
-    const Row = ({ index, style }: ListChildComponentProps) => {
-        const item = filteredCurrencies[index];
-        return (
-            <MenuItem
-                key={item.id}
-                selected={item.code === selectedValue}
-                onClick={() => handleSelect(item.code)}
-                style={style}
-            >
-                <Stack flexDirection="row" alignItems="center" gap={1}>
-                    <Box
-                        component="img"
-                        src={`http://nowpayments.io${item.logo_url}`}
-                        alt={item.code}
-                        sx={{ width: 20, height: 20 }}
-                    />
-                    <ListItemText primary={item.name} />
-                </Stack>
+  return (
+    <Stack width={1}>
+      <InputLabel>Select Currency</InputLabel>
+      <FormControl sx={{ width: 1 }}>
+        <Box
+          onClick={handleOpen}
+          sx={{
+            border: '1px solid',
+            borderColor: isOpen ? 'primary.main' : 'background.border',
+            borderRadius: 3,
+            px: 2, py: 1,
+            bgcolor: 'background.default',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Typography>{selected.emoji}</Typography>
+            <Typography fontWeight={700} variant="caption">{selected.name}</Typography>
+          </Stack>
+          {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+        </Box>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+          <Box sx={{ px: 1, pt: 1 }}>
+            <InputBase
+              placeholder="Search currency"
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ bgcolor: 'background.layer4', borderRadius: 1, px: 1, fontSize: 14, height: 36, mb: 1 }}
+            />
+          </Box>
+          {filtered.map(item => (
+            <MenuItem key={item.id} selected={item.code === selectedValue} onClick={() => handleSelect(item.code)}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Typography>{item.emoji}</Typography>
+                <ListItemText primary={item.name} />
+              </Stack>
             </MenuItem>
-        );
-    };
-    return (
-        <Stack justifyContent="center" alignItems="center" gap={2} sx={{ flexDirection: { md: 'row', xs: 'column' } }}>
-            <Stack width={1}>
-                <InputLabel>{t('select_network')}</InputLabel>
-                <SortSelect
-                    value={selectedNetwork}
-                    sortList={networks}
-                    width={1}
-                    capitalize
-                    setSelectedValue={setSelectedNetwork}
-                />
-            </Stack>
-            <Stack width={1}>
-                <InputLabel>{t('select_currency')}</InputLabel>
-                <FormControl sx={{ width: 1 }}>
-                    <Box
-                        onClick={handleOpen}
-                        sx={{
-                            border: '1px solid',
-                            borderColor: 'background.border',
-                            borderRadius: 3,
-                            px: 2,
-                            py: 1,
-                            bgcolor: 'background.default',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            outline: 'none',
-                            '&:hover': {
-                                borderColor: 'text.primary'
-                            },
-                            ...(isOpen && {
-                                border: '2px solid',
-                                borderColor: 'primary.main'
-                            })
-                        }}
-                    >
-                        {selectedItem ? (
-                            <Stack direction="row" alignItems="center" gap={1} maxWidth={0.9}>
-                                <Box
-                                    component="img"
-                                    src={`http://nowpayments.io${selectedItem.logo_url}`}
-                                    alt={selectedItem.code}
-                                    sx={{ width: 20, height: 20 }}
-                                />
-                                <Typography noWrap fontWeight={700} variant="caption">
-                                    {selectedItem.name}
-                                </Typography>
-                            </Stack>
-                        ) : (
-                            <Typography color="text.secondary">{t('currency')}</Typography>
-                        )}
-
-                        {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                    </Box>
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleClose}
-                        PaperProps={{
-                            style: {
-                                maxHeight: ITEM_HEIGHT * (VISIBLE_COUNT + 2) + ITEM_PADDING_TOP,
-                                width: anchorEl ? anchorEl.offsetWidth : undefined
-                            }
-                        }}
-                    >
-                        <Box sx={{ px: 1, pt: 1, pb: 1 }}>
-                            <InputBase
-                                placeholder="Search Providers"
-                                fullWidth
-                                value={providerSearch}
-                                onChange={(e) => setProviderSearch(e.target.value)}
-                                sx={{
-                                    bgcolor: 'background.layer4',
-                                    borderRadius: 1,
-                                    px: 1,
-                                    fontSize: 14,
-                                    height: 36,
-                                    mb: 1
-                                }}
-                            />
-                        </Box>
-                        {filteredCurrencies.length > 0 ? (
-                            <FixedSizeList
-                                height={Math.min(VISIBLE_COUNT, filteredCurrencies.length) * ITEM_HEIGHT}
-                                width="100%"
-                                style={{ overflowX: 'hidden' }}
-                                itemSize={ITEM_HEIGHT}
-                                itemCount={filteredCurrencies.length}
-                                overscanCount={6}
-                            >
-                                {Row}
-                            </FixedSizeList>
-                        ) : (
-                            <MenuItem disabled>{t('no_results_found')}</MenuItem>
-                        )}
-                    </Menu>
-                </FormControl>
-            </Stack>
-        </Stack>
-    );
+          ))}
+        </Menu>
+      </FormControl>
+    </Stack>
+  );
 };
