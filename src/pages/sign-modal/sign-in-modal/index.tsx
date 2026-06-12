@@ -2,26 +2,21 @@ import * as Yup from 'yup';
 import { useState } from 'react';
 import { useTranslate } from 'locales';
 import { useSnackbar } from 'notistack';
-// form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-//
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { IconButton, InputAdornment, Stack, Typography } from '@mui/material';
-// components
 import ColorButton from 'components/ColorButton';
 import FormProvider from 'components/hook-form/form-provider';
 import RHFTextField from 'components/hook-form/rhf-text-field';
 import { useSettingsContext } from 'components/settings';
-// hooks
 import { useAuth } from 'hooks/use-auth-context';
-//
 import { CloseButton } from '../component';
 
 type FormValuesProps = {
-    username: string;
+    login: string;
     password: string;
     afterSubmit?: string;
 };
@@ -35,12 +30,12 @@ const SignInModal = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const LoginSchema = Yup.object().shape({
-        username: Yup.string().required(t('auth.usernameRequired')),
+        login: Yup.string().required('Username or email is required'),
         password: Yup.string().required(t('auth.passwordRequired'))
     });
 
     const defaultValues = {
-        username: '',
+        login: '',
         password: ''
     };
 
@@ -54,9 +49,9 @@ const SignInModal = () => {
         formState: { isSubmitting }
     } = methods;
 
-    const onSubmit = async (data: { username: string; password: string }) => {
+    const onSubmit = async (data: { login: string; password: string }) => {
         try {
-            await login(data.username, data.password, false);
+            await login(data.login, data.password, false);
             onToggleModal('');
         } catch (error: any) {
             enqueueSnackbar(typeof error === 'string' ? error : error.message, { variant: 'error' });
@@ -84,7 +79,7 @@ const SignInModal = () => {
 
                 <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
                     <Stack spacing={2}>
-                        <RHFTextField size="small" name="username" placeholder={t('auth.username')} type="text" />
+                        <RHFTextField size="small" name="login" placeholder="Username or Email" type="text" />
                         <RHFTextField
                             size="small"
                             name="password"
@@ -107,14 +102,7 @@ const SignInModal = () => {
                         <Stack alignItems="flex-end">
                             <Typography
                                 component="span"
-                                sx={{
-                                    ml: 'auto',
-                                    color: 'text.secondary',
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    textAlign: 'right',
-                                    cursor: 'pointer'
-                                }}
+                                sx={{ ml: 'auto', color: 'text.secondary', fontSize: 14, fontWeight: 600, textAlign: 'right', cursor: 'pointer' }}
                                 onClick={() => onToggleModal('PASSWORD')}
                             >
                                 {t('auth.forgotPassword')}
@@ -141,42 +129,6 @@ const SignInModal = () => {
                     </Stack>
                 </FormProvider>
             </Stack>
-
-            {/* <Stack
-                direction="column"
-                gap={1.5}
-                width="100%"
-                position={{ xs: 'relative', sm: 'absolute' }}
-                mt={{ xs: 2, sm: 0 }}
-                bottom={{ xs: 10, sm: 20 }}
-                left={0}
-                px={3}
-            >
-                <Stack direction="row" alignItems="center" width="100%">
-                    <Divider sx={{ flex: 1, borderColor: 'divider' }} />
-                    <Typography sx={{ color: 'text.secondary', mx: 1.5, fontSize: 14, fontWeight: 600 }}>
-                        {t('logInDirectlyWith')}
-                    </Typography>
-                    <Divider sx={{ flex: 1, borderColor: 'divider' }} />
-                </Stack>
-
-                <Button variant="outlined" sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-                    <Box
-                        component="img"
-                        src="/assets/icons/passkey.svg"
-                        alt="passkey"
-                        sx={{ width: '18px', height: '18px' }}
-                    />
-                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Sign In with passkey</Typography>
-                </Button>
-
-                <Stack direction="row" justifyContent="space-between">
-                    {['Google', 'Twitter', 'Telegram', 'Discord', 'WhatsApp'].map((social) => (
-                        <SocialLoginButton key={social}>
-                        </SocialLoginButton>
-                    ))}
-                </Stack>
-            </Stack> */}
         </Stack>
     );
 };
