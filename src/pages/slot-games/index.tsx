@@ -122,7 +122,7 @@ const SlotGames = () => {
                     ))
                 ) : games.length > 0 ? (
                     games.map((item: any, index: number) => (
-                        <GameCard key={index} image={item.image} name={item.name} href={/ag-game/${item.id}} />
+                        <GameCard key={index} image={item.image} name={item.name} href={`/ag-game/${item.id}`} />
                     ))
                 ) : (
                     <Stack sx={{ py: 10, justifyContent: 'center', alignItems: 'center', width: 1 }}>
