@@ -128,7 +128,7 @@ export const getCurrencyList = async () => {
 };
 
 export const getUserBalance = async () => {
-    const res = await axios.get('/api/auth/me');  // ✅ fixed - was /api/player/balance
+    const res = await axios.get('/api/auth/me');
     return res.data;
 };
 
