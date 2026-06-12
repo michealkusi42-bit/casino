@@ -1,86 +1,139 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Stack, IconButton, Typography, Grid, Skeleton } from '@mui/material';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import GameCard from 'components/game-card';
+import Pagination from 'components/pagination';
+import { MultiSelect } from 'components/multi-select';
+import { SortSelect } from 'components/sort-select';
+import { getAgCategory, getSlotGames, getSlotProviders } from 'api';
+import { categoryType } from 'types/game';
+import { ASSETS } from 'utils/axios';
 
-const authRoutes = require('./routes/auth');
-const walletRoutes = require('./routes/wallet');
-const gameRoutes = require('./routes/games');
-const leaderboardRoutes = require('./routes/leaderboard');
-const affiliateRoutes = require('./routes/affiliates');
-const { router: adminRouter } = require('./routes/admin');
-const { authenticateToken } = require('./middleware/auth');
-const { registerGameHandlers, initGames } = require('./games/socketHandler');
+const sortList = ['Popular', 'A-Z', 'Z-A', 'New'];
 
-const app = express();
-const server = http.createServer(app);
+const SlotGames = () => {
+    const navigate = useNavigate();
+    const [selectedSort, setSelectedSort] = useState<string>(sortList[0]);
+    const [currentPage, setCurrentPage] = React.useState<number>(1);
+    const [totalPages, setTotalPages] = React.useState<number>(10);
+    const [provider, setProvider] = React.useState<string[]>(['All']);
+    const [providerList, setProviderList] = useState<string[]>([]);
+    const [games, setGames] = useState<any>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
-const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
-});
+    const selectList = useMemo(() => {
+        return providerList.map((item) => ({ value: item, label: item }));
+    }, [providerList]);
 
-app.set('trust proxy', 1);
-app.use(helmet());
-app.use(cors({ origin: '*' }));
-app.use(express.json());
-app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
-app.use('/api/games', (req, res, next) => {
-  const { gameOverrides } = require('./routes/admin');
-  if (gameOverrides.maintenanceMode) return res.status(503).json({ error: 'Games under maintenance.' });
-  next();
-});
+    const getCategories = async () => {
+        try {
+            const response = await getSlotProviders('slots');
+            setProviderList(response || []);
+        } catch {
+            setProviderList([]);
+        }
+    };
 
-app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-app.use('/api/auth', authRoutes);
-app.use('/api/wallet', authenticateToken, walletRoutes);
-app.use('/api/games', authenticateToken, gameRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/affiliates', affiliateRoutes);
-app.use('/api/admin', adminRouter);
+    const getGameList = async () => {
+        try {
+            setLoading(true);
+            if (provider) {
+                const processed = provider.length === 1 && provider[0] === 'All' ? undefined : provider;
+                const response = await getSlotGames({
+                    currentPage: currentPage,
+                    perPage: 40,
+                    categories: 'slots',
+                    provider: processed
+                });
+                setGames(response.data || []);
+                setTotalPages(Math.ceil((response.count || 0) / 40));
+            }
+        } catch (error) {
+            setGames([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-// Stub routes for frontend compatibility
-app.get('/api/setting/site', (req, res) => res.json({}));
-app.get('/api/casino/recommend', (req, res) => res.json([]));
-app.post('/api/casino/recommend', (req, res) => res.json([]));
-app.post('/api/casino/ag-games', (req, res) => res.json({ data: [], count: 0 }));
-app.get('/api/casino/ag-category', (req, res) => res.json([]));
-app.post('/api/casino/games', (req, res) => res.json({ data: [], count: 0 }));
-app.post('/api/casino/provider', (req, res) => res.json([]));
-app.post('/api/casino/search', (req, res) => res.json({ data: [], count: 0 }));
-app.get('/api/casino/providers', (req, res) => res.json([]));
-app.post('/api/casino/launch', authenticateToken, (req, res) => res.json({ url: '' }));
-app.post('/api/casino/ag-launch', authenticateToken, (req, res) => res.json({ url: '' }));
-app.get('/api/preference', authenticateToken, (req, res) => res.json({ language: 'en' }));
-app.patch('/api/preference', authenticateToken, (req, res) => res.json({ language: 'en' }));
-app.get('/api/notification', authenticateToken, (req, res) => res.json([]));
-app.get('/api/player/balance', authenticateToken, (req, res) => res.json({ balance: 0 }));
-app.get('/api/sport', (req, res) => res.json([]));
-app.get('/api/bonus', (req, res) => res.json([]));
-app.get('/api/package', (req, res) => res.json([]));
+    useEffect(() => {
+        getGameList();
+    }, [provider, currentPage]);
 
-io.use((socket, next) => {
-  const token = socket.handshake.auth?.token;
-  if (!token) return next(new Error('Authentication required'));
-  try {
-    const jwt = require('jsonwebtoken');
-    socket.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch { next(new Error('Invalid token')); }
-});
+    useEffect(() => {
+        getCategories();
+    }, []);
 
-io.on('connection', (socket) => {
-  console.log('Player connected: ' + socket.user.username);
-  registerGameHandlers(io, socket);
-  socket.on('disconnect', () => console.log('Player disconnected: ' + socket.user.username));
-});
+    return (
+        <>
+            <Stack flexDirection="row" gap={2} alignItems="center">
+                <IconButton
+                    size="small"
+                    sx={{ bgcolor: 'background.button1', borderRadius: 2 }}
+                    onClick={() => navigate('/')}
+                >
+                    <KeyboardArrowLeftIcon />
+                </IconButton>
+                <Typography variant="h6">Slots</Typography>
+            </Stack>
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log('Foretell Backend running on port ' + PORT);
-});
+            <Stack flexDirection="row" gap={2} alignItems="center">
+                <SortSelect
+                    size="small"
+                    value={selectedSort}
+                    sortList={sortList}
+                    width={300}
+                    setSelectedValue={setSelectedSort}
+                />
+                <MultiSelect
+                    size="small"
+                    placeholder="Providers"
+                    selectedValues={provider}
+                    selectValues={setProvider}
+                    list={selectList}
+                />
+            </Stack>
 
-module.exports = { app, io };
+            <Grid
+                container
+                spacing={1}
+                sx={{
+                    mt: 4,
+                    display: games.length > 0 || loading ? 'grid' : 'flex',
+                    gridTemplateColumns: {
+                        xs: 'repeat(3, 1fr)',
+                        sm: 'repeat(5, 1fr)',
+                        md: 'repeat(8, 1fr)'
+                    }
+                }}
+            >
+                {loading ? (
+                    new Array(40).fill(null).map((_, index: number) => (
+                        <Skeleton
+                            key={index}
+                            width="100%"
+                            height="162px"
+                            sx={{ bgcolor: 'background.button1' }}
+                        />
+                    ))
+                ) : games.length > 0 ? (
+                    games.map((item: any, index: number) => (
+                        <GameCard key={index} image={item.image} name={item.name} href={/ag-game/${item.id}} />
+                    ))
+                ) : (
+                    <Stack sx={{ py: 10, justifyContent: 'center', alignItems: 'center', width: 1 }}>
+                        No Items
+                    </Stack>
+                )}
+            </Grid>
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        </>
+    );
+};
+
+export default SlotGames;
