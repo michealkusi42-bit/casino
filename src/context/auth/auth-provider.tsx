@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-//utils
 import axios from 'utils/axios';
 import { setSession } from 'utils/auth';
 import localStorageAvailable from 'utils/localStorageAvailable';
-// store
 import { balanceAction } from 'store/slices/balance';
 import {
     languageAction,
@@ -16,12 +14,10 @@ import {
     updateUserAction
 } from 'store/slices/auth';
 import { updateDeafultData, updateRecommendGames } from 'store/slices/setting';
-// api
 import { getUserBalance } from 'api';
 import { casinoApi } from 'api/casino.api';
 import { settingApi } from 'api/setting.api';
 import { notificationApi } from 'api/notification.api';
-//
 import { AuthContext } from './auth-context';
 import { updateNotification } from 'store/slices/notification';
 
@@ -110,14 +106,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     const login = useCallback(
         async (username: string, password: string, remember: boolean) => {
             const response = await axios.post('/api/auth/login', {
-                username,
+                login: username, // ✅ sends as 'login' so backend accepts email or username
                 password
             });
 
-            const { accessToken, user } = response.data;
+            const { token, username: user } = response.data;
 
-            setSession(accessToken);
-            dispatch(loginAction({ user, accessToken }));
+            setSession(token);
+            dispatch(loginAction({ user: { username: user }, accessToken: token }));
             const balanceData = await getUserBalance();
             dispatch(balanceAction(balanceData));
         },
@@ -136,7 +132,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         [dispatch]
     );
 
-    // UPDATE STAKES
     const updateStakes = useCallback(
         async (stakes: { name: string; value: number }[]) => {
             dispatch(updateStakesAction(stakes));
@@ -151,7 +146,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         [dispatch]
     );
 
-    // UPDATE USER
     const updateUser = useCallback(
         async (params: any) => {
             dispatch(updateUserAction(params));
