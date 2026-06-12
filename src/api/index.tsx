@@ -56,17 +56,17 @@ export const getProviderGameList = async (data: {
 };
 
 export const getSports = async () => {
-    const res = await axios.get(/api/sport);
-    return res.data;
+    const res = await axios.get(`/api/sport`);
+     return res.data;
 };
 
 export const getGameDetails = async (gameCode: string) => {
-    const res = await axios.get(/api/casino/game-detail/${gameCode});
+    const res = await axios.get(`/api/casino/game-detail/${gameCode}`);
     return res.data;
 };
 
 export const gameLaunch = async (data: any) => {
-    const res = await axios.post(/api/casino/launch, data);
+    const res = await axios.post(`/api/casino/launch`, data);
     return res.data;
 };
 
@@ -92,7 +92,7 @@ export const getSlotGames = async (data: {
 };
 
 export const getSlotProviders = async (categorie: string) => {
-    const res = await axios.get(/api/casino/providers?category=${categorie});
+    const res = await axios.get(`/api/casino/providers?category=${categorie}`);
     return res.data;
 };
 
@@ -102,12 +102,12 @@ export const getAgCategory = async () => {
 };
 
 export const getAgGameDetails = async (gameCode: string) => {
-    const res = await axios.get(/api/casino/ag-game-detail/${gameCode});
+    const res = await axios.get(`/api/casino/ag-game-detail/${gameCode}`);
     return res.data;
 };
 
 export const agGameLaunch = async (data: any) => {
-    const res = await axios.post(/api/casino/ag-launch, data);
+    const res = await axios.post(`/api/casino/ag-launch`, data);
     return res.data;
 };
 
@@ -162,7 +162,7 @@ export const getBonusList = async () => {
 };
 
 export const getBonusById = async (id: string) => {
-    const res = await axios.get(/api/bonus/${id});
+    const res = await axios.get(`/api/bonus/${id}`);
     return res.data;
 };
 
