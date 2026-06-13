@@ -6,9 +6,7 @@ import GameCard from 'components/game-card';
 import Pagination from 'components/pagination';
 import { MultiSelect } from 'components/multi-select';
 import { SortSelect } from 'components/sort-select';
-import { getAgCategory, getSlotGames, getSlotProviders } from 'api';
-import { categoryType } from 'types/game';
-import { ASSETS } from 'utils/axios';
+import { getSlotGames, getSlotProviders } from 'api';
 
 const sortList = ['Popular', 'A-Z', 'Z-A', 'New'];
 
@@ -19,7 +17,7 @@ const SlotGames = () => {
     const [totalPages, setTotalPages] = React.useState<number>(10);
     const [provider, setProvider] = React.useState<string[]>(['All']);
     const [providerList, setProviderList] = useState<string[]>([]);
-    const [games, setGames] = useState<any>([]);
+    const [games, setGames] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
     const selectList = useMemo(() => {
