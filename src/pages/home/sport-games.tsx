@@ -3,8 +3,6 @@ import { getSlotGames } from 'api';
 import { Box } from '@mui/material';
 
 import CustomSwiper from 'components/swiper';
-import GameCard from 'components/game-card';
-import { ASSETS } from 'utils/axios';
 import MatchCard from 'components/match-card';
 
 interface CustomSwiperProps {
@@ -14,7 +12,7 @@ interface CustomSwiperProps {
 }
 
 export const SportGames = ({ category, categoryName, viewCount }: CustomSwiperProps) => {
-    const [games, setGames] = useState<any>([]);
+    const [games, setGames] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
     const getGameList = async () => {
@@ -27,9 +25,10 @@ export const SportGames = ({ category, categoryName, viewCount }: CustomSwiperPr
             };
 
             const gameList = await getSlotGames(query);
-            setGames(gameList.data);
+            setGames(gameList.data || []);
         } catch (error) {
             console.log(error);
+            setGames([]);
         } finally {
             setLoading(false);
         }
@@ -38,12 +37,13 @@ export const SportGames = ({ category, categoryName, viewCount }: CustomSwiperPr
     useEffect(() => {
         getGameList();
     }, []);
+
     return (
         <CustomSwiper
             index={category}
             category={category}
             loading={loading}
-            data={games.map((item: any, index: number) => (
+            data={(games || []).map((item: any, index: number) => (
                 <Box
                     key={index}
                     sx={{
