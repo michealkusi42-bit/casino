@@ -33,11 +33,12 @@ const HotGames = () => {
                     categories: undefined
                 });
 
-                setGames(response.data);
-                setTotalPages(Math.ceil(response.count / 40));
+                setGames(response?.data || []);
+                setTotalPages(Math.ceil((response?.count || 0) / 40));
             }
         } catch (error) {
             console.log(error);
+            setGames([]);
         } finally {
             setLoading(false);
         }
@@ -96,7 +97,7 @@ const HotGames = () => {
                     ))
                 ) : games.length > 0 ? (
                     games.map((item: any, index: number) => (
-                        <GameCard key={index} image={item.image} name={item.gameName} href={`/ag-game/${item.id}`} />
+                        <GameCard key={index} image={item.image} name={item.gameName} href={/ag-game/${item.id}} />
                     ))
                 ) : (
                     <Stack
