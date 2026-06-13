@@ -97,7 +97,7 @@ const HotGames = () => {
                     ))
                 ) : games.length > 0 ? (
                     games.map((item: any, index: number) => (
-                        <GameCard key={index} image={item.image} name={item.gameName} href={/ag-game/${item.id}} />
+                        <GameCard key={index} image={item.image} name={item.gameName} href={`/ag-game/${item.id}`} />
                     ))
                 ) : (
                     <Stack
