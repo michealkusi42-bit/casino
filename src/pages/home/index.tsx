@@ -23,7 +23,7 @@ const Home = () => {
         <Box sx={{ overflowX: 'hidden' }}>
             <Banner />
 
-            <GameLists />
+            
 
             <GameLink />
 
