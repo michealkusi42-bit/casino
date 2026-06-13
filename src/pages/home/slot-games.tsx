@@ -25,7 +25,7 @@ export const SlotGames = ({ category, categoryName, viewCount }: CustomSwiperPro
             };
 
             const gameList = await getSlotGames(query);
-            setGames(gameList.data || []);
+            setGames(gameList?.data || []);
         } catch (error) {
             console.log(error);
             setGames([]);
