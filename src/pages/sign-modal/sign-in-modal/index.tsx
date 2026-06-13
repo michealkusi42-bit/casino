@@ -54,7 +54,7 @@ const SignInModal = () => {
             await login(data.login, data.password, false);
             onToggleModal('');
         } catch (error: any) {
-            enqueueSnackbar(typeof error === 'string' ? error : error.message, { variant: 'error' });
+            enqueueSnackbar(typeof error === 'string' ? error : (error?.message || 'Something went wrong'), { variant: 'error' });
         }
     };
 
