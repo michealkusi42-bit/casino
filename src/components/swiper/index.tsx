@@ -38,8 +38,8 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
     const responsiveViewCount = isMobile ? 3 : isTablet ? Math.round((viewCount / 3) * 2) : viewCount;
 
     const totalSlides = safeData.length;
-    const prevButtonClass = swiper-prev-button-${index};
-    const nextButtonClass = swiper-next-button-${index};
+    const prevButtonClass = 'swiper-prev-button-' + index;
+    const nextButtonClass = 'swiper-next-button-' + index;
 
     const handleNext = () => {
         if (!swiperRef.current) return;
@@ -65,7 +65,7 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
         return (
             <Stack direction="column" gap={1} mt={3}>
                 <Typography sx={{ fontSize: '16px', fontWeight: 800, textTransform: 'uppercase' }}>
-                    {t(${title})}
+                    {t(title)}
                 </Typography>
                 <Typography color="text.secondary">{t('no_items_to_display')}</Typography>
             </Stack>
@@ -76,7 +76,7 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
         <Stack direction="column" gap={1} mt={3}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography sx={{ fontSize: '16px', fontWeight: 800, textTransform: 'uppercase' }}>
-                    {t(${title})}
+                    {t(title)}
                 </Typography>
 
                 <Stack direction="row" alignItems="center" gap={0.5}>
@@ -112,7 +112,7 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
                             alignItems: 'center',
                             gap: 0.5
                         }}
-                        onClick={() => navigate(/gamelist/${category}?type=${title})}
+                        onClick={() => navigate('/gamelist/' + category + '?type=' + title)}
                     >
                         <Typography sx={{ fontSize: 14, color: 'text.primary', lineHeight: 1, fontWeight: 600 }}>
                             {t('all')}
@@ -129,8 +129,8 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
                     setActiveIndex(swiper.activeIndex);
                 }}
                 navigation={{
-                    prevEl: .${prevButtonClass},
-                    nextEl: .${nextButtonClass}
+                    prevEl: '.' + prevButtonClass,
+                    nextEl: '.' + nextButtonClass
                 }}
                 slidesPerView={responsiveViewCount}
                 spaceBetween={10}
@@ -142,11 +142,13 @@ const CustomSwiper: React.FC<CustomSwiperProps> = ({ index, title, data, viewCou
                 <Grid container>
                     {loading
                         ? new Array(viewCount).fill(null).map((_, index) => (
-                              <SwiperSlide key={skeleton-${index}}>
+                              <SwiperSlide key={'skeleton-' + index}>
                                   <Skeleton width="100%" height="162px" sx={{ bgcolor: 'background.button1' }} />
                               </SwiperSlide>
                           ))
-                        : safeData.map((item, itemIndex) => <SwiperSlide key={slide-${itemIndex}}>{item}</SwiperSlide>)}
+                        : safeData.map((item, itemIndex) => (
+                              <SwiperSlide key={'slide-' + itemIndex}>{item}</SwiperSlide>
+                          ))}
                 </Grid>
             </Swiper>
         </Stack>
