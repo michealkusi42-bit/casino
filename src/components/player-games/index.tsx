@@ -33,7 +33,6 @@ export default function PlayerGames({ viewCount }: CustomSwiperProps) {
         if (isLogined) {
             getGameList();
         }
-        // eslint-disable-next-line
     }, [isLogined]);
 
     if (!games.length) return null;
@@ -50,13 +49,13 @@ export default function PlayerGames({ viewCount }: CustomSwiperProps) {
                         image={
                             item.gameDetails.ownImg
                                 ? ASSETS(item.gameDetails.ownImg)
-                                : item.gameDetails.image_url || ASSETS(${item.gameDetails.gameCode}.png)
+                                : item.gameDetails.image_url || ASSETS(item.gameDetails.gameCode + '.png')
                         }
                         name={item.gameDetails.game_name || item.gameDetails.gameName}
                         href={
                             item.gameDetails.gameCode
-                                ? /ag-game/${item.gameDetails.gameCode}
-                                : /game/${item.gameDetails.game_code}
+                                ? '/ag-game/' + item.gameDetails.gameCode
+                                : '/game/' + item.gameDetails.game_code
                         }
                     />
                 </Box>
