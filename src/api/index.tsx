@@ -80,8 +80,12 @@ export const getSlotGames = async (data: {
     categories?: string;
     provider?: string[];
 }) => {
-    const res = await axios.post('/api/casino/ag-games', data);
-    return res.data;
+    try {
+        const res = await axios.post('/api/casino/ag-games', data);
+        return res.data;
+    } catch {
+        return { data: [], count: 0 };
+    }
 };
 
 export const getSlotProviders = async (categorie: string) => {
