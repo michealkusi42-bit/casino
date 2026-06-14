@@ -20,10 +20,10 @@ export default function PlayerGames({ viewCount }: CustomSwiperProps) {
         try {
             setLoading(true);
             const gameList = await playerApi.getPlayerGames();
-
-            setGames(gameList);
+            setGames(gameList || []);
         } catch (error) {
             console.log(error);
+            setGames([]);
         } finally {
             setLoading(false);
         }
@@ -43,20 +43,20 @@ export default function PlayerGames({ viewCount }: CustomSwiperProps) {
             category={'your-games'}
             index={'your-games'}
             loading={loading}
-            data={games.map((item: any, index: number) => (
+            data={(games || []).map((item: any, index: number) => (
                 <Box key={index} sx={{ borderRadius: 2, overflow: 'hidden' }}>
                     <GameCard
                         key={index}
                         image={
                             item.gameDetails.ownImg
                                 ? ASSETS(item.gameDetails.ownImg)
-                                : item.gameDetails.image_url || ASSETS(`${item.gameDetails.gameCode}.png`)
+                                : item.gameDetails.image_url || ASSETS(${item.gameDetails.gameCode}.png)
                         }
                         name={item.gameDetails.game_name || item.gameDetails.gameName}
                         href={
                             item.gameDetails.gameCode
-                                ? `/ag-game/${item.gameDetails.gameCode}`
-                                : `/game/${item.gameDetails.game_code}`
+                                ? /ag-game/${item.gameDetails.gameCode}
+                                : /game/${item.gameDetails.game_code}
                         }
                     />
                 </Box>
