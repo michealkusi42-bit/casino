@@ -79,7 +79,7 @@ const GameContainer = ({ gameData, gameCode }: { gameData: any; gameCode: string
                 setLaunchState(true);
                 setLaunchUrl(response.url);
             } else {
-                enqueueSnackbar(response.message, { variant: 'error' });
+                enqueueSnackbar(response.message || 'Failed to launch game', { variant: 'error' });
             }
         } catch (error: any) {
             enqueueSnackbar(error?.message || 'Something went wrong', { variant: 'error' });
@@ -230,92 +230,6 @@ const GameContainer = ({ gameData, gameCode }: { gameData: any; gameCode: string
                     />
                 </Box>
             </GameFrame>
-            {/* 
-            <GameControls>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="center">
-                    <Stack
-                        direction="row"
-                        alignItems="center"
-                        spacing={1}
-                        pr={2}
-                        borderRight="1px solid"
-                        borderColor="divider"
-                    >
-                        {['favourite', 'like', 'share'].map((icon) => (
-                            <Box
-                                key={icon}
-                                component="img"
-                                src={`/assets/icons/${icon}.svg`}
-                                alt={icon}
-                                sx={{ width: 24, height: 24 }}
-                            />
-                        ))}
-                    </Stack>
-
-                    <Stack direction="row" spacing={1}>
-                        <IconButton onClick={toggleFullscreen}>
-                            <Box
-                                component="img"
-                                src={`/assets/icons/full-screen.svg`}
-                                alt="full-screen"
-                                sx={{ width: 24, height: 24 }}
-                            />
-                        </IconButton>
-                        {['live-stats', 'movie-mode', 'full-screen'].map((icon) => (
-                            <IconButton key={`game-${icon}`}>
-                                <Box
-                                    component="img"
-                                    src={`/assets/icons/${icon}.svg`}
-                                    alt={icon}
-                                    sx={{ width: 24, height: 24 }}
-                                />
-                            </IconButton>
-                        ))}
-                    </Stack>
-                </Stack>
-
-                <Box
-                    sx={{
-                        display: { xs: 'none', sm: 'block' },
-                        position: 'absolute',
-                        inset: 0,
-                        m: 'auto',
-                        height: 32
-                    }}
-                />
-
-                <Stack
-                    direction="row"
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="flex-end"
-                    sx={{ flex: 1, zIndex: 10 }}
-                >
-                    <Box sx={{ display: 'flex', px: 2, ml: 'auto' }} />
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            gap: 0.5,
-                            height: 40,
-                            borderRadius: 1,
-                            bgcolor: 'background.default',
-                            p: 0.5
-                        }}
-                    >
-                        <Button
-                            sx={{
-                                px: 2,
-                                height: '100%',
-                                whiteSpace: 'nowrap',
-                                fontSize: { xs: 12, sm: 14 },
-                                bgcolor: 'background.layer2'
-                            }}
-                        >
-                            Real Play
-                        </Button>
-                    </Box>
-                </Stack>
-            </GameControls> */}
         </GameContainer_>
     );
 };
