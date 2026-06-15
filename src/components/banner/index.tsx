@@ -16,7 +16,7 @@ const BannerContainer = styled(Box)(({ theme }) => ({
     position: 'relative',
     overflow: 'hidden',
     borderRadius: (theme.shape.borderRadius as number) * 1.5,
-    background: `linear-gradient(261deg, ${theme.palette.background.layer4} 70.44%, rgb(96, 104, 105) 128.85%)`,
+    background: linear-gradient(261deg, ${theme.palette.background.layer4} 70.44%, rgb(96, 104, 105) 128.85%),
     backgroundSize: 'cover',
     backgroundRepeat: 'repeat-x',
     display: 'flex',
@@ -52,7 +52,7 @@ const ContentContainer = styled(Stack, {
     padding: theme.spacing(2),
     [theme.breakpoints.up('sm')]: {
         transformOrigin: 'top left',
-        transform: `scale(${scale})`,
+        transform: scale(${scale}),
         left: '19%',
         top: '4%',
         height: 'auto',
@@ -98,7 +98,7 @@ const Banner = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
     const { isLogined } = useAuth();
-    const { banners } = useSelector((state) => state.setting);
+    const { banners = [] } = useSelector((state) => state.setting);
 
     const [width, setWidth] = useState(window.innerWidth);
 
@@ -179,7 +179,7 @@ const Banner = () => {
                             <Box key={index} sx={{ borderRadius: 1, overflow: 'hidden' }}>
                                 <Image
                                     src={ASSETS(img.image)}
-                                    alt={`banner-${index}`}
+                                    alt={banner-${index}}
                                     ratio={isMobile ? '16/9' : '21/9'}
                                     sx={{ borderRadius: 1 }}
                                 />
