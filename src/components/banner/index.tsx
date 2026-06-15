@@ -89,11 +89,7 @@ return (
             <BannerContainer sx={{ maxHeight: isMobile ? 180 : 400, aspectRatio: isMobile ? '1.7' : '4.6', mb: 2, mt: { xs: 2.5, sm: 4 } }}>
                 {!isMobile && <BannerImage2 src={'/assets/images/home/players-banner_2.webp'} alt="Banner" />}
                 <BannerImage
-                    src={
-                        isMobile
-                            ? '/assets/images/home/players-banner-mobile.webp'
-                            : '/assets/images/home/players-banner.webp'
-                    }
+                    src={isMobile ? '/assets/images/home/players-banner-mobile.webp' : '/assets/images/home/players-banner.webp'}
                     alt="Banner"
                 />
                 <Stack
