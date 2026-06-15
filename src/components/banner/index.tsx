@@ -77,7 +77,7 @@ return (
                         <Box key={index} sx={{ borderRadius: 1, overflow: 'hidden' }}>
                             <Image
                                 src={ASSETS(img.image)}
-                                alt={banner-${index}}
+                                alt={`banner-${index}`}
                                 ratio={isMobile ? '16/9' : '21/9'}
                                 sx={{ borderRadius: 1 }}
                             />
