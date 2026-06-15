@@ -2,7 +2,7 @@ import axios from 'utils/axios';
 
 export const paymentApi = {
     withdraw: async (data: any) => {
-        const res = await axios.post('/api/withdraw', data);
+        const res = await axios.post('/api/wallet/withdraw', data);
         return res.data;
     },
     getWithdrawCurrency: async (withdrawAmount: number, currencyCode: string) => {
@@ -18,7 +18,7 @@ export const paymentApi = {
         return res.data;
     },
     getDepositList: async (data: any) => {
-        const res = await axios.post('/api/player/deposit', data);
+        const res = await axios.post('/api/wallet/deposit', data);
         return res.data;
     },
     getPendingWithdraw: async () => {
@@ -26,7 +26,7 @@ export const paymentApi = {
         return res.data;
     },
     getWithdrawList: async (data: any) => {
-        const res = await axios.post('/api/player/withdraw', data);
+        const res = await axios.post('/api/wallet/withdraw', data);
         return res.data;
     },
     agpaymentDeposit: async (data: any) => {
