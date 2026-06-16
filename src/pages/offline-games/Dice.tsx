@@ -70,17 +70,6 @@ const Dice = () => {
         }
     }, [rollValue]);
 
-    const updateBalance = async () => {
-        try {
-            const balanceData = await getUserBalance();
-            if (balanceData && balanceData.amount !== undefined) {
-                dispatch({ type: 'balance/setBalance', payload: balanceData.amount });
-            }
-        } catch (error) {
-            console.error('Failed to update balance:', error);
-        }
-    };
-
     const handleBetClicked = async () => {
         if (!betAmount || parseFloat(betAmount) <= 0) {
             enqueueSnackbar('Enter a valid bet amount', { variant: 'error' });
@@ -101,11 +90,10 @@ const Dice = () => {
         }, 300);
 
         try {
-            // Call backend API to play the game
             const response = await playDice(parseFloat(betAmount), rollValue);
 
             if (response.success) {
-                const { diceNumber, win, newBalance } = response.data;
+                const { roll: diceNumber, win, newBalance } = response.data;
 
                 setTimeout(() => {
                     setRecentNumber(diceNumber);
@@ -123,7 +111,6 @@ const Dice = () => {
                     setShowDice(true);
                     setIsBetStarted(false);
 
-                    // Update balance from backend response
                     dispatch({ type: 'balance/setBalance', payload: newBalance });
                 }, 500);
 
@@ -139,7 +126,6 @@ const Dice = () => {
             setIsBetStarted(false);
             const errorMessage = error.response?.data?.message || error.message || 'Failed to place bet';
             enqueueSnackbar(errorMessage, { variant: 'error' });
-            console.error('Bet error:', error);
         }
     };
 
@@ -337,124 +323,12 @@ const Dice = () => {
                                     mb: { xs: 12, sm: 20 }
                                 }}
                             >
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        left: { xs: 24, sm: 28 },
-                                        top: -28,
-                                        '&::after': {
-                                            content: '""',
-                                            width: 8,
-                                            height: 8,
-                                            bgcolor: '#2f4553',
-                                            display: 'block',
-                                            transform: 'rotate(45deg)',
-                                            mt: '1px'
-                                        }
-                                    }}
-                                >
-                                    0
-                                </Box>
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        left: '25%',
-                                        ml: 1,
-                                        top: -28,
-                                        '&::after': {
-                                            content: '""',
-                                            width: 8,
-                                            height: 8,
-                                            bgcolor: '#2f4553',
-                                            display: 'block',
-                                            transform: 'rotate(45deg)',
-                                            ml: 0.5,
-                                            mt: '1px'
-                                        }
-                                    }}
-                                >
-                                    25
-                                </Box>
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        top: -28,
-                                        '&::after': {
-                                            content: '""',
-                                            width: 8,
-                                            height: 8,
-                                            bgcolor: '#2f4553',
-                                            display: 'block',
-                                            transform: 'rotate(45deg)',
-                                            ml: 0.5,
-                                            mt: '1px'
-                                        }
-                                    }}
-                                >
-                                    50
-                                </Box>
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        right: '25%',
-                                        mr: 1,
-                                        top: -28,
-                                        '&::after': {
-                                            content: '""',
-                                            width: 8,
-                                            height: 8,
-                                            bgcolor: '#2f4553',
-                                            display: 'block',
-                                            transform: 'rotate(45deg)',
-                                            ml: 0.5,
-                                            mt: '1px'
-                                        }
-                                    }}
-                                >
-                                    75
-                                </Box>
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        right: 16,
-                                        top: -28,
-                                        '&::after': {
-                                            content: '""',
-                                            width: 8,
-                                            height: 8,
-                                            bgcolor: '#2f4553',
-                                            display: 'block',
-                                            transform: 'rotate(45deg)',
-                                            ml: 0.75,
-                                            mt: '1px'
-                                        }
-                                    }}
-                                >
-                                    100
-                                </Box>
-                                <Box
-                                    sx={{
-                                        bgcolor: '#0f212e',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        p: 1.5,
-                                        borderRadius: 9999,
-                                        m: 'auto'
-                                    }}
-                                >
+                                <Box sx={{ position: 'absolute', color: 'white', fontWeight: 500, left: { xs: 24, sm: 28 }, top: -28, '&::after': { content: '""', width: 8, height: 8, bgcolor: '#2f4553', display: 'block', transform: 'rotate(45deg)', mt: '1px' } }}>0</Box>
+                                <Box sx={{ position: 'absolute', color: 'white', fontWeight: 500, left: '25%', ml: 1, top: -28, '&::after': { content: '""', width: 8, height: 8, bgcolor: '#2f4553', display: 'block', transform: 'rotate(45deg)', ml: 0.5, mt: '1px' } }}>25</Box>
+                                <Box sx={{ position: 'absolute', color: 'white', fontWeight: 500, left: '50%', transform: 'translateX(-50%)', top: -28, '&::after': { content: '""', width: 8, height: 8, bgcolor: '#2f4553', display: 'block', transform: 'rotate(45deg)', ml: 0.5, mt: '1px' } }}>50</Box>
+                                <Box sx={{ position: 'absolute', color: 'white', fontWeight: 500, right: '25%', mr: 1, top: -28, '&::after': { content: '""', width: 8, height: 8, bgcolor: '#2f4553', display: 'block', transform: 'rotate(45deg)', ml: 0.5, mt: '1px' } }}>75</Box>
+                                <Box sx={{ position: 'absolute', color: 'white', fontWeight: 500, right: 16, top: -28, '&::after': { content: '""', width: 8, height: 8, bgcolor: '#2f4553', display: 'block', transform: 'rotate(45deg)', ml: 0.75, mt: '1px' } }}>100</Box>
+                                <Box sx={{ bgcolor: '#0f212e', display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 1.5, borderRadius: 9999, m: 'auto' }}>
                                     <Box
                                         component="input"
                                         ref={sliderRef}
@@ -468,140 +342,30 @@ const Dice = () => {
                                         className="slider"
                                         sx={{ width: '100%' }}
                                     />
-                                    <DiceNumber
-                                        w={width}
-                                        hidden={!showDice}
-                                        amount={recentNumber}
-                                        win={recentNumber >= rollValue}
-                                    />
+                                    <DiceNumber w={width} hidden={!showDice} amount={recentNumber} win={recentNumber >= rollValue} />
                                 </Box>
                             </Box>
                         </Box>
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 16,
-                                right: 16,
-                                left: 16,
-                                bgcolor: '#213743',
-                                borderRadius: 1,
-                                display: 'flex',
-                                p: 2,
-                                gap: 1
-                            }}
-                        >
+                        <Box sx={{ position: 'absolute', bottom: 16, right: 16, left: 16, bgcolor: '#213743', borderRadius: 1, display: 'flex', p: 2, gap: 1 }}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                                <Typography
-                                    component="label"
-                                    htmlFor="targetMul"
-                                    variant="body2"
-                                    sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}
-                                >
-                                    Multiplier
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        bgcolor: '#0f212e',
-                                        alignItems: 'center',
-                                        pr: 1,
-                                        border: '2px solid #2f4553',
-                                        '&:hover': { borderColor: '#557086' },
-                                        borderRadius: 1
-                                    }}
-                                >
-                                    <TextField
-                                        disabled={isBetStarted}
-                                        onChange={(e) => {
-                                            setMul(e.target.value);
-                                            setRollValue(100 - 99 / Number(e.target.value));
-                                        }}
-                                        id="targetMul"
-                                        type="number"
-                                        value={mul}
-                                        sx={{
-                                            width: '100%',
-                                            input: { color: '#fff', fontWeight: 500, padding: '10px' },
-                                            '& fieldset': { border: 'none' }
-                                        }}
-                                    />
-                                    <Typography sx={{ color: '#b1bad3', fontSize: '1.125rem', fontWeight: 700 }}>
-                                        X
-                                    </Typography>
+                                <Typography component="label" htmlFor="targetMul" variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Multiplier</Typography>
+                                <Box sx={{ display: 'flex', bgcolor: '#0f212e', alignItems: 'center', pr: 1, border: '2px solid #2f4553', '&:hover': { borderColor: '#557086' }, borderRadius: 1 }}>
+                                    <TextField disabled={isBetStarted} onChange={(e) => { setMul(e.target.value); setRollValue(100 - 99 / Number(e.target.value)); }} id="targetMul" type="number" value={mul} sx={{ width: '100%', input: { color: '#fff', fontWeight: 500, padding: '10px' }, '& fieldset': { border: 'none' } }} />
+                                    <Typography sx={{ color: '#b1bad3', fontSize: '1.125rem', fontWeight: 700 }}>X</Typography>
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                                <Typography
-                                    component="label"
-                                    htmlFor="roll"
-                                    variant="body2"
-                                    sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}
-                                >
-                                    Roll Over
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        bgcolor: '#0f212e',
-                                        alignItems: 'center',
-                                        pr: 1,
-                                        border: '2px solid #2f4553',
-                                        '&:hover': { borderColor: '#557086' },
-                                        borderRadius: 1
-                                    }}
-                                >
-                                    <TextField
-                                        disabled
-                                        id="roll"
-                                        type="number"
-                                        value={parseFloat(rollValue.toString()).toFixed(2)}
-                                        sx={{
-                                            width: '100%',
-                                            input: {
-                                                color: '#fff',
-                                                fontWeight: 500,
-                                                padding: '10px',
-                                                cursor: 'pointer'
-                                            },
-                                            '& fieldset': { border: 'none' }
-                                        }}
-                                    />
+                                <Typography component="label" htmlFor="roll" variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Roll Over</Typography>
+                                <Box sx={{ display: 'flex', bgcolor: '#0f212e', alignItems: 'center', pr: 1, border: '2px solid #2f4553', '&:hover': { borderColor: '#557086' }, borderRadius: 1 }}>
+                                    <TextField disabled id="roll" type="number" value={parseFloat(rollValue.toString()).toFixed(2)} sx={{ width: '100%', input: { color: '#fff', fontWeight: 500, padding: '10px', cursor: 'pointer' }, '& fieldset': { border: 'none' } }} />
                                     <Box component="img" src={loop} sx={{ width: 20 }} alt="" />
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>
-                                    Win Percentage
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        bgcolor: '#0f212e',
-                                        alignItems: 'center',
-                                        pr: 1,
-                                        border: '2px solid #2f4553',
-                                        '&:hover': { borderColor: '#557086' },
-                                        borderRadius: 1
-                                    }}
-                                >
-                                    <TextField
-                                        disabled
-                                        type="number"
-                                        value={parseFloat((100 - rollValue).toString()).toFixed(4)}
-                                        sx={{
-                                            width: '100%',
-                                            input: {
-                                                color: '#fff',
-                                                fontWeight: 500,
-                                                padding: '10px',
-                                                cursor: 'pointer'
-                                            },
-                                            '& fieldset': { border: 'none' }
-                                        }}
-                                    />
-                                    <Typography sx={{ color: '#b1bad3', fontSize: '1.125rem', fontWeight: 700 }}>
-                                        %
-                                    </Typography>
+                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Win Percentage</Typography>
+                                <Box sx={{ display: 'flex', bgcolor: '#0f212e', alignItems: 'center', pr: 1, border: '2px solid #2f4553', '&:hover': { borderColor: '#557086' }, borderRadius: 1 }}>
+                                    <TextField disabled type="number" value={parseFloat((100 - rollValue).toString()).toFixed(4)} sx={{ width: '100%', input: { color: '#fff', fontWeight: 500, padding: '10px', cursor: 'pointer' }, '& fieldset': { border: 'none' } }} />
+                                    <Typography sx={{ color: '#b1bad3', fontSize: '1.125rem', fontWeight: 700 }}>%</Typography>
                                 </Box>
                             </Box>
                         </Box>
@@ -614,19 +378,7 @@ const Dice = () => {
 
 const ShowBetResult = ({ amount, win }: { amount: any; win: boolean }) => {
     return (
-        <Box
-            sx={{
-                px: 2,
-                py: 1,
-                fontWeight: 'bold',
-                fontSize: '0.75rem',
-                borderRadius: 9999,
-                bgcolor: win ? '#00e701' : '#2f4553',
-                color: win ? 'black' : 'white',
-                animation: 'slide 0.3s ease-out'
-            }}
-            className="betResult"
-        >
+        <Box sx={{ px: 2, py: 1, fontWeight: 'bold', fontSize: '0.75rem', borderRadius: 9999, bgcolor: win ? '#00e701' : '#2f4553', color: win ? 'black' : 'white', animation: 'slide 0.3s ease-out' }} className="betResult">
             {parseFloat(amount).toFixed(2)}
         </Box>
     );
@@ -634,37 +386,10 @@ const ShowBetResult = ({ amount, win }: { amount: any; win: boolean }) => {
 
 const DiceNumber = ({ w, amount, win, hidden }: { w: number; amount: number; win: boolean; hidden: boolean }) => {
     return (
-        <Box
-            sx={{
-                left: `${(amount * w) / 100 - 5}px`,
-                position: 'absolute',
-                transform: 'translateZ(0)',
-                transition: 'all 0.3s',
-                opacity: hidden ? 0 : 1
-            }}
-        >
+        <Box sx={{ left: `${(amount * w) / 100 - 5}px`, position: 'absolute', transform: 'translateZ(0)', transition: 'all 0.3s', opacity: hidden ? 0 : 1 }}>
             <Box sx={{ position: 'relative' }}>
-                <Box
-                    component="img"
-                    src={cube}
-                    alt=""
-                    sx={{
-                        width: { xs: '4.2rem', sm: '5rem' },
-                        mb: { xs: '4.8rem', sm: '5.5rem' },
-                        height: 'fit-content'
-                    }}
-                />
-                <Typography
-                    sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        color: win ? '#00b801' : '#ea234b',
-                        fontSize: { xs: '1rem', sm: '1.125rem' },
-                        fontWeight: 'bold'
-                    }}
-                >
+                <Box component="img" src={cube} alt="" sx={{ width: { xs: '4.2rem', sm: '5rem' }, mb: { xs: '4.8rem', sm: '5.5rem' }, height: 'fit-content' }} />
+                <Typography sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: win ? '#00b801' : '#ea234b', fontSize: { xs: '1rem', sm: '1.125rem' }, fontWeight: 'bold' }}>
                     {parseFloat(amount.toString()).toFixed(2)}
                 </Typography>
             </Box>
