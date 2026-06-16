@@ -6,7 +6,7 @@ const gamelist = [
     {
         name: 'poker',
         image: '/assets/home/poker.webp',
-        path: '/poker',
+        path: '/offline-games/poker',
         background: 'linear-gradient(to left, rgba(39, 232, 187, 0.2), transparent 75%)',
         icon: { name: 'url(/assets/icons/icons-1.webp)', x: '-96px ', y: '0px' }
     },
