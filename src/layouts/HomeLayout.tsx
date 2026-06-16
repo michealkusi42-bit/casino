@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Dialog } from '@mui/material';
 // hooks
 import { useResponsive } from 'hooks/use-responsive';
+import useAutoBalance from 'hooks/use-auto-balance';
 // components
 import Header from 'components/header';
 import Navbar from 'components/navbar';
@@ -20,6 +21,8 @@ const MainLayout = () => {
     const [navStatus, setNavStatus] = useState(false);
     const [notificationState, setNotificationState] = useState(false);
     const { modal, onToggleModal } = useSettingsContext();
+
+    useAutoBalance();
 
     useEffect(() => {
         if (isDesktop) {
