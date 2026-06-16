@@ -79,11 +79,11 @@ const Header = ({
                     mx: 'auto'
                 }}
             >
-                {/* Left Section */}
-                <Stack direction="row" alignItems="center" spacing={2}>
+                {/* Left Section — flex:1 + minWidth:0 lets it absorb leftover space without pushing the right side */}
+                <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
                     <IconButton
                         onClick={onHandleNav}
-                        sx={{ display: { lg: 'none' }, color: 'text.secondary' }}
+                        sx={{ display: { lg: 'none' }, color: 'text.secondary', flexShrink: 0 }}
                     >
                         <Box
                             sx={{
@@ -99,13 +99,21 @@ const Header = ({
                         component="img"
                         src="/logo.webp"
                         onClick={() => router.push('/')}
-                        sx={{ height: { xs: 32, md: 40 }, cursor: 'pointer', display: 'block' }}
+                        sx={{ height: { xs: 32, md: 40 }, cursor: 'pointer', display: 'block', flexShrink: 0 }}
                     />
 
+                    {/* Tabs — scrolls horizontally instead of wrapping, so it can never collide with the search icon */}
                     <Stack
                         direction="row"
                         spacing={1}
-                        sx={{ display: { xs: 'none', lg: 'flex' }, ml: 4 }}
+                        sx={{
+                            display: { xs: 'none', lg: 'flex' },
+                            ml: 4,
+                            minWidth: 0,
+                            overflowX: 'auto',
+                            scrollbarWidth: 'none',
+                            '&::-webkit-scrollbar': { display: 'none' }
+                        }}
                     >
                         {headerTabs.map((tab) => {
                             const isActive = pathname === tab.path;
@@ -121,6 +129,7 @@ const Header = ({
                                         px: 2,
                                         py: 1,
                                         borderRadius: 2,
+                                        flexShrink: 0,
                                         transition: 'all 0.2s',
                                         bgcolor: isActive ? 'background.layer3' : 'transparent',
                                         '&:hover': {
@@ -135,6 +144,7 @@ const Header = ({
                                         sx={{
                                             width: 20,
                                             height: 20,
+                                            flexShrink: 0,
                                             filter: isActive ? 'none' : 'grayscale(100%) opacity(0.7)'
                                         }}
                                     />
@@ -143,6 +153,7 @@ const Header = ({
                                         variant="subtitle2"
                                         sx={{
                                             fontWeight: 600,
+                                            whiteSpace: 'nowrap',
                                             color: isActive ? 'primary.main' : 'text.secondary',
                                             transition: 'color 0.2s'
                                         }}
@@ -155,8 +166,13 @@ const Header = ({
                     </Stack>
                 </Stack>
 
-                {/* Right Section */}
-                <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
+                {/* Right Section — flexShrink:0 so this group is never compressed by the left side */}
+                <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={{ xs: 1, sm: 2 }}
+                    sx={{ flexShrink: 0 }}
+                >
                     <IconButton
                         onClick={() => onToggleModal('EXPLORE')}
                         sx={{
@@ -165,6 +181,7 @@ const Header = ({
                             bgcolor: 'background.layer3',
                             borderRadius: '50%',
                             p: 1.2,
+                            flexShrink: 0,
                             '&:hover': { bgcolor: 'background.layer4', color: 'text.primary' }
                         }}
                     >
@@ -180,6 +197,7 @@ const Header = ({
                                     fontWeight: 600,
                                     textTransform: 'none',
                                     display: { xs: 'none', sm: 'flex' },
+                                    flexShrink: 0,
                                     '&:hover': { color: 'primary.main', bgcolor: 'transparent' }
                                 }}
                             >
@@ -191,7 +209,8 @@ const Header = ({
                                     px: { xs: 2, sm: 3 },
                                     height: { xs: '2.25rem', sm: '2.5rem' },
                                     fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                                    textTransform: 'none'
+                                    textTransform: 'none',
+                                    flexShrink: 0
                                 }}
                             >
                                 {t('Sign up')}
@@ -216,7 +235,9 @@ const Header = ({
                                     py: 0.8,
                                     border: '1px solid',
                                     borderColor: 'background.border',
-                                    display: { xs: 'none', sm: 'flex' }
+                                    display: { xs: 'none', sm: 'flex' },
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
                                 {/* ✅ Ghana Cedis symbol */}
@@ -309,6 +330,8 @@ const Header = ({
                                     height: { xs: 32, sm: 40 },
                                     textTransform: 'none',
                                     fontWeight: 700,
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap',
                                     '&:hover': {
                                         backgroundImage: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)'
                                     }
@@ -331,6 +354,8 @@ const Header = ({
                                     textTransform: 'none',
                                     fontWeight: 700,
                                     display: { xs: 'none', sm: 'flex' },
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap',
                                     '&:hover': { bgcolor: '#3e5b6d' }
                                 }}
                             >
@@ -345,6 +370,7 @@ const Header = ({
                                     bgcolor: 'background.layer3',
                                     borderRadius: 2,
                                     p: 1,
+                                    flexShrink: 0,
                                     '&:hover': { bgcolor: 'background.layer4', color: 'text.primary' }
                                 }}
                             >
@@ -365,6 +391,7 @@ const Header = ({
                             bgcolor: 'background.layer3',
                             borderRadius: 2,
                             p: 1,
+                            flexShrink: 0,
                             '&:hover': { bgcolor: 'background.layer4', color: 'text.primary' }
                         }}
                     >
