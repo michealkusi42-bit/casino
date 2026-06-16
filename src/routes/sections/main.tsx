@@ -8,12 +8,12 @@ import Dice from 'pages/offline-games/Dice';
 import HiLo from 'pages/offline-games/HiLo';
 import CoinFlip from 'pages/offline-games/CoinFlip';
 import Roulette from 'pages/offline-games/Roulette';
+import AdminPanel from 'pages/admin';
 
 const HomePage = Loadable(lazy(() => import('pages/home')));
 const CasinoPage = Loadable(lazy(() => import('pages/casino')));
 const YourGames = Loadable(lazy(() => import('pages/your-games')));
 const SportsGame = Loadable(lazy(() => import('pages/sports/game')));
-// const DigitainPlay = Loadable(lazy(() => import('pages/sports/digitain-play')));
 const PlayerBonusPage = Loadable(lazy(() => import('pages/wallet/bonus')));
 const WithdrawPage = Loadable(lazy(() => import('pages/wallet/withdraw')));
 const TransactionPage = Loadable(lazy(() => import('pages/wallet/transaction')));
@@ -41,9 +41,12 @@ const AffiliateDashboard = Loadable(lazy(() => import('pages/affiliate/index')))
 const HelpCenter = Loadable(lazy(() => import('pages/help-center')));
 const Mine = Loadable(lazy(() => import('pages/offline-games/mines')));
 
-// ----------------------------------------------------------------------
-
 export const mainRoutes = [
+    // ✅ Admin route - outside MainLayout so no navbar
+    {
+        path: '/admin',
+        element: <AdminPanel />
+    },
     {
         path: '/',
         element: <MainLayout />,
@@ -104,30 +107,12 @@ export const mainRoutes = [
                 path: 'wallet',
                 element: <WalletPage />,
                 children: [
-                    {
-                        path: 'balance',
-                        element: <BallancePage />
-                    },
-                    {
-                        path: 'deposit',
-                        element: <DepositPage />
-                    },
-                    {
-                        path: 'withdraw',
-                        element: <WithdrawPage />
-                    },
-                    {
-                        path: 'bonus',
-                        element: <PlayerBonusPage />
-                    },
-                    {
-                        path: 'transaction',
-                        element: <TransactionPage />
-                    },
-                    {
-                        path: 'bet-history',
-                        element: <BetHistoryPage />
-                    }
+                    { path: 'balance', element: <BallancePage /> },
+                    { path: 'deposit', element: <DepositPage /> },
+                    { path: 'withdraw', element: <WithdrawPage /> },
+                    { path: 'bonus', element: <PlayerBonusPage /> },
+                    { path: 'transaction', element: <TransactionPage /> },
+                    { path: 'bet-history', element: <BetHistoryPage /> }
                 ]
             },
             {
@@ -138,22 +123,10 @@ export const mainRoutes = [
                 path: 'settings',
                 element: <SettingPage />,
                 children: [
-                    {
-                        path: 'account-info',
-                        element: <AccountInfoPage />
-                    },
-                    {
-                        path: 'security',
-                        element: <SecurityPage />
-                    },
-                    {
-                        path: 'preferences',
-                        element: <PreferencesPage />
-                    },
-                    {
-                        path: 'verification',
-                        element: <PersonalVerification />
-                    }
+                    { path: 'account-info', element: <AccountInfoPage /> },
+                    { path: 'security', element: <SecurityPage /> },
+                    { path: 'preferences', element: <PreferencesPage /> },
+                    { path: 'verification', element: <PersonalVerification /> }
                 ]
             },
             {
@@ -167,10 +140,7 @@ export const mainRoutes = [
             {
                 path: 'affiliate',
                 children: [
-                    {
-                        path: ':tab',
-                        element: <AffiliateDashboard />
-                    }
+                    { path: ':tab', element: <AffiliateDashboard /> }
                 ]
             },
             {
@@ -180,26 +150,11 @@ export const mainRoutes = [
             {
                 path: '/offline-games',
                 children: [
-                    {
-                        path: 'mines',
-                        element: <Mine />
-                    },
-                    {
-                        path: 'dice',
-                        element: <Dice />
-                    },
-                    {
-                        path: 'hilo',
-                        element: <HiLo />
-                    },
-                    {
-                        path: 'coinflip',
-                        element: <CoinFlip />
-                    },
-                    {
-                        path: 'roulette',
-                        element: <Roulette />
-                    }
+                    { path: 'mines', element: <Mine /> },
+                    { path: 'dice', element: <Dice /> },
+                    { path: 'hilo', element: <HiLo /> },
+                    { path: 'coinflip', element: <CoinFlip /> },
+                    { path: 'roulette', element: <Roulette /> }
                 ]
             }
         ]
@@ -212,10 +167,6 @@ export const mainRoutes = [
                 path: ':product_code/:currency',
                 element: <SportsGame />
             }
-            // {
-            //     path: '1164/:currency',
-            //     element: <DigitainPlay />
-            // }
         ]
     }
 ];
