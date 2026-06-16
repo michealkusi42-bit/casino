@@ -54,6 +54,8 @@ const Header = ({
         setShowBalance(false);
     };
 
+    const currency = user?.currency || 'GHS';
+
     const commonButtonStyle = {
         padding: 0,
         minWidth: 0,
@@ -110,8 +112,8 @@ const Header = ({
                             sx={{
                                 width: 24,
                                 height: 24,
-                                background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`, // Menu icon
-                                backgroundSize: 'cover', // Adjust if sprite needs scaling
+                                background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`,
+                                backgroundSize: 'cover',
                                 transform: 'scale(1)'
                             }}
                         />
@@ -187,7 +189,6 @@ const Header = ({
 
                 {/* Right Section: Actions */}
                 <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
-                    {/* Search Button (Desktop) */}
                     <IconButton
                         onClick={() => onToggleModal('EXPLORE')}
                         sx={{
@@ -202,7 +203,6 @@ const Header = ({
                         <SearchIcon sx={{ fontSize: 20 }} />
                     </IconButton>
 
-                    {/* Not Logged In Actions */}
                     {!isLogined && (
                         <>
                             <Button
@@ -231,10 +231,8 @@ const Header = ({
                         </>
                     )}
 
-                    {/* Logged In Actions */}
                     {isLogined && (
                         <>
-                            {/* Balance Component */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -259,7 +257,6 @@ const Header = ({
                                 <ArrowDropDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             </Stack>
 
-                            {/* Balance Popover */}
                             {anchorBalanceEl2.current && (
                                 <Popover
                                     open={showBalance}
@@ -280,28 +277,21 @@ const Header = ({
                                 >
                                     <Stack spacing={1.5}>
                                         <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">
-                                                Main
-                                            </Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.amount)} ${user?.currency}`}</Typography>
+                                            <Typography variant="body2" color="text.secondary">Main</Typography>
+                                            <Typography variant="subtitle2">{`${fBalance(balance.amount)} ${currency}`}</Typography>
                                         </Stack>
                                         <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">
-                                                Bonus
-                                            </Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.bonus)} ${user?.currency}`}</Typography>
+                                            <Typography variant="body2" color="text.secondary">Bonus</Typography>
+                                            <Typography variant="subtitle2">{`${fBalance(balance.bonus)} ${currency}`}</Typography>
                                         </Stack>
                                         <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">
-                                                Withdrawable
-                                            </Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.withdrawable)} ${user?.currency}`}</Typography>
+                                            <Typography variant="body2" color="text.secondary">Withdrawable</Typography>
+                                            <Typography variant="subtitle2">{`${fBalance(balance.withdrawable)} ${currency}`}</Typography>
                                         </Stack>
                                     </Stack>
                                 </Popover>
                             )}
 
-                            {/* Deposit Button */}
                             <Button
                                 onClick={() => onToggleModal('DEPOSIT')}
                                 startIcon={<Add />}
@@ -324,7 +314,6 @@ const Header = ({
                                 {t('Deposit')}
                             </Button>
 
-                            {/* Notification */}
                             <IconButton
                                 onClick={onHandleNotification}
                                 sx={{
@@ -341,12 +330,10 @@ const Header = ({
                                 </Badge>
                             </IconButton>
 
-                            {/* Profile Dropdown */}
                             <AccountPopover />
                         </>
                     )}
 
-                    {/* Language Switcher */}
                     <IconButton
                         onClick={() => onToggleModal('LANGUAGE')}
                         sx={{
