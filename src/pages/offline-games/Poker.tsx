@@ -24,7 +24,7 @@ const PAY_TABLE = [
 const BET_OPTIONS = [1, 5, 10, 25, 50, 100];
 
 function PlayingCard({ card, held, onClick, index }) {
-  const isRed = card && (card.suit === '♥' || card.suit === '♦');
+  const isRed = card && (card.suit === '♥️' || card.suit === '♦️');
 
   return (
     <Fade in timeout={300 + index * 100}>
@@ -302,4 +302,9 @@ export default function PokerGame() {
 Comment
 
 Leave a comment
-Paste, dr
+Footer
+© 2026 GitHub, Inc.
+Footer navigation
+
+    Terms
+    Pr
