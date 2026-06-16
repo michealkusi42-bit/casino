@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Box, Button, TextField, Typography, Grid, Card, CardContent,
     Table, TableBody, TableCell, TableHead, TableRow, TableContainer,
-    Paper, Select, MenuItem, FormControl, InputLabel, Switch,
-    FormControlLabel, Chip, Divider, Tab, Tabs
+    Paper, Switch, Divider, Chip, Tabs, Tab
 } from '@mui/material';
 
 const BACKEND_URL = 'https://foretell-backend-production-58a6.up.railway.app';
@@ -16,7 +15,6 @@ const AdminPanel = () => {
     const [tab, setTab] = useState(0);
     const [stats, setStats] = useState<any>(null);
     const [users, setUsers] = useState<any[]>([]);
-    const [transactions, setTransactions] = useState<any[]>([]);
     const [overrides, setOverrides] = useState<any>({});
     const [maintenance, setMaintenance] = useState(false);
     const [balanceUser, setBalanceUser] = useState('');
@@ -76,23 +74,43 @@ const AdminPanel = () => {
             body: JSON.stringify({ game, value })
         });
         fetchOverrides();
-        setMessage(`✅ ${game} override set to: ${value}`);
+        setMessage(`✅ ${game} override set to: ${value ?? 'random'}`);
         setTimeout(() => setMessage(''), 3000);
     };
 
-    const adjustBalance = async () => {
-        if (!balanceUser || !balanceAmount) return;
-        const res = await fetch(`${BACKEND_URL}/api/admin/user/balance`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ username: balanceUser, amount: parseFloat(balanceAmount) })
-        });
-        const data = await res.json();
-        setMessage(`✅ Balance updated! New balance: GH₵ ${data.balance}`);
-        setTimeout(() => setMessage(''), 3000);
-        fetchUsers();
-        setBalanceUser('');
-        setBalanceAmount('');
+    const adjustBalance = async (forceAmount?: number) => {
+        if (!balanceUser) {
+            setMessage('❌ Please enter a username');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+        const amount = forceAmount !== undefined ? forceAmount : parseFloat(balanceAmount);
+        if (isNaN(amount) || amount === 0) {
+            setMessage('❌ Please enter a valid amount');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/admin/user/balance`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ username: balanceUser, amount })
+            });
+            const data = await res.json();
+            if (data.balance !== undefined) {
+                setMessage(`✅ Done! ${balanceUser} new balance: GH₵ ${data.balance?.toFixed(2)}`);
+            } else {
+                setMessage(`❌ ${data.error || 'Failed to update balance'}`);
+            }
+            setTimeout(() => setMessage(''), 4000);
+            fetchUsers();
+            setBalanceUser('');
+            setBalanceAmount('');
+        } catch (error) {
+            setMessage('❌ Error connecting to backend');
+            setTimeout(() => setMessage(''), 3000);
+        }
     };
 
     const toggleMaintenance = async () => {
@@ -173,11 +191,7 @@ const AdminPanel = () => {
                         label={maintenance ? '🔴 Maintenance ON' : '🟢 Site Live'}
                         color={maintenance ? 'error' : 'success'}
                     />
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => setIsLoggedIn(false)}
-                    >
+                    <Button variant="outlined" color="error" onClick={() => setIsLoggedIn(false)}>
                         Logout
                     </Button>
                 </Box>
@@ -186,7 +200,9 @@ const AdminPanel = () => {
             {/* Message */}
             {message && (
                 <Box sx={{ bgcolor: '#213743', p: 2, borderRadius: 2, mb: 2 }}>
-                    <Typography color="#00e701">{message}</Typography>
+                    <Typography color={message.startsWith('❌') ? '#ef4444' : '#00e701'}>
+                        {message}
+                    </Typography>
                 </Box>
             )}
 
@@ -194,7 +210,12 @@ const AdminPanel = () => {
             <Tabs
                 value={tab}
                 onChange={(_, v) => setTab(v)}
-                sx={{ mb: 3, '& .MuiTab-root': { color: '#99a4b0' }, '& .Mui-selected': { color: '#00e701' } }}
+                sx={{
+                    mb: 3,
+                    '& .MuiTab-root': { color: '#99a4b0' },
+                    '& .Mui-selected': { color: '#00e701' },
+                    '& .MuiTabs-indicator': { bgcolor: '#00e701' }
+                }}
             >
                 <Tab label="📊 Dashboard" />
                 <Tab label="👥 Users" />
@@ -218,7 +239,9 @@ const AdminPanel = () => {
                             <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Card sx={{ bgcolor: '#213743', borderRadius: 2 }}>
                                     <CardContent>
-                                        <Typography color="#99a4b0" variant="body2">{item.icon} {item.label}</Typography>
+                                        <Typography color="#99a4b0" variant="body2">
+                                            {item.icon} {item.label}
+                                        </Typography>
                                         <Typography color="white" variant="h5" fontWeight="bold" sx={{ mt: 1 }}>
                                             {item.value}
                                         </Typography>
@@ -278,17 +301,20 @@ const AdminPanel = () => {
                         🎮 Game Outcome Control
                     </Typography>
                     <Typography color="#99a4b0" sx={{ mb: 3 }}>
-                        Set win/lose override for each game. Set to null to use random outcomes.
+                        Force win or lose for any game. Set to Random for normal play.
                     </Typography>
                     <Grid container spacing={2}>
                         {GAMES.map((game) => (
                             <Grid key={game} size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Card sx={{ bgcolor: '#213743', borderRadius: 2, p: 2 }}>
-                                    <Typography color="white" fontWeight="bold" sx={{ mb: 2, textTransform: 'uppercase' }}>
+                                    <Typography color="white" fontWeight="bold" sx={{ mb: 1, textTransform: 'uppercase' }}>
                                         🎲 {game}
                                     </Typography>
-                                    <Typography color="#99a4b0" variant="caption" sx={{ mb: 1, display: 'block' }}>
-                                        Current: <span style={{ color: '#00e701' }}>{String(overrides[game] ?? 'random')}</span>
+                                    <Typography color="#99a4b0" variant="caption" sx={{ mb: 2, display: 'block' }}>
+                                        Current:{' '}
+                                        <span style={{ color: overrides[game] === 'win' ? '#00e701' : overrides[game] === 'lose' ? '#ef4444' : '#99a4b0' }}>
+                                            {String(overrides[game] ?? 'random')}
+                                        </span>
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                         <Button
@@ -329,7 +355,7 @@ const AdminPanel = () => {
                     <Typography color="white" variant="h6" sx={{ mb: 3 }}>
                         💰 Adjust User Balance
                     </Typography>
-                    <Box sx={{ bgcolor: '#213743', p: 3, borderRadius: 2, maxWidth: 500 }}>
+                    <Box sx={{ bgcolor: '#213743', p: 3, borderRadius: 2, maxWidth: 500, mb: 4 }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <TextField
                                 label="Username"
@@ -338,25 +364,31 @@ const AdminPanel = () => {
                                 sx={{
                                     input: { color: 'white' },
                                     label: { color: '#99a4b0' },
-                                    '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: '#2f4553' } }
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': { borderColor: '#2f4553' },
+                                        '&:hover fieldset': { borderColor: '#00e701' }
+                                    }
                                 }}
                             />
                             <TextField
-                                label="Amount (use negative to deduct)"
+                                label="Amount"
                                 type="number"
                                 value={balanceAmount}
                                 onChange={(e) => setBalanceAmount(e.target.value)}
                                 sx={{
                                     input: { color: 'white' },
                                     label: { color: '#99a4b0' },
-                                    '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: '#2f4553' } }
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': { borderColor: '#2f4553' },
+                                        '&:hover fieldset': { borderColor: '#00e701' }
+                                    }
                                 }}
                             />
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button
                                     fullWidth
                                     variant="contained"
-                                    onClick={adjustBalance}
+                                    onClick={() => adjustBalance(Math.abs(parseFloat(balanceAmount || '0')))}
                                     sx={{ bgcolor: '#00e701', color: 'black', fontWeight: 'bold', py: 1.5 }}
                                 >
                                     ➕ Add Balance
@@ -364,10 +396,7 @@ const AdminPanel = () => {
                                 <Button
                                     fullWidth
                                     variant="contained"
-                                    onClick={() => {
-                                        setBalanceAmount(String(-Math.abs(parseFloat(balanceAmount || '0'))));
-                                        adjustBalance();
-                                    }}
+                                    onClick={() => adjustBalance(-Math.abs(parseFloat(balanceAmount || '0')))}
                                     sx={{ bgcolor: '#ef4444', color: 'white', fontWeight: 'bold', py: 1.5 }}
                                 >
                                     ➖ Deduct
@@ -376,8 +405,8 @@ const AdminPanel = () => {
                         </Box>
                     </Box>
 
-                    {/* Quick balance table */}
-                    <Typography color="white" variant="h6" sx={{ mt: 4, mb: 2 }}>
+                    {/* User balances table */}
+                    <Typography color="white" variant="h6" sx={{ mb: 2 }}>
                         All User Balances
                     </Typography>
                     <TableContainer component={Paper} sx={{ bgcolor: '#213743', maxWidth: 600 }}>
@@ -386,7 +415,7 @@ const AdminPanel = () => {
                                 <TableRow>
                                     <TableCell sx={{ color: '#99a4b0' }}>Username</TableCell>
                                     <TableCell sx={{ color: '#99a4b0' }}>Balance</TableCell>
-                                    <TableCell sx={{ color: '#99a4b0' }}>Quick Add</TableCell>
+                                    <TableCell sx={{ color: '#99a4b0' }}>Select</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -399,13 +428,13 @@ const AdminPanel = () => {
                                         <TableCell>
                                             <Button
                                                 size="small"
-                                                onClick={() => {
-                                                    setBalanceUser(user.username);
-                                                    setTab(3);
+                                                onClick={() => setBalanceUser(user.username)}
+                                                sx={{
+                                                    color: balanceUser === user.username ? '#00e701' : '#99a4b0',
+                                                    fontWeight: balanceUser === user.username ? 'bold' : 'normal'
                                                 }}
-                                                sx={{ color: '#00e701' }}
                                             >
-                                                Select
+                                                {balanceUser === user.username ? '✅ Selected' : 'Select'}
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -435,7 +464,9 @@ const AdminPanel = () => {
                             />
                         </Box>
                         <Divider sx={{ bgcolor: '#2f4553', mb: 3 }} />
-                        <Typography color="white" fontWeight="bold" sx={{ mb: 1 }}>Reset All Game Overrides</Typography>
+                        <Typography color="white" fontWeight="bold" sx={{ mb: 1 }}>
+                            Reset All Game Overrides
+                        </Typography>
                         <Typography color="#99a4b0" variant="caption" sx={{ mb: 2, display: 'block' }}>
                             Set all games back to random outcomes
                         </Typography>
