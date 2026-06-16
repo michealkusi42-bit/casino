@@ -23,7 +23,7 @@ const Home = () => {
             <GameLink />
 
             <PlayerGames viewCount={6} />
-            <OfflineGames categoryName="Offline Games" viewCount={8} />
+            <OfflineGames categoryName="Foretell Games" viewCount={8} />
             <PaymentSection />
             <DashTable />
         </Box>
