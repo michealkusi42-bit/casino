@@ -101,7 +101,7 @@ interface ResultType {
 export default function PokerGame() {
   const { user } = useAuth();
   const dispatch = useDispatch();
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const token = localStorage.getItem('betthrob-accessToken');
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [hand, setHand] = useState<CardType[]>([null, null, null, null, null]);
