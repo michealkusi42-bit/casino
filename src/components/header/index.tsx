@@ -1,25 +1,17 @@
 import { useRef, useState } from 'react';
-// @mui
 import { Box, Button, Stack, Typography, useTheme, IconButton, Popover, Badge } from '@mui/material';
-// hook
 import { usePathname, useRouter } from 'routes/hook';
 import { useAuth } from 'hooks/use-auth-context';
 import { useResponsive } from 'hooks/use-responsive';
-// locales
 import { useTranslate } from 'locales';
-// icons
 import { SearchIcon, WorldIcon } from 'icons';
-import { Add } from '@mui/icons-material';
+import { Add, Remove } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-// components
 import ColorButton from 'components/ColorButton';
 import { useSettingsContext } from 'components/settings';
-// store
 import { useSelector } from 'store/store';
-// utils
 import { fBalance } from 'utils/format-balance';
-//
 import AccountPopover from './account-popover';
 import { headerTabs } from 'data';
 
@@ -42,30 +34,18 @@ const Header = ({
     const anchorBalanceEl2 = useRef<HTMLDivElement | null>(null);
     const [showBalance, setShowBalance] = useState(false);
 
-    const anchorBalanceOpen = (event: any) => {
-        if (showBalance) {
-            setShowBalance(false);
-        } else {
-            setShowBalance(true);
-        }
+    const anchorBalanceOpen = () => {
+        setShowBalance((prev) => !prev);
     };
 
     const handleBalanceClose = () => {
         setShowBalance(false);
     };
 
-    const currency = user?.currency || 'GHS';
-
-    const commonButtonStyle = {
-        padding: 0,
-        minWidth: 0,
-        width: { xs: '2rem', sm: '2.5rem' },
-        height: { xs: '2rem', sm: '2.5rem' },
-        borderRadius: '.5rem',
-        bgcolor: 'background.layer5',
-        marginRight: '10px',
-        display: { xs: 'none', sm: 'block' }
-    };
+    // ✅ Get the actual balance amount safely
+    const balanceAmount = typeof balance === 'object' && balance !== null
+        ? (balance.amount ?? balance)
+        : balance;
 
     return (
         <Stack
@@ -99,22 +79,18 @@ const Header = ({
                     mx: 'auto'
                 }}
             >
-                {/* Left Section: Mobile Menu, Logo, Desktop Tabs */}
+                {/* Left Section */}
                 <Stack direction="row" alignItems="center" spacing={2}>
                     <IconButton
                         onClick={onHandleNav}
-                        sx={{
-                            display: { lg: 'none' },
-                            color: 'text.secondary'
-                        }}
+                        sx={{ display: { lg: 'none' }, color: 'text.secondary' }}
                     >
                         <Box
                             sx={{
                                 width: 24,
                                 height: 24,
                                 background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`,
-                                backgroundSize: 'cover',
-                                transform: 'scale(1)'
+                                backgroundSize: 'cover'
                             }}
                         />
                     </IconButton>
@@ -123,21 +99,13 @@ const Header = ({
                         component="img"
                         src="/logo.webp"
                         onClick={() => router.push('/')}
-                        sx={{
-                            height: { xs: 32, md: 40 },
-                            cursor: 'pointer',
-                            display: 'block'
-                        }}
+                        sx={{ height: { xs: 32, md: 40 }, cursor: 'pointer', display: 'block' }}
                     />
 
-                    {/* Desktop Navigation Tabs */}
                     <Stack
                         direction="row"
                         spacing={1}
-                        sx={{
-                            display: { xs: 'none', lg: 'flex' },
-                            ml: 4
-                        }}
+                        sx={{ display: { xs: 'none', lg: 'flex' }, ml: 4 }}
                     >
                         {headerTabs.map((tab) => {
                             const isActive = pathname === tab.path;
@@ -187,7 +155,7 @@ const Header = ({
                     </Stack>
                 </Stack>
 
-                {/* Right Section: Actions */}
+                {/* Right Section */}
                 <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
                     <IconButton
                         onClick={() => onToggleModal('EXPLORE')}
@@ -233,6 +201,7 @@ const Header = ({
 
                     {isLogined && (
                         <>
+                            {/* ✅ Balance Display with GH₵ */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -250,9 +219,21 @@ const Header = ({
                                     display: { xs: 'none', sm: 'flex' }
                                 }}
                             >
-                                <Box component="img" src={balance.icon} sx={{ width: 20, height: 20 }} />
+                                {/* ✅ Ghana Cedis symbol */}
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        fontWeight: 700,
+                                        color: '#FCD116',
+                                        fontSize: '1rem'
+                                    }}
+                                >
+                                    GH₵
+                                </Typography>
                                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                                    {balance.amount.toFixed(2)}
+                                    {typeof balanceAmount === 'number'
+                                        ? balanceAmount.toFixed(2)
+                                        : parseFloat(balanceAmount || '0').toFixed(2)}
                                 </Typography>
                                 <ArrowDropDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             </Stack>
@@ -277,21 +258,43 @@ const Header = ({
                                 >
                                     <Stack spacing={1.5}>
                                         <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">Main</Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.amount)} ${currency}`}</Typography>
+                                            <Typography variant="body2" color="text.secondary">Balance</Typography>
+                                            <Typography variant="subtitle2" sx={{ color: '#FCD116' }}>
+                                                GH₵ {typeof balanceAmount === 'number'
+                                                    ? balanceAmount.toFixed(2)
+                                                    : parseFloat(balanceAmount || '0').toFixed(2)}
+                                            </Typography>
                                         </Stack>
-                                        <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">Bonus</Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.bonus)} ${currency}`}</Typography>
-                                        </Stack>
-                                        <Stack direction="row" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">Withdrawable</Typography>
-                                            <Typography variant="subtitle2">{`${fBalance(balance.withdrawable)} ${currency}`}</Typography>
-                                        </Stack>
+                                        <Button
+                                            fullWidth
+                                            onClick={() => { onToggleModal('DEPOSIT'); handleBalanceClose(); }}
+                                            sx={{
+                                                bgcolor: '#00e701',
+                                                color: 'black',
+                                                fontWeight: 'bold',
+                                                borderRadius: 2,
+                                                mt: 1
+                                            }}
+                                        >
+                                            + Deposit
+                                        </Button>
+                                        <Button
+                                            fullWidth
+                                            onClick={() => { router.push('/wallet/withdraw'); handleBalanceClose(); }}
+                                            sx={{
+                                                bgcolor: '#2f4553',
+                                                color: 'white',
+                                                fontWeight: 'bold',
+                                                borderRadius: 2
+                                            }}
+                                        >
+                                            - Withdraw
+                                        </Button>
                                     </Stack>
                                 </Popover>
                             )}
 
+                            {/* ✅ Deposit Button */}
                             <Button
                                 onClick={() => onToggleModal('DEPOSIT')}
                                 startIcon={<Add />}
@@ -312,6 +315,26 @@ const Header = ({
                                 }}
                             >
                                 {t('Deposit')}
+                            </Button>
+
+                            {/* ✅ Withdraw Button */}
+                            <Button
+                                onClick={() => router.push('/wallet/withdraw')}
+                                startIcon={<Remove />}
+                                sx={{
+                                    bgcolor: '#2f4553',
+                                    color: '#fff',
+                                    borderRadius: 2,
+                                    px: { xs: 1.5, sm: 2.5 },
+                                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                                    height: { xs: 32, sm: 40 },
+                                    textTransform: 'none',
+                                    fontWeight: 700,
+                                    display: { xs: 'none', sm: 'flex' },
+                                    '&:hover': { bgcolor: '#3e5b6d' }
+                                }}
+                            >
+                                {t('Withdraw')}
                             </Button>
 
                             <IconButton
