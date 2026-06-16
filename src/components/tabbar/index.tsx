@@ -7,12 +7,11 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import HomeIcon from '@mui/icons-material/Home';
 // icons
 import { CasinoIcon, ExploreIcon, MenuIcon, SportsIcon } from 'icons';
 // components
 import { useSettingsContext } from 'components/settings';
-
-// ----------------------------------------------------------------------
 
 const StyledBottomNavigation = styled(Box)(({ theme }) => ({
     position: 'fixed',
@@ -48,20 +47,11 @@ const TabItem = styled(Stack)(({ theme }) => ({
 }));
 
 const tabs = [
-    {
-        label: 'menu'
-    },
-    {
-        label: 'explore'
-    },
-    {
-        label: 'casino',
-        path: paths.casino.root
-    },
-    {
-        label: 'sports',
-        path: paths.sports.root
-    }
+    { label: 'menu' },
+    { label: 'explore' },
+    { label: 'home', path: '/' },
+    { label: 'casino', path: paths.casino.root },
+    { label: 'sports', path: paths.sports.root }
 ];
 
 const Tabbar = ({ navStatus, onHandleNav }: { navStatus: boolean; onHandleNav: VoidFunction }) => {
@@ -70,9 +60,7 @@ const Tabbar = ({ navStatus, onHandleNav }: { navStatus: boolean; onHandleNav: V
     const { onToggleModal } = useSettingsContext();
 
     const activeTab = useMemo(() => {
-        if (navStatus) {
-            return 'menu';
-        }
+        if (navStatus) return 'menu';
         const current = tabs.find((tab) => location.pathname.startsWith(tab.path || 'explore'));
         return current?.label || '';
     }, [location.pathname, navStatus]);
@@ -80,87 +68,42 @@ const Tabbar = ({ navStatus, onHandleNav }: { navStatus: boolean; onHandleNav: V
     return (
         <StyledBottomNavigation>
             <Stack direction="row" spacing={0} sx={{ width: 1 }}>
-                <TabItem
-                    direction="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    onClick={() => {
-                        onHandleNav();
-                    }}
-                >
-                    <MenuIcon
-                        sx={{
-                            color: activeTab === 'menu' ? 'primary.main' : 'text.secondary'
-                        }}
-                    />
-                    <TabLabel
-                        sx={{
-                            color: activeTab === 'menu' ? 'primary.main' : 'text.secondary'
-                        }}
-                    >
+                <TabItem direction="column" alignItems="center" justifyContent="center"
+                    onClick={() => onHandleNav()}>
+                    <MenuIcon sx={{ color: activeTab === 'menu' ? 'primary.main' : 'text.secondary' }} />
+                    <TabLabel sx={{ color: activeTab === 'menu' ? 'primary.main' : 'text.secondary' }}>
                         {t(`menu`)}
                     </TabLabel>
                 </TabItem>
-                <TabItem
-                    direction="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    onClick={() => {
-                        onToggleModal('EXPLORE');
-                    }}
-                >
-                    <ExploreIcon
-                        sx={{
-                            color: activeTab === 'explore' ? 'primary.main' : 'text.secondary'
-                        }}
-                    />
-                    <TabLabel
-                        sx={{
-                            color: activeTab === 'explore' ? 'primary.main' : 'text.secondary'
-                        }}
-                    >
+
+                <TabItem direction="column" alignItems="center" justifyContent="center"
+                    onClick={() => onToggleModal('EXPLORE')}>
+                    <ExploreIcon sx={{ color: activeTab === 'explore' ? 'primary.main' : 'text.secondary' }} />
+                    <TabLabel sx={{ color: activeTab === 'explore' ? 'primary.main' : 'text.secondary' }}>
                         {t(`explore`)}
                     </TabLabel>
                 </TabItem>
-                <TabItem
-                    direction="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    onClick={() => {
-                        router.push(paths.casino.root);
-                    }}
-                >
-                    <CasinoIcon
-                        sx={{
-                            color: activeTab === 'casino' ? 'primary.main' : 'text.secondary'
-                        }}
-                    />
-                    <TabLabel
-                        sx={{
-                            color: activeTab === 'casino' ? 'primary.main' : 'text.secondary'
-                        }}
-                    >
+
+                <TabItem direction="column" alignItems="center" justifyContent="center"
+                    onClick={() => router.push('/')}>
+                    <HomeIcon sx={{ color: activeTab === 'home' ? 'primary.main' : 'text.secondary', fontSize: 24 }} />
+                    <TabLabel sx={{ color: activeTab === 'home' ? 'primary.main' : 'text.secondary' }}>
+                        Home
+                    </TabLabel>
+                </TabItem>
+
+                <TabItem direction="column" alignItems="center" justifyContent="center"
+                    onClick={() => router.push(paths.casino.root)}>
+                    <CasinoIcon sx={{ color: activeTab === 'casino' ? 'primary.main' : 'text.secondary' }} />
+                    <TabLabel sx={{ color: activeTab === 'casino' ? 'primary.main' : 'text.secondary' }}>
                         {t(`casino`)}
                     </TabLabel>
                 </TabItem>
-                <TabItem
-                    direction="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    onClick={() => {
-                        router.push(paths.sports.root);
-                    }}
-                >
-                    <SportsIcon
-                        sx={{
-                            color: activeTab === 'sports' ? 'primary.main' : 'text.secondary'
-                        }}
-                    />
-                    <TabLabel
-                        sx={{
-                            color: activeTab === 'sports' ? 'primary.main' : 'text.secondary'
-                        }}
-                    >
+
+                <TabItem direction="column" alignItems="center" justifyContent="center"
+                    onClick={() => router.push(paths.sports.root)}>
+                    <SportsIcon sx={{ color: activeTab === 'sports' ? 'primary.main' : 'text.secondary' }} />
+                    <TabLabel sx={{ color: activeTab === 'sports' ? 'primary.main' : 'text.secondary' }}>
                         {t(`sports`)}
                     </TabLabel>
                 </TabItem>
