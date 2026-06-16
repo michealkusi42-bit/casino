@@ -80,10 +80,7 @@ const Roulette = () => {
         const currentChipValue = betcoins[betKey] || 0;
         const newChipValue = currentChipValue + coin;
 
-        setBetcoins({
-            ...betcoins,
-            [betKey]: newChipValue
-        });
+        setBetcoins({ ...betcoins, [betKey]: newChipValue });
 
         const existingBetIndex = betValarr.findIndex((b) => b.bet === betKey);
         if (existingBetIndex !== -1) {
@@ -106,14 +103,10 @@ const Roulette = () => {
         if (betValarr.length > 0) {
             const lastBet = betValarr[betValarr.length - 1];
             setBetAmount((prev) => prev - lastBet.amt);
-
             const newBetcoins = { ...betcoins };
             newBetcoins[lastBet.bet] -= lastBet.amt;
-            if (newBetcoins[lastBet.bet] <= 0) {
-                delete newBetcoins[lastBet.bet];
-            }
+            if (newBetcoins[lastBet.bet] <= 0) delete newBetcoins[lastBet.bet];
             setBetcoins(newBetcoins);
-
             setBetValarr((prev) => prev.slice(0, -1));
         }
     };
@@ -126,16 +119,12 @@ const Roulette = () => {
             }
             setBetAmount(betAmount * 2);
             const newBetcoins: any = {};
-            Object.keys(betcoins).forEach((key) => {
-                newBetcoins[key] = betcoins[key] * 2;
-            });
+            Object.keys(betcoins).forEach((key) => { newBetcoins[key] = betcoins[key] * 2; });
             setBetcoins(newBetcoins);
         } else if (type === 'divide') {
             setBetAmount(betAmount / 2);
             const newBetcoins: any = {};
-            Object.keys(betcoins).forEach((key) => {
-                newBetcoins[key] = betcoins[key] / 2;
-            });
+            Object.keys(betcoins).forEach((key) => { newBetcoins[key] = betcoins[key] / 2; });
             setBetcoins(newBetcoins);
         }
     };
@@ -153,10 +142,6 @@ const Roulette = () => {
         setBallStyle({ animation: 'ballRotate 2s linear infinite' });
 
         setTimeout(() => {
-            setBallStyle({ animation: 'ballRotate 2s linear infinite' });
-        }, 2000);
-
-        setTimeout(() => {
             setBallStyle({ transform: 'rotate(-' + degree + 'deg)', transition: 'transform 4s ease-out' });
             setWheelStyle({ transform: 'rotate(' + degree + 'deg)', transition: 'transform 4s ease-out' });
         }, 6000);
@@ -166,48 +151,24 @@ const Roulette = () => {
         }, 10000);
     };
 
-    // Hotkeys
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (isSpinning) return;
-
             switch (event.key) {
-                case 's':
-                    submitBet();
-                    break;
-                case 'c':
-                    clearData();
-                    break;
-                case 'u':
-                    undo();
-                    break;
-                case 'd':
-                    bettingamount('multiply');
-                    break;
-                case 'h':
-                    bettingamount('divide');
-                    break;
-                case '1':
-                    coinswitch(1);
-                    break;
-                case '2':
-                    coinswitch(10);
-                    break;
-                case '3':
-                    coinswitch(100);
-                    break;
-                case '4':
-                    coinswitch(1000);
-                    break;
-                default:
-                    break;
+                case 's': submitBet(); break;
+                case 'c': clearData(); break;
+                case 'u': undo(); break;
+                case 'd': bettingamount('multiply'); break;
+                case 'h': bettingamount('divide'); break;
+                case '1': coinswitch(1); break;
+                case '2': coinswitch(10); break;
+                case '3': coinswitch(100); break;
+                case '4': coinswitch(1000); break;
+                default: break;
             }
         };
-
         window.addEventListener('keyup', handleKeyDown);
-        return () => {
-            window.removeEventListener('keyup', handleKeyDown);
-        };
+        return () => window.removeEventListener('keyup', handleKeyDown);
     }, [isSpinning, betAmount, betcoins, betValarr, coin]);
 
     const submitBet = async () => {
@@ -215,7 +176,6 @@ const Roulette = () => {
             enqueueSnackbar('Please select bet first', { variant: 'warning' });
             return;
         }
-
         if (betAmount > totalAmount) {
             enqueueSnackbar('Insufficient Balance', { variant: 'error' });
             return;
@@ -230,13 +190,14 @@ const Roulette = () => {
             const response = await playRoulette(betcoins);
 
             if (response.success) {
-                const { winningNumber, win, payout, newBalance } = response.data;
+                // ✅ FIX: backend returns 'result' not 'winningNumber'
+                const { result: winningNumber, win, payout, newBalance } = response.data;
 
-                spinWheel(winningNumber);
+                spinWheel(winningNumber ?? 0);
 
                 setTimeout(() => {
-                    setPayOut(win ? payout / betAmount : 0);
-                    setReturnAmt(payout);
+                    setPayOut(win && betAmount > 0 ? payout / betAmount : 0);
+                    setReturnAmt(payout || 0);
 
                     if (win) {
                         winAudio.play();
@@ -252,7 +213,7 @@ const Roulette = () => {
                                 id: Math.random().toString(36).substr(2, 9),
                                 bet: betAmount,
                                 payout: win ? (payout / betAmount).toFixed(2) : '0.00',
-                                profit: payout - betAmount,
+                                profit: (payout || 0) - betAmount,
                                 status: win ? 'winner' : 'loser'
                             },
                             ...prev
@@ -262,7 +223,7 @@ const Roulette = () => {
                     updateBalance(newBalance);
                     setIsSpinning(false);
                     setBetActive(true);
-                }, 10000); // Wait for animation
+                }, 10000);
             } else {
                 setIsSpinning(false);
                 setBetActive(true);
@@ -289,41 +250,20 @@ const Roulette = () => {
     return (
         <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#17181b', color: 'white', overflow: 'hidden' }}>
             <Grid container sx={{ height: '100%' }}>
-                {/* Left Panel - Controls */}
-                <Grid
-                    size={{ xs: 12, md: 3 }}
-                    sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3, zIndex: 10 }}
-                >
+                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3, zIndex: 10 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Typography variant="caption" sx={{ color: '#99a4b0', fontWeight: 600 }}>
-                                Chip Value
-                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#99a4b0', fontWeight: 600 }}>Chip Value</Typography>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                                 {[1, 10, 100, 1000].map((val) => (
-                                    <Button
-                                        key={val}
-                                        onClick={() => coinswitch(val)}
-                                        sx={{
-                                            minWidth: '40px',
-                                            height: '40px',
-                                            borderRadius: '50%',
-                                            bgcolor: coin === val ? '#00e701' : '#2f4553',
-                                            color: 'white',
-                                            border: coin === val ? '2px solid white' : 'none',
-                                            '&:hover': { bgcolor: '#00e701' }
-                                        }}
-                                    >
+                                    <Button key={val} onClick={() => coinswitch(val)} sx={{ minWidth: '40px', height: '40px', borderRadius: '50%', bgcolor: coin === val ? '#00e701' : '#2f4553', color: 'white', border: coin === val ? '2px solid white' : 'none', '&:hover': { bgcolor: '#00e701' } }}>
                                         {val}
                                     </Button>
                                 ))}
                             </Box>
                         </Box>
-
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Typography variant="caption" sx={{ color: '#99a4b0', fontWeight: 600 }}>
-                                Bet Amount
-                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#99a4b0', fontWeight: 600 }}>Bet Amount</Typography>
                             <Box sx={{ display: 'flex', bgcolor: '#2f4553', borderRadius: 1, p: 0.5 }}>
                                 <TextField
                                     fullWidth
@@ -339,111 +279,36 @@ const Roulette = () => {
                                         sx: { color: 'white', px: 1, fontWeight: 600 }
                                     }}
                                 />
-                                <Button
-                                    onClick={() => bettingamount('divide')}
-                                    sx={{ color: '#99a4b0', minWidth: '40px' }}
-                                >
-                                    ½
-                                </Button>
-                                <Button
-                                    onClick={() => bettingamount('multiply')}
-                                    sx={{ color: '#99a4b0', minWidth: '40px' }}
-                                >
-                                    2x
-                                </Button>
+                                <Button onClick={() => bettingamount('divide')} sx={{ color: '#99a4b0', minWidth: '40px' }}>½</Button>
+                                <Button onClick={() => bettingamount('multiply')} sx={{ color: '#99a4b0', minWidth: '40px' }}>2x</Button>
                             </Box>
                         </Box>
-
-                        <Button
-                            fullWidth
-                            variant="contained"
-                            onClick={submitBet}
-                            disabled={isSpinning || betAmount === 0}
-                            sx={{
-                                bgcolor: '#00e701',
-                                color: 'black',
-                                fontWeight: 'bold',
-                                py: 1.5,
-                                '&:hover': { bgcolor: '#00c201' },
-                                '&:disabled': { bgcolor: '#2f4553', color: '#99a4b0' }
-                            }}
-                        >
+                        <Button fullWidth variant="contained" onClick={submitBet} disabled={isSpinning || betAmount === 0} sx={{ bgcolor: '#00e701', color: 'black', fontWeight: 'bold', py: 1.5, '&:hover': { bgcolor: '#00c201' }, '&:disabled': { bgcolor: '#2f4553', color: '#99a4b0' } }}>
                             {isSpinning ? 'Spinning...' : 'Bet'}
                         </Button>
-                        <Button
-                            fullWidth
-                            variant="contained"
-                            onClick={clearData}
-                            disabled={isSpinning}
-                            sx={{
-                                bgcolor: '#ff4d4d',
-                                color: 'white',
-                                fontWeight: 'bold',
-                                py: 1.5,
-                                mt: 1,
-                                '&:hover': { bgcolor: '#cc0000' },
-                                '&:disabled': { bgcolor: '#2f4553', color: '#99a4b0' }
-                            }}
-                        >
+                        <Button fullWidth variant="contained" onClick={clearData} disabled={isSpinning} sx={{ bgcolor: '#ff4d4d', color: 'white', fontWeight: 'bold', py: 1.5, mt: 1, '&:hover': { bgcolor: '#cc0000' }, '&:disabled': { bgcolor: '#2f4553', color: '#99a4b0' } }}>
                             Clear
                         </Button>
                     </Box>
-                    {/* History */}
                     <Box sx={{ mt: 4 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            Recent Bets
-                        </Typography>
+                        <Typography variant="h6" sx={{ mb: 2 }}>Recent Bets</Typography>
                         {history.map((h, i) => (
-                            <Box
-                                key={i}
-                                sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    mb: 1,
-                                    p: 1,
-                                    bgcolor: '#2f4553',
-                                    borderRadius: 1
-                                }}
-                            >
-                                <Typography variant="body2" color={h.status === 'winner' ? 'green' : 'red'}>
-                                    {h.status === 'winner' ? 'Win' : 'Loss'}
-                                </Typography>
+                            <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, p: 1, bgcolor: '#2f4553', borderRadius: 1 }}>
+                                <Typography variant="body2" color={h.status === 'winner' ? 'green' : 'red'}>{h.status === 'winner' ? 'Win' : 'Loss'}</Typography>
                                 <Typography variant="body2">{h.profit.toFixed(2)}</Typography>
                             </Box>
                         ))}
                     </Box>
                 </Grid>
 
-                {/* Right Panel - Game Area */}
-                <Grid
-                    size={{ xs: 12, md: 9 }}
-                    sx={{
-                        order: { xs: 1, md: 2 },
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        bgcolor: '#17181b'
-                    }}
-                >
+                <Grid size={{ xs: 12, md: 9 }} sx={{ order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', bgcolor: '#17181b' }}>
                     {winnerpop && (
                         <div className="winboxwhl" style={{ zIndex: 20 }}>
                             <div className="box chckbox win-box">
                                 <h2 className="t red mb-0 green-t" style={{ textAlign: 'center', color: '#3BC117' }}>
                                     {returnAmt.toFixed(2)}
                                     <span>
-                                        <img
-                                            src={winBox}
-                                            className="img-fluid"
-                                            alt="win"
-                                            style={{
-                                                width: '1.4em',
-                                                height: '1.4em',
-                                                verticalAlign: 'middle',
-                                                marginLeft: '5px'
-                                            }}
-                                        />
+                                        <img src={winBox} className="img-fluid" alt="win" style={{ width: '1.4em', height: '1.4em', verticalAlign: 'middle', marginLeft: '5px' }} />
                                     </span>
                                 </h2>
                                 <p className="coinsub" style={{ textAlign: 'center' }}>
@@ -522,149 +387,34 @@ const Roulette = () => {
                                     ))}
                                 </div>
                                 <div className="bbtop">
-                                    <div
-                                        className="coinchip bbtoptwo pointer"
-                                        id="Nubhalf1"
-                                        onClick={() => betclick(1, 'half')}
-                                    >
-                                        <span>1 to 18</span>
-                                        {renderChip('half1')}
-                                    </div>
-                                    <div
-                                        className="coinchip bbtoptwo pointer"
-                                        id="Nubhalf2"
-                                        onClick={() => betclick(2, 'half')}
-                                    >
-                                        <span>19 to 36</span>
-                                        {renderChip('half2')}
-                                    </div>
+                                    <div className="coinchip bbtoptwo pointer" id="Nubhalf1" onClick={() => betclick(1, 'half')}><span>1 to 18</span>{renderChip('half1')}</div>
+                                    <div className="coinchip bbtoptwo pointer" id="Nubhalf2" onClick={() => betclick(2, 'half')}><span>19 to 36</span>{renderChip('half2')}</div>
                                 </div>
                                 <div className="number_board">
-                                    <div
-                                        className="coinchip number_0 pointer"
-                                        id="Nub0"
-                                        onClick={() => betclick(0, 'single')}
-                                    >
-                                        <div className="nbn">0</div>
-                                        {renderChip('num0')}
-                                    </div>
+                                    <div className="coinchip number_0 pointer" id="Nub0" onClick={() => betclick(0, 'single')}><div className="nbn">0</div>{renderChip('num0')}</div>
                                     {[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36].map((num) => (
-                                        <div
-                                            key={num}
-                                            className={`coinchip number_block pointer ${[1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(num) ? 'redNum' : 'blackNum'}`}
-                                            id={`Nub${num}`}
-                                            onClick={() => betclick(num, 'single')}
-                                        >
-                                            <div className="nbn">{num}</div>
-                                            {renderChip(`num${num}`)}
-                                        </div>
+                                        <div key={num} className={`coinchip number_block pointer ${[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(num) ? 'redNum' : 'blackNum'}`} id={`Nub${num}`} onClick={() => betclick(num, 'single')}><div className="nbn">{num}</div>{renderChip(`num${num}`)}</div>
                                     ))}
-                                    <div
-                                        className="coinchip tt1_block pointer"
-                                        id="Nubrow1"
-                                        onClick={() => betclick(1, 'row')}
-                                    >
-                                        <div className="nbn">2:1</div>
-                                        {renderChip('row1')}
-                                    </div>
+                                    <div className="coinchip tt1_block pointer" id="Nubrow1" onClick={() => betclick(1, 'row')}><div className="nbn">2:1</div>{renderChip('row1')}</div>
                                     {[2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35].map((num) => (
-                                        <div
-                                            key={num}
-                                            className={`coinchip number_block pointer ${[1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(num) ? 'redNum' : 'blackNum'}`}
-                                            id={`Nub${num}`}
-                                            onClick={() => betclick(num, 'single')}
-                                        >
-                                            <div className="nbn">{num}</div>
-                                            {renderChip(`num${num}`)}
-                                        </div>
+                                        <div key={num} className={`coinchip number_block pointer ${[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(num) ? 'redNum' : 'blackNum'}`} id={`Nub${num}`} onClick={() => betclick(num, 'single')}><div className="nbn">{num}</div>{renderChip(`num${num}`)}</div>
                                     ))}
-                                    <div
-                                        className="coinchip tt1_block pointer"
-                                        id="Nubrow2"
-                                        onClick={() => betclick(2, 'row')}
-                                    >
-                                        <div className="nbn">2:1</div>
-                                        {renderChip('row2')}
-                                    </div>
+                                    <div className="coinchip tt1_block pointer" id="Nubrow2" onClick={() => betclick(2, 'row')}><div className="nbn">2:1</div>{renderChip('row2')}</div>
                                     {[1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34].map((num) => (
-                                        <div
-                                            key={num}
-                                            className={`coinchip number_block pointer ${[1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(num) ? 'redNum' : 'blackNum'}`}
-                                            id={`Nub${num}`}
-                                            onClick={() => betclick(num, 'single')}
-                                        >
-                                            <div className="nbn">{num}</div>
-                                            {renderChip(`num${num}`)}
-                                        </div>
+                                        <div key={num} className={`coinchip number_block pointer ${[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(num) ? 'redNum' : 'blackNum'}`} id={`Nub${num}`} onClick={() => betclick(num, 'single')}><div className="nbn">{num}</div>{renderChip(`num${num}`)}</div>
                                     ))}
-                                    <div
-                                        className="coinchip tt1_block pointer"
-                                        id="Nubrow3"
-                                        onClick={() => betclick(3, 'row')}
-                                    >
-                                        <div className="nbn">2:1</div>
-                                        {renderChip('row3')}
-                                    </div>
+                                    <div className="coinchip tt1_block pointer" id="Nubrow3" onClick={() => betclick(3, 'row')}><div className="nbn">2:1</div>{renderChip('row3')}</div>
                                 </div>
                                 <div className="bo3_board">
-                                    <div
-                                        className="coinchip bo3_block pointer"
-                                        id="Nubseg1"
-                                        onClick={() => betclick(1, 'segment')}
-                                    >
-                                        <span>1 to 12</span>
-                                        {renderChip('seg1')}
-                                    </div>
-                                    <div
-                                        className="coinchip bo3_block pointer"
-                                        id="Nubseg2"
-                                        onClick={() => betclick(2, 'segment')}
-                                    >
-                                        <span>13 to 24</span>
-                                        {renderChip('seg2')}
-                                    </div>
-                                    <div
-                                        className="coinchip bo3_block pointer"
-                                        id="Nubseg3"
-                                        onClick={() => betclick(3, 'segment')}
-                                    >
-                                        <span>25 to 36</span>
-                                        {renderChip('seg3')}
-                                    </div>
+                                    <div className="coinchip bo3_block pointer" id="Nubseg1" onClick={() => betclick(1, 'segment')}><span>1 to 12</span>{renderChip('seg1')}</div>
+                                    <div className="coinchip bo3_block pointer" id="Nubseg2" onClick={() => betclick(2, 'segment')}><span>13 to 24</span>{renderChip('seg2')}</div>
+                                    <div className="coinchip bo3_block pointer" id="Nubseg3" onClick={() => betclick(3, 'segment')}><span>25 to 36</span>{renderChip('seg3')}</div>
                                 </div>
                                 <div className="oto_board">
-                                    <div
-                                        className="coinchip oto_block pointer"
-                                        id="Nubeven"
-                                        onClick={() => betclick('even', 'type')}
-                                    >
-                                        <span>EVEN</span>
-                                        {renderChip('even')}
-                                    </div>
-                                    <div
-                                        className="coinchip oto_block pointer Nubred"
-                                        id="Nubred"
-                                        onClick={() => betclick('red', 'type')}
-                                    >
-                                        <span>RED</span>
-                                        {renderChip('red')}
-                                    </div>
-                                    <div
-                                        className="coinchip oto_block pointer Nubblack"
-                                        id="Nubblack"
-                                        onClick={() => betclick('black', 'type')}
-                                    >
-                                        <span>BLACK</span>
-                                        {renderChip('black')}
-                                    </div>
-                                    <div
-                                        className="coinchip oto_block pointer"
-                                        id="Nubodd"
-                                        onClick={() => betclick('odd', 'type')}
-                                    >
-                                        <span>ODD</span>
-                                        {renderChip('odd')}
-                                    </div>
+                                    <div className="coinchip oto_block pointer" id="Nubeven" onClick={() => betclick('even', 'type')}><span>EVEN</span>{renderChip('even')}</div>
+                                    <div className="coinchip oto_block pointer Nubred" id="Nubred" onClick={() => betclick('red', 'type')}><span>RED</span>{renderChip('red')}</div>
+                                    <div className="coinchip oto_block pointer Nubblack" id="Nubblack" onClick={() => betclick('black', 'type')}><span>BLACK</span>{renderChip('black')}</div>
+                                    <div className="coinchip oto_block pointer" id="Nubodd" onClick={() => betclick('odd', 'type')}><span>ODD</span>{renderChip('odd')}</div>
                                 </div>
                             </div>
                         </div>
