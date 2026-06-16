@@ -201,7 +201,7 @@ export default function PokerGame() {
           <Typography variant="subtitle2" sx={{ color: '#FCD116', mb: 1, textAlign: 'center', fontWeight: 700 }}>PAY TABLE</Typography>
           <Grid container spacing={0.5}>
             {PAY_TABLE.map(({ hand, multiplier }) => (
-              <Grid item xs={6} key={hand}>
+              <Grid size={{ xs: 6 }} key={hand}>
                 <Stack direction="row" justifyContent="space-between" sx={{
                   px: 1, py: 0.3, borderRadius: 1,
                   bgcolor: result?.hand === hand ? 'rgba(0,231,1,0.15)' : 'transparent',
@@ -317,3 +317,5 @@ export default function PokerGame() {
     </Box>
   );
 }
+@michealkusi42-bit
+Comment
