@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useAuth } from 'hooks/use-auth-context';
 import { useDispatch } from 'store/store';
-import { setBalance } from 'store/slices/balance';
+import { balanceAction } from 'store/slices/balance';
 
 const API = process.env.REACT_APP_API_URL || 'https://foretell-backend-production-58a6.up.railway.app';
 
@@ -23,7 +23,16 @@ const PAY_TABLE = [
 
 const BET_OPTIONS = [1, 5, 10, 25, 50, 100];
 
-function PlayingCard({ card, held, onClick, index }) {
+type CardType = { rank: string; suit: string } | null;
+
+interface PlayingCardProps {
+  card: CardType;
+  held: boolean;
+  onClick?: () => void;
+  index: number;
+}
+
+function PlayingCard({ card, held, onClick, index }: PlayingCardProps) {
   const isRed = card && (card.suit === '♥️' || card.suit === '♦️');
 
   return (
@@ -80,18 +89,27 @@ function PlayingCard({ card, held, onClick, index }) {
   );
 }
 
+type Phase = 'idle' | 'dealt' | 'result';
+
+interface ResultType {
+  hand: string;
+  multiplier: number;
+  payout: number;
+  win: boolean;
+}
+
 export default function PokerGame() {
   const { user } = useAuth();
   const dispatch = useDispatch();
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-  const [phase, setPhase] = useState('idle');
-  const [hand, setHand] = useState([null, null, null, null, null]);
-  const [heldIndexes, setHeldIndexes] = useState([]);
-  const [betAmount, setBetAmount] = useState(5);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [hand, setHand] = useState<CardType[]>([null, null, null, null, null]);
+  const [heldIndexes, setHeldIndexes] = useState<number[]>([]);
+  const [betAmount, setBetAmount] = useState<number>(5);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [result, setResult] = useState<ResultType | null>(null);
+  const [error, setError] = useState<string>('');
 
   const authHeader = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
@@ -108,12 +126,13 @@ export default function PokerGame() {
       } catch (e) {}
     };
     checkActive();
+    // eslint-disable-next-line
   }, []);
 
-  const toggleHold = (index) => {
+  const toggleHold = (index: number) => {
     if (phase !== 'dealt') return;
-    setHeldIndexes(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    setHeldIndexes((prev: number[]) =>
+      prev.includes(index) ? prev.filter((i: number) => i !== index) : [...prev, index]
     );
   };
 
@@ -132,8 +151,8 @@ export default function PokerGame() {
       if (!data.success) throw new Error(data.message || data.error);
       setHand(data.data.hand);
       setPhase('dealt');
-      if (data.data.newBalance !== undefined) dispatch(setBalance(data.data.newBalance));
-    } catch (e) {
+      if (data.data.newBalance !== undefined) dispatch(balanceAction({ amount: data.data.newBalance }));
+    } catch (e: any) {
       setError(e.message);
     }
     setLoading(false);
@@ -153,8 +172,8 @@ export default function PokerGame() {
       setHand(data.data.hand);
       setResult({ hand: data.data.result, multiplier: data.data.multiplier, payout: data.data.payout, win: data.data.win });
       setPhase('result');
-      if (data.data.newBalance !== undefined) dispatch(setBalance(data.data.newBalance));
-    } catch (e) {
+      if (data.data.newBalance !== undefined) dispatch(balanceAction({ amount: data.data.newBalance }));
+    } catch (e: any) {
       setError(e.message);
     }
     setLoading(false);
@@ -242,7 +261,7 @@ export default function PokerGame() {
           <Stack spacing={1} alignItems="center">
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>Bet Amount (GH₵)</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="center">
-              {BET_OPTIONS.map(amt => (
+              {BET_OPTIONS.map((amt: number) => (
                 <Chip
                   key={amt}
                   label={`${amt}`}
