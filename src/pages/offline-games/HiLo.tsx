@@ -24,17 +24,6 @@ const HiLo = () => {
     const [loading, setLoading] = useState(false);
     const [recentCardsArray, setRecentCardsArray] = useState<any[]>([]);
 
-    const updateBalance = async () => {
-        try {
-            const balanceData = await getUserBalance();
-            if (balanceData && balanceData.amount !== undefined) {
-                dispatch({ type: 'balance/setBalance', payload: balanceData.amount });
-            }
-        } catch (error) {
-            console.error('Failed to update balance:', error);
-        }
-    };
-
     const handleBet = async (choice: 'higher' | 'lower' | 'skip') => {
         if (choice !== 'skip') {
             if (!betAmount || parseFloat(betAmount) <= 0) {
@@ -54,22 +43,27 @@ const HiLo = () => {
             const response = await playHiLo(parseFloat(betAmount), choice, currentCard.cardNumber);
 
             if (response.success) {
-                const { nextCard: newCard, win, payout, newBalance, multiplier } = response.data;
+                const { nextCard: newCardNumber, win, payout, newBalance, multiplier } = response.data;
 
-                setNextCard(newCard);
+                // Convert the number from backend into a full card object
+                const newCardObject = {
+                    cardNumber: newCardNumber,
+                    cardColor: Math.floor(Math.random() * 4) + 1
+                };
+
+                setNextCard(newCardObject);
 
                 setTimeout(() => {
-                    // Update history
                     const historyItem = {
                         card: currentCard,
                         isSkipped: choice === 'skip',
                         isLost: !win && choice !== 'skip',
                         isHigher: choice === 'higher',
-                        desc: choice === 'skip' ? 'Skipped' : win ? multiplier.toFixed(2) + 'x' : '0.00x'
+                        desc: choice === 'skip' ? 'Skipped' : win ? (multiplier || 1.9).toFixed(2) + 'x' : '0.00x'
                     };
                     setRecentCardsArray((prev) => [historyItem, ...prev].slice(0, 10));
 
-                    setCurrentCard(newCard);
+                    setCurrentCard(newCardObject);
                     setNextCard(null);
                     setLoading(false);
                     setIsBetStarted(false);
@@ -98,6 +92,7 @@ const HiLo = () => {
     };
 
     const calculateMultiplier = (card: number, type: 'higher' | 'lower') => {
+        if (!card || isNaN(card)) return 1.0;
         if (type === 'higher') {
             return card === 1 ? 1.07 : (13 / (14 - card)) * 0.99;
         } else {
@@ -281,7 +276,7 @@ const HiLo = () => {
                                 >
                                     <Typography>Lower or Same</Typography>
                                     <Typography variant="caption">
-                                        {calculateMultiplier(currentCard.cardNumber, 'lower').toFixed(2)}x
+                                        {calculateMultiplier(currentCard?.cardNumber, 'lower').toFixed(2)}x
                                     </Typography>
                                 </Button>
                                 <Button
@@ -298,13 +293,12 @@ const HiLo = () => {
                                 >
                                     <Typography>Higher or Same</Typography>
                                     <Typography variant="caption">
-                                        {calculateMultiplier(currentCard.cardNumber, 'higher').toFixed(2)}x
+                                        {calculateMultiplier(currentCard?.cardNumber, 'higher').toFixed(2)}x
                                     </Typography>
                                 </Button>
                             </Box>
                         </Box>
 
-                        {/* History Scroll */}
                         <Box
                             sx={{
                                 position: 'absolute',
@@ -341,44 +335,24 @@ const Card = ({ card, small }: any) => {
     const [textColor, setTextColor] = useState<any>(null);
 
     useEffect(() => {
+        if (!card) return;
         switch (card.cardNumber) {
-            case 1:
-                setCardNumber('A');
-                break;
-            case 11:
-                setCardNumber('J');
-                break;
-            case 12:
-                setCardNumber('Q');
-                break;
-            case 13:
-                setCardNumber('K');
-                break;
-            default:
-                setCardNumber(card.cardNumber);
-                break;
+            case 1: setCardNumber('A'); break;
+            case 11: setCardNumber('J'); break;
+            case 12: setCardNumber('Q'); break;
+            case 13: setCardNumber('K'); break;
+            default: setCardNumber(card.cardNumber); break;
         }
         switch (card.cardColor) {
-            case 1:
-                setColorSrc(hearts);
-                setTextColor('#e9113c');
-                break;
-            case 2:
-                setColorSrc(diamonds);
-                setTextColor('#e9113c');
-                break;
-            case 3:
-                setColorSrc(spades);
-                setTextColor('#1a2c38');
-                break;
-            case 4:
-                setColorSrc(clubs);
-                setTextColor('#1a2c38');
-                break;
-            default:
-                break;
+            case 1: setColorSrc(hearts); setTextColor('#e9113c'); break;
+            case 2: setColorSrc(diamonds); setTextColor('#e9113c'); break;
+            case 3: setColorSrc(spades); setTextColor('#1a2c38'); break;
+            case 4: setColorSrc(clubs); setTextColor('#1a2c38'); break;
+            default: break;
         }
     }, [card]);
+
+    if (!card) return null;
 
     return (
         <Box
