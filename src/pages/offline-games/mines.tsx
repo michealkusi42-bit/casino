@@ -36,35 +36,29 @@ const Mine = () => {
 
     const clickAudioRef = useRef<HTMLAudioElement>(null);
 
-    // Check for active game on mount
     useEffect(() => {
         const checkActiveGame = async () => {
             try {
                 setLoading(true);
                 const response = await getActiveMinesGame();
                 if (response.success && response.data) {
-                    const {
-                        betAmount: activeBet,
-                        mineCount,
-                        revealed,
-                        currentPayout,
-                        currentMultiplier
-                    } = response.data;
+                    const { betAmount: activeBet, mineCount, revealed } = response.data;
                     setBetAmount(activeBet.toString());
                     setNoOfBombs(mineCount);
                     setIsBetStarted(true);
-                    setClickedIndices(revealed);
+                    setClickedIndices(revealed || []);
 
-                    // Update visible images
                     const newVisible = Array(totalCells).fill(false);
-                    revealed.forEach((idx: number) => (newVisible[idx] = true));
+                    (revealed || []).forEach((idx: number) => (newVisible[idx] = true));
                     setVisibleImages(newVisible);
 
+                    const mult = 1 + (revealed?.length || 0) * 0.2;
+                    const currentPayout = activeBet * mult;
                     setTotalProfit((currentPayout - activeBet).toFixed(2));
-                    setProfitRatio(currentMultiplier.toFixed(2));
+                    setProfitRatio(mult.toFixed(2));
                 }
             } catch (error) {
-                // No active game or error, ignore
+                // No active game
             } finally {
                 setLoading(false);
             }
@@ -101,19 +95,18 @@ const Mine = () => {
 
     const handleBetClicked = async () => {
         if (isBetStarted) {
-            // Cashout
             try {
                 setLoading(true);
                 const response = await cashoutMines();
                 if (response.success) {
-                    const { payout, balance, mines } = response.data;
+                    // Backend returns: { payout, multiplier, newBalance }
+                    const { payout, multiplier, newBalance } = response.data;
                     setSentBet(payout);
                     setShowPop(true);
                     setIsBetStarted(false);
-                    if (mines) setBombIndices(mines);
                     setVisibleImages(Array(totalCells).fill(true));
-
-                    updateBalance(balance);
+                    setProfitRatio((multiplier || 1).toFixed(2));
+                    updateBalance(newBalance);
                     enqueueSnackbar(`Cashed out ${payout.toFixed(2)}!`, { variant: 'success' });
                 }
             } catch (error: any) {
@@ -124,7 +117,6 @@ const Mine = () => {
             return;
         }
 
-        // Start Game
         if (!betAmount || parseFloat(betAmount) <= 0) {
             enqueueSnackbar('Enter a valid bet amount', { variant: 'error' });
             return;
@@ -140,7 +132,8 @@ const Mine = () => {
             const response = await startMines(parseFloat(betAmount), noOfBombs);
             if (response.success) {
                 setIsBetStarted(true);
-                updateBalance();
+                // Backend returns: { totalTiles, mineCount, newBalance }
+                updateBalance(response.data?.newBalance);
             }
         } catch (error: any) {
             enqueueSnackbar(error.response?.data?.message || error.message || 'Failed to start game', {
@@ -153,11 +146,8 @@ const Mine = () => {
 
     const handleClick = useCallback(
         async (e: React.MouseEvent, index: number) => {
-            if (!isBetStarted || firstBombClicked || visibleImages[index] || loading) {
-                return;
-            }
+            if (!isBetStarted || firstBombClicked || visibleImages[index] || loading) return;
 
-            // Animation
             const target = e.target as HTMLElement;
             target.classList.add('animate-click');
             setTimeout(() => target.classList.remove('animate-click'), 600);
@@ -166,36 +156,18 @@ const Mine = () => {
                 const response = await clickMinesTile(index);
 
                 if (response.success) {
-                    const { status, mines, payout, multiplier, balance, currentPayout, currentMultiplier } =
-                        response.data;
+                    const { isMine, minePositions, revealed, multiplier, potentialPayout } = response.data;
 
-                    if (status === 'loss') {
-                        // Boom
-                        setBombIndices(mines);
+                    if (isMine) {
+                        // Hit a mine
+                        setBombIndices(minePositions || []);
                         setFirstBombClicked(true);
                         setVisibleImages(Array(totalCells).fill(true));
                         setShowLostPop(true);
                         setIsBetStarted(false);
                         updateBalance();
-                    } else if (status === 'win') {
-                        // Auto Cashout (All gems found)
-                        clickAudioRef.current?.play();
-                        setClickedIndices((prev) => [...prev, index]);
-                        setVisibleImages((prev) => {
-                            const newVis = [...prev];
-                            newVis[index] = true;
-                            return newVis;
-                        });
-
-                        setSentBet(payout);
-                        setShowPop(true);
-                        setIsBetStarted(false);
-                        setTotalProfit((payout - parseFloat(betAmount)).toFixed(2));
-                        setProfitRatio(multiplier.toFixed(2));
-                        updateBalance(balance);
-                        enqueueSnackbar(`You Won! Payout: ${payout}`, { variant: 'success' });
                     } else {
-                        // Gem found, continue
+                        // Safe tile
                         clickAudioRef.current?.play();
                         setClickedIndices((prev) => [...prev, index]);
                         setVisibleImages((prev) => {
@@ -204,8 +176,10 @@ const Mine = () => {
                             return newVis;
                         });
 
-                        setTotalProfit((currentPayout - parseFloat(betAmount)).toFixed(2));
-                        setProfitRatio(currentMultiplier.toFixed(2));
+                        const mult = multiplier || 1;
+                        const profit = (potentialPayout || 0) - parseFloat(betAmount);
+                        setTotalProfit(profit.toFixed(2));
+                        setProfitRatio(mult.toFixed(2));
                     }
                 }
             } catch (error: any) {
@@ -214,7 +188,7 @@ const Mine = () => {
                 });
             }
         },
-        [isBetStarted, firstBombClicked, visibleImages, loading, betAmount, enqueueSnackbar, totalCells]
+        [isBetStarted, firstBombClicked, visibleImages, loading, betAmount, enqueueSnackbar]
     );
 
     const isClickedByUser = (index: number) => clickedIndices.includes(index);
@@ -240,47 +214,14 @@ const Mine = () => {
                                         size="small"
                                         sx={{
                                             width: '55%',
-                                            input: {
-                                                bgcolor: '#0f212e',
-                                                color: '#fff',
-                                                fontWeight: 500,
-                                                padding: '10px'
-                                            },
+                                            input: { bgcolor: '#0f212e', color: '#fff', fontWeight: 500, padding: '10px' },
                                             '& fieldset': { border: 'none' }
                                         }}
                                     />
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            width: '45%',
-                                            color: '#fff',
-                                            fontWeight: 600,
-                                            fontSize: '14px',
-                                            alignItems: 'center'
-                                        }}
-                                    >
-                                        <Button
-                                            disabled={isBetStarted}
-                                            onClick={() => setBetAmount((amt) => (Number(amt) / 2).toFixed(2))}
-                                            sx={{ width: '50%', color: '#fff', '&:hover': { bgcolor: '#557086' } }}
-                                        >
-                                            ½
-                                        </Button>
-                                        <Box
-                                            sx={{
-                                                width: '3px',
-                                                height: '20px',
-                                                bgcolor: '#1a2c38',
-                                                borderRadius: '4px'
-                                            }}
-                                        />
-                                        <Button
-                                            disabled={isBetStarted}
-                                            onClick={() => setBetAmount((amt) => (Number(amt) * 2).toFixed(2))}
-                                            sx={{ width: '50%', color: '#fff', '&:hover': { bgcolor: '#557086' } }}
-                                        >
-                                            2×
-                                        </Button>
+                                    <Box sx={{ display: 'flex', width: '45%', color: '#fff', fontWeight: 600, fontSize: '14px', alignItems: 'center' }}>
+                                        <Button disabled={isBetStarted} onClick={() => setBetAmount((amt) => (Number(amt) / 2).toFixed(2))} sx={{ width: '50%', color: '#fff', '&:hover': { bgcolor: '#557086' } }}>½</Button>
+                                        <Box sx={{ width: '3px', height: '20px', bgcolor: '#1a2c38', borderRadius: '4px' }} />
+                                        <Button disabled={isBetStarted} onClick={() => setBetAmount((amt) => (Number(amt) * 2).toFixed(2))} sx={{ width: '50%', color: '#fff', '&:hover': { bgcolor: '#557086' } }}>2×</Button>
                                     </Box>
                                 </Box>
                             </Box>
@@ -289,106 +230,36 @@ const Mine = () => {
                                     <Grid container spacing={2}>
                                         <Grid size={6}>
                                             <Box display="flex" flexDirection="column" gap={1}>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}
-                                                >
-                                                    Mines
-                                                </Typography>
-                                                <Box
-                                                    sx={{
-                                                        bgcolor: '#2f4553',
-                                                        color: '#fff',
-                                                        px: 2,
-                                                        py: 1.5,
-                                                        borderRadius: 1,
-                                                        border: '2px solid #2f4553',
-                                                        fontSize: '14px',
-                                                        fontWeight: 500,
-                                                        boxShadow: '0px 0px 6px rgba(0,0,0,0.35)'
-                                                    }}
-                                                >
-                                                    {noOfBombs}
-                                                </Box>
+                                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Mines</Typography>
+                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500, boxShadow: '0px 0px 6px rgba(0,0,0,0.35)' }}>{noOfBombs}</Box>
                                             </Box>
                                         </Grid>
                                         <Grid size={6}>
                                             <Box display="flex" flexDirection="column" gap={1}>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}
-                                                >
-                                                    Gems
-                                                </Typography>
-                                                <Box
-                                                    sx={{
-                                                        bgcolor: '#2f4553',
-                                                        color: '#fff',
-                                                        px: 2,
-                                                        py: 1.5,
-                                                        borderRadius: 1,
-                                                        border: '2px solid #2f4553',
-                                                        fontSize: '14px',
-                                                        fontWeight: 500,
-                                                        boxShadow: '0px 0px 6px rgba(0,0,0,0.35)'
-                                                    }}
-                                                >
-                                                    {25 - noOfBombs - clickedIndices.length}
-                                                </Box>
+                                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Gems</Typography>
+                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500, boxShadow: '0px 0px 6px rgba(0,0,0,0.35)' }}>{25 - noOfBombs - clickedIndices.length}</Box>
                                             </Box>
                                         </Grid>
                                     </Grid>
                                     <Box display="flex" flexDirection="column" gap={1}>
-                                        <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>
-                                            Total Profit ({profitRatio}×)
-                                        </Typography>
-                                        <Box
-                                            sx={{
-                                                bgcolor: '#2f4553',
-                                                color: '#fff',
-                                                px: 2,
-                                                py: 1.5,
-                                                borderRadius: 1,
-                                                border: '2px solid #2f4553',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                                boxShadow: '0px 0px 6px rgba(0,0,0,0.35)',
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}
-                                        >
+                                        <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Total Profit ({profitRatio}×)</Typography>
+                                        <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500, boxShadow: '0px 0px 6px rgba(0,0,0,0.35)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span>{totalProfit}</span>
-                                            <Box
-                                                component="img"
-                                                src={ruppee}
-                                                sx={{ width: 16, height: 16 }}
-                                                alt="Rs."
-                                            />
+                                            <Box component="img" src={ruppee} sx={{ width: 16, height: 16 }} alt="Rs." />
                                         </Box>
                                     </Box>
                                 </Box>
                             ) : (
                                 <FormControl fullWidth size="small" disabled={isBetStarted} sx={{ mt: 2 }}>
-                                    <FormLabel sx={{ color: 'text.secondary', fontSize: '0.85rem', mb: 0.5 }}>
-                                        Mines
-                                    </FormLabel>
+                                    <FormLabel sx={{ color: 'text.secondary', fontSize: '0.85rem', mb: 0.5 }}>Mines</FormLabel>
                                     <Select
                                         id="minesNo"
                                         value={noOfBombs}
                                         onChange={(e) => setNoOfBombs(parseInt(e.target.value as unknown as string))}
-                                        sx={{
-                                            bgcolor: '#0f212e',
-                                            color: 'white',
-                                            border: '1px solid #475569',
-                                            fontSize: '0.85rem',
-                                            '& .MuiSelect-select': { py: 1.2 }
-                                        }}
+                                        sx={{ bgcolor: '#0f212e', color: 'white', border: '1px solid #475569', fontSize: '0.85rem', '& .MuiSelect-select': { py: 1.2 } }}
                                     >
                                         {array.map((no) => (
-                                            <MenuItem key={no} value={no}>
-                                                {no}
-                                            </MenuItem>
+                                            <MenuItem key={no} value={no}>{no}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -399,29 +270,12 @@ const Mine = () => {
                             variant="contained"
                             onClick={handleBetClicked}
                             disabled={loading}
-                            sx={{
-                                mt: 2,
-                                py: 1.5,
-                                fontWeight: 600,
-                                backgroundColor: '#00e701',
-                                '&:hover': { backgroundColor: '#1fff20' },
-                                borderRadius: 2
-                            }}
+                            sx={{ mt: 2, py: 1.5, fontWeight: 600, backgroundColor: '#00e701', '&:hover': { backgroundColor: '#1fff20' }, borderRadius: 2 }}
                         >
                             {isBetStarted ? 'Cashout' : 'Bet'}
                         </Button>
                     </Grid>
-                    <Grid
-                        size={{ xs: 12, md: 9 }}
-                        sx={{
-                            m: '0 auto',
-                            py: { sm: 3, xs: 1.5 },
-                            position: 'relative',
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            order: { xs: 1, md: 2 }
-                        }}
-                    >
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ m: '0 auto', py: { sm: 3, xs: 1.5 }, position: 'relative', width: '100%', boxSizing: 'border-box', order: { xs: 1, md: 2 } }}>
                         <Box sx={{ display: showPop ? 'block' : 'none' }}>
                             <Popup hidden={!showPop} profitRatio={profitRatio} totalWin={sentBet.toFixed(2)} />
                         </Box>
@@ -451,12 +305,8 @@ const Mine = () => {
                                                     transition: 'transform 0.3s ease, background-color 0.3s ease',
                                                     bgcolor: visible ? '#071822' : '#2f4553',
                                                     cursor: visible ? 'default' : 'pointer',
-                                                    borderBottom: visible
-                                                        ? 'none'
-                                                        : { xs: '4px solid #213743', sm: '8px solid #213743' },
-                                                    '&:hover': visible
-                                                        ? {}
-                                                        : { transform: 'translateY(-6px)', bgcolor: '#557086' },
+                                                    borderBottom: visible ? 'none' : { xs: '4px solid #213743', sm: '8px solid #213743' },
+                                                    '&:hover': visible ? {} : { transform: 'translateY(-6px)', bgcolor: '#557086' },
                                                     p: 1,
                                                     boxSizing: 'border-box'
                                                 }}
