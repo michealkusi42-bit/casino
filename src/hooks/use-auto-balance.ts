@@ -1,23 +1,24 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'store/store';
 import { balanceAction } from 'store/slices/balance';
-import { getUserBalance } from 'api';
+import axios from 'utils/axios';
 
 const useAutoBalance = () => {
     const dispatch = useDispatch();
 
     const fetchBalance = async () => {
         try {
-            const data = await getUserBalance();
-            if (data) {
+            const res = await axios.get('/api/wallet/balance');
+            const data = res.data;
+            if (data && data.balance !== undefined) {
                 dispatch(balanceAction({
-                    amount: data.amount ?? 0,
-                    bonus: data.bonus ?? 0,
-                    pending: data.pending ?? 0,
-                    turnover: data.turnover ?? 0,
-                    withdrawable: data.withdrawable ?? 0,
-                    currency: data.currency ?? 'GHS',
-                    icon: data.icon ?? ''
+                    amount: data.balance ?? 0,
+                    bonus: 0,
+                    pending: 0,
+                    turnover: 0,
+                    withdrawable: data.balance ?? 0,
+                    currency: 'GHS',
+                    icon: '/assets/icons/ghc.png'
                 }));
             }
         } catch (err) {
