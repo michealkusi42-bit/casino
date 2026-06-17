@@ -46,6 +46,7 @@ const GameList = Loadable(lazy(() => import('pages/game-list')));
 const AffiliateDashboard = Loadable(lazy(() => import('pages/affiliate/index')));
 const HelpCenter = Loadable(lazy(() => import('pages/help-center')));
 const Mine = Loadable(lazy(() => import('pages/offline-games/mines')));
+const AboutPage = Loadable(lazy(() => import('pages/about')));
 
 export const mainRoutes = [
     {
@@ -99,6 +100,7 @@ export const mainRoutes = [
                 children: [{ path: ':tab', element: <AffiliateDashboard /> }]
             },
             { path: '/help-center', element: <HelpCenter /> },
+            { path: '/about', element: <AboutPage /> },
             {
                 path: '/offline-games',
                 children: [
