@@ -158,4 +158,137 @@ export const casinoMenus = [
             y: 0
         },
         path: '/casino',
-        children:
+        children: [
+            {
+                name: 'Hot Game',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -194,
+                    y: -32
+                },
+                path: '/gamelist/Hot Game'
+            },
+            {
+                name: 'Live Casino',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -160,
+                    y: -192
+                },
+                path: '/casino/live?type=Live Casino'
+            },
+            {
+                name: 'Slots',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -128,
+                    y: -224
+                },
+                path: '/casino/slot?type=Slots'
+            },
+            {
+                name: 'Fishing',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -194,
+                    y: -32
+                },
+                path: '/casino/fish?type=Fishing'
+            },
+            {
+                name: 'Poker',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -256,
+                    y: -64
+                },
+                path: '/casino/poker?type=Poker'
+            },
+            {
+                name: 'others',
+                icon: {
+                    path: '/assets/icons/icons-5.webp',
+                    active: '/assets/icons/icons-6.webp',
+                    x: -160,
+                    y: -32
+                },
+                path: '/casino/OTHER?type=Others'
+            }
+        ]
+    },
+    {
+        name: 'sports',
+        icon: {
+            path: '/assets/icons/icons-1.webp',
+            active: '/assets/icons/icons-1.webp',
+            x: -160,
+            y: -160
+        },
+        path: '/sports'
+    },
+    {
+        name: 'Store',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: -64,
+            y: -224
+        },
+        path: '/store'
+    },
+    {
+        name: 'vip_club',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: 0,
+            y: -256
+        },
+        path: '/vip'
+    },
+    {
+        name: 'bonus.title',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: -128,
+            y: -65
+        },
+        path: '/bonus'
+    },
+    {
+        name: 'dropMenu.affiliate',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: 0,
+            y: -32
+        },
+        path: '/affiliate/dashboard'
+    },
+    {
+        name: 'helpCenter',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: -257,
+            y: -160
+        },
+        path: '/help-center'
+    },
+    {
+        name: 'about',
+        icon: {
+            path: '/assets/icons/icons-5.webp',
+            active: '/assets/icons/icons-6.webp',
+            x: -257,
+            y: -160
+        },
+        path: '/about'
+    }
+];
