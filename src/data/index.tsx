@@ -21,36 +21,11 @@ export const tabs = [
         value: 'slot',
         label: 'Slots'
     },
-    // {
-    //     icon: <Image src="/assets/icons/bc-original.svg" alt="bc-original" width={18} height={18} />,
-    //     value: 'LOTTERY',
-    //     label: 'lottery'
-    // },
-    // {
-    //     icon: <Image src="/assets/icons/lobby.svg" alt="lobby" width={18} height={18} />,
-    //     value: 'QIPAI',
-    //     label: 'Qipai'
-    // },
-    // {
-    //     icon: <Image src="/assets/icons/slots.svg" alt="slots" width={18} height={18} />,
-    //     value: 'P2P',
-    //     label: 'P2P'
-    // },
     {
         icon: <Image src="/assets/icons/hot-games.svg" alt="hot games" width={18} height={18} />,
         value: 'fish',
         label: 'Fishing'
     },
-    // {
-    //     icon: <Image src="/assets/icons/game-shows.svg" alt="game shows" width={18} height={18} />,
-    //     value: 'COCK_FIGHTING',
-    //     label: 'cock_fighting'
-    // },
-    // {
-    //     icon: <Image src="/assets/icons/new-releases.svg" alt="new releases" width={18} height={18} />,
-    //     value: 'BONUS',
-    //     label: 'bonus.title'
-    // },
     {
         icon: <Image src="/assets/icons/table-games.svg" alt="table games" width={18} height={18} />,
         value: 'poker',
@@ -61,11 +36,6 @@ export const tabs = [
         value: '',
         label: 'others'
     }
-    // {
-    //     icon: <Image src="/assets/icons/providers.svg" alt="providers" width={18} height={18} />,
-    //     value: 'LIVE_CASINO_PREMIUM',
-    //     label: 'live_casino_premium'
-    // }
 ];
 
 export const headerTabs = [
@@ -95,8 +65,7 @@ export const sidebarConfig = [
     {
         type: 'button',
         name: 'Bonus',
-        // path: '/bonus',
-        image: '/assets/images/bonus-chest.png' // We will need to mock this or use CSS
+        image: '/assets/images/bonus-chest.png'
     },
     {
         type: 'row',
@@ -122,7 +91,7 @@ export const sidebarConfig = [
         children: [
             {
                 name: 'Pick For You',
-                icon: { path: '/assets/icons/icons-5.webp', x: -128, y: -224 }, // Placeholder coords
+                icon: { path: '/assets/icons/icons-5.webp', x: -128, y: -224 },
                 path: '/pick-for-you'
             },
             {
@@ -147,17 +116,17 @@ export const sidebarConfig = [
             },
             {
                 name: 'New Releases',
-                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 }, // Placeholder
+                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 },
                 path: '/new-releases'
             },
             {
                 name: 'Feature Buy-In',
-                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 }, // Placeholder
+                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 },
                 path: '/feature-buy-in'
             },
             {
                 name: 'Blackjack',
-                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 }, // Placeholder
+                icon: { path: '/assets/icons/icons-5.webp', x: -160, y: -192 },
                 path: '/blackjack'
             },
             {
@@ -189,187 +158,4 @@ export const casinoMenus = [
             y: 0
         },
         path: '/casino',
-        children: [
-            {
-                name: 'Hot Game',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -194,
-                    y: -32
-                },
-                path: '/gamelist/Hot Game'
-            },
-            {
-                name: 'Live Casino',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -160,
-                    y: -192
-                },
-                path: '/casino/live?type=Live Casino'
-            },
-            {
-                name: 'Slots',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -128,
-                    y: -224
-                },
-                path: '/casino/slot?type=Slots'
-            },
-            // {
-            //     name: 'lottery',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -64,
-            //         y: -256
-            //     },
-            //     path: '/casino/LOTTERY'
-            // },
-            // {
-            //     name: 'Qipai',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -96,
-            //         y: -162
-            //     },
-            //     path: '/casino/QIPAI'
-            // },
-            // {
-            //     name: 'P2P',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -96,
-            //         y: -223
-            //     },
-            //     path: '/casino/P2P'
-            // },
-            {
-                name: 'Fishing',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -194,
-                    y: -32
-                },
-                path: '/casino/fish?type=Fishing'
-            },
-            // {
-            //     name: 'cock_fighting',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -66,
-            //         y: -128
-            //     },
-            //     path: '/casino/COCK_FIGHTING'
-            // },
-            // {
-            //     name: 'bonus.title',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -226,
-            //         y: 0
-            //     },
-            //     path: '/casino/BONUS'
-            // },
-            {
-                name: 'Poker',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -256,
-                    y: -64
-                },
-                path: '/casino/poker?type=Poker'
-            },
-            {
-                name: 'others',
-                icon: {
-                    path: '/assets/icons/icons-5.webp',
-                    active: '/assets/icons/icons-6.webp',
-                    x: -160,
-                    y: -32
-                },
-                path: '/casino/OTHER?type=Others'
-            }
-            // {
-            //     name: 'live_casino_premium',
-            //     icon: {
-            //         path: '/assets/icons/icons-5.webp',
-            //         active: '/assets/icons/icons-6.webp',
-            //         x: -160,
-            //         y: -96
-            //     },
-            //     path: '/casino/LIVE_CASINO_PREMIUM'
-            // }
-        ]
-    },
-    {
-        name: 'sports',
-        icon: {
-            path: '/assets/icons/icons-1.webp',
-            active: '/assets/icons/icons-1.webp',
-            x: -160,
-            y: -160
-        },
-        path: '/sports'
-    },
-    {
-        name: 'Store',
-        icon: {
-            path: '/assets/icons/icons-5.webp',
-            active: '/assets/icons/icons-6.webp',
-            x: -64,
-            y: -224
-        },
-        path: '/store'
-    },
-    {
-        name: 'vip_club',
-        icon: {
-            path: '/assets/icons/icons-5.webp',
-            active: '/assets/icons/icons-6.webp',
-            x: 0,
-            y: -256
-        },
-        path: '/vip'
-    },
-    {
-        name: 'bonus.title',
-        icon: {
-            path: '/assets/icons/icons-5.webp',
-            active: '/assets/icons/icons-6.webp',
-            x: -128,
-            y: -65
-        },
-        path: '/bonus'
-    },
-    {
-        name: 'dropMenu.affiliate',
-        icon: {
-            path: '/assets/icons/icons-5.webp',
-            active: '/assets/icons/icons-6.webp',
-            x: 0,
-            y: -32
-        },
-        path: '/affiliate/dashboard'
-    },
-    {
-        name: 'helpCenter',
-        icon: {
-            path: '/assets/icons/icons-5.webp',
-            active: '/assets/icons/icons-6.webp',
-            x: -257,
-            y: -160
-        },
-        path: '/help-center'
-    }
-];
+        children:
