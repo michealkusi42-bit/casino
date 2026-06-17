@@ -60,7 +60,7 @@ const Lottery = () => {
         <Box sx={{ bgcolor: '#1a2c38', minHeight: '100vh', pt: 4, px: 1.5 }}>
             <Box sx={{ bgcolor: '#0f212e', maxWidth: '1536px', mx: 'auto', borderRadius: 2, overflow: 'hidden' }}>
                 <Grid container>
-                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3 }}>
+                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                             <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Bet Amount</Typography>
                             <Box sx={{ display: 'flex', bgcolor: '#2f4553', p: '4px', borderRadius: 1 }}>
@@ -86,13 +86,22 @@ const Lottery = () => {
                         </Button>
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 9 }} sx={{ minHeight: '85vh', p: 3, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 1, maxWidth: 500 }}>
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ minHeight: { xs: 'auto', md: '85vh' }, p: { xs: 2, md: 3 }, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                        <Box sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: 'repeat(5, 1fr)', sm: 'repeat(10, 1fr)' },
+                            gap: { xs: 0.75, sm: 1 },
+                            width: '100%',
+                            maxWidth: 500,
+                        }}>
                             {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
                                 <Box key={n} onClick={() => !isBetStarted && toggleNumber(n)}
                                     sx={{
-                                        width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        borderRadius: '50%', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem',
+                                        width: '100%',
+                                        aspectRatio: '1 / 1',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        borderRadius: '50%', cursor: 'pointer', fontWeight: 700,
+                                        fontSize: { xs: '0.7rem', sm: '0.85rem' },
                                         bgcolor: selectedNumbers.includes(n) && result?.winningNumbers?.includes(n) ? '#ffd700'
                                             : result?.winningNumbers?.includes(n) ? '#00e676'
                                             : selectedNumbers.includes(n) ? '#9c27b0'
@@ -107,14 +116,14 @@ const Lottery = () => {
                         </Box>
 
                         {isBetStarted && (
-                            <Typography sx={{ color: '#ffd700', fontSize: '1.5rem', fontWeight: 700 }}>
+                            <Typography sx={{ color: '#ffd700', fontSize: { xs: '1.1rem', sm: '1.5rem' }, fontWeight: 700, textAlign: 'center' }}>
                                 🎱 Drawing numbers...
                             </Typography>
                         )}
 
                         {result && (
                             <Box sx={{ textAlign: 'center' }}>
-                                <Typography sx={{ color: result.win ? '#00e676' : '#f44336', fontSize: '1.5rem', fontWeight: 700 }}>
+                                <Typography sx={{ color: result.win ? '#00e676' : '#f44336', fontSize: { xs: '1.1rem', sm: '1.5rem' }, fontWeight: 700 }}>
                                     {result.win ? `🎉 ${result.matches} matches! Won ${result.payout.toFixed(2)}` : `😞 ${result.matches} matches. Try again!`}
                                 </Typography>
                                 <Typography sx={{ color: '#aaa', mt: 1 }}>
