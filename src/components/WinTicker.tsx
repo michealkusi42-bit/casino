@@ -120,12 +120,13 @@ const WinTicker = () => {
                     </Typography>
                 </Box>
 
-                {/* Online players counter */}
+                {/* Online players counter — hidden on very small screens to avoid collision,
+                    shown as its own row on mobile instead (see below) */}
                 <Box
                     sx={{
                         px: 1.5,
                         height: '100%',
-                        display: 'flex',
+                        display: { xs: 'none', sm: 'flex' },
                         alignItems: 'center',
                         gap: 0.7,
                         flexShrink: 0,
@@ -187,6 +188,40 @@ const WinTicker = () => {
                         </Box>
                     ))}
                 </Box>
+            </Box>
+
+            {/* Mobile-only online counter row — sits just below the main ticker bar
+                so it never competes for space with the scrolling win text */}
+            <Box
+                sx={{
+                    display: { xs: 'flex', sm: 'none' },
+                    alignItems: 'center',
+                    gap: 0.7,
+                    width: '100%',
+                    height: 26,
+                    bgcolor: '#0a141d',
+                    position: 'fixed',
+                    top: '106px', // sits directly under the 36px ticker bar (70px + 36px)
+                    left: 0,
+                    right: 0,
+                    zIndex: 1199,
+                    px: 1.5,
+                    borderBottom: '1px solid rgba(0,186,230,0.12)',
+                }}
+            >
+                <Box
+                    sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: '#00e701',
+                        boxShadow: '0 0 6px #00e701',
+                        animation: 'livePulse 1.6s ease-in-out infinite',
+                    }}
+                />
+                <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, color: '#cbd5e1' }}>
+                    {onlineCount.toLocaleString()} players online now
+                </Typography>
             </Box>
 
             {/* Toast Popups — positioned above the mobile bottom nav bar */}
