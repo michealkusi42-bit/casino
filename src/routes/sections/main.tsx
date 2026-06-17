@@ -10,6 +10,11 @@ import CoinFlip from 'pages/offline-games/CoinFlip';
 import Roulette from 'pages/offline-games/Roulette';
 import Poker from 'pages/offline-games/Poker';
 import AdminPanel from 'pages/admin';
+import Racing from 'pages/offline-games/Racing';
+import UpDown from 'pages/offline-games/UpDown';
+import Crash from 'pages/offline-games/Crash';
+import Lottery from 'pages/offline-games/Lottery';
+import Bingo from 'pages/offline-games/Bingo';
 
 const HomePage = Loadable(lazy(() => import('pages/home')));
 const CasinoPage = Loadable(lazy(() => import('pages/casino')));
@@ -102,7 +107,12 @@ export const mainRoutes = [
                     { path: 'hilo', element: <HiLo /> },
                     { path: 'coinflip', element: <CoinFlip /> },
                     { path: 'roulette', element: <Roulette /> },
-                    { path: 'poker', element: <Poker /> }
+                    { path: 'poker', element: <Poker /> },
+                    { path: 'racing', element: <Racing /> },
+                    { path: 'updown', element: <UpDown /> },
+                    { path: 'crash', element: <Crash /> },
+                    { path: 'lottery', element: <Lottery /> },
+                    { path: 'bingo', element: <Bingo /> }
                 ]
             }
         ]
