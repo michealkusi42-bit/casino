@@ -23,7 +23,7 @@ const Wrapper = ({ open }: { open: boolean }) => {
                 pb: !isDesktop ? '70px' : 0
             }}
         >
-            <Container sx={{ pt: '4.5rem', pb: 3, px: '1rem', maxWidth: '1248px !important' }}>
+            <Container sx={{ pt: { xs: '6.1rem', sm: '4.5rem' }, pb: 3, px: '1rem', maxWidth: '1248px !important' }}>
                 <Outlet />
             </Container>
 
