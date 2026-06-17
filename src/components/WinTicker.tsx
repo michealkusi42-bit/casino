@@ -38,10 +38,31 @@ const randomWin = () => ({
 
 const generateWins = () => Array.from({ length: 25 }, randomWin);
 
+// ─── Online player counter ────────────────────────────────────────────────
+// Starts around a believable baseline and drifts slowly up/down,
+// so it never jumps unrealistically between renders.
+const useOnlineCount = () => {
+    const [count, setCount] = useState(() => 1200 + Math.floor(Math.random() * 400));
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            setCount((prev) => {
+                const drift = Math.floor(Math.random() * 15) - 6; // slightly biased upward
+                const next = prev + drift;
+                return Math.max(900, Math.min(2400, next));
+            });
+        }, 4000 + Math.random() * 3000);
+        return () => clearInterval(id);
+    }, []);
+
+    return count;
+};
+
 const WinTicker = () => {
     const [wins] = useState(generateWins);
     const [toasts, setToasts] = useState<any[]>([]);
     const intervalRef = useRef<any>(null);
+    const onlineCount = useOnlineCount();
 
     useEffect(() => {
         const showToast = () => {
@@ -99,6 +120,38 @@ const WinTicker = () => {
                     </Typography>
                 </Box>
 
+                {/* Online players counter */}
+                <Box
+                    sx={{
+                        px: 1.5,
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.7,
+                        flexShrink: 0,
+                        zIndex: 1,
+                        borderRight: '1px solid rgba(255,255,255,0.08)',
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            bgcolor: '#00e701',
+                            boxShadow: '0 0 6px #00e701',
+                            animation: 'livePulse 1.6s ease-in-out infinite',
+                            '@keyframes livePulse': {
+                                '0%, 100%': { opacity: 1 },
+                                '50%': { opacity: 0.35 },
+                            },
+                        }}
+                    />
+                    <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
+                        {onlineCount.toLocaleString()} online
+                    </Typography>
+                </Box>
+
                 {/* Scrolling content */}
                 <Box
                     sx={{
@@ -136,17 +189,18 @@ const WinTicker = () => {
                 </Box>
             </Box>
 
-            {/* Toast Popups */}
+            {/* Toast Popups — positioned above the mobile bottom nav bar */}
             <Box
                 sx={{
                     position: 'fixed',
-                    bottom: 24,
+                    bottom: { xs: 88, sm: 24 }, // clears the bottom tab bar on mobile
                     left: 16,
-                    zIndex: 9999,
+                    zIndex: 1250, // below modals/dialogs, above page content and nav
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 1,
                     pointerEvents: 'none',
+                    maxWidth: 'calc(100vw - 32px)',
                 }}
             >
                 {toasts.map((toast) => (
