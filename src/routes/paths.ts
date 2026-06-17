@@ -38,5 +38,8 @@ export const paths = {
     },
     bonus: {
         root: '/bonus'
+    },
+    about: {
+        root: '/about'
     }
 };
