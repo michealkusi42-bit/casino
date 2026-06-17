@@ -174,5 +174,10 @@ export {
     getActiveMinesGame,
     playRoulette,
     getGameHistory,
-    getAllGameHistory
+    getAllGameHistory,
+    playUpDown,
+    playCrash,
+    playLottery,
+    playRacing,
+    playBingo
 } from './offlineGame.api';
