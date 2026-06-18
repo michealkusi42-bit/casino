@@ -48,16 +48,16 @@ const Header = ({
                 right: 0,
                 zIndex: 1201,
                 height: '60px',
-                px: { xs: 2, md: 3 },
+                px: { xs: 1.25, sm: 2, md: 3 },
                 borderBottom: '1px solid',
                 borderColor: 'background.border',
                 bgcolor: 'background.layer1',
                 backdropFilter: 'blur(6px)',
             }}
         >
-            {/* LEFT: Menu + Logo */}
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flexShrink: 0, minWidth: 0 }}>
-                <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: 0.5 }}>
+            {/* LEFT: Menu + Logo — pinned left, never shrinks */}
+            <Stack direction="row" alignItems="center" spacing={{ xs: 0.75, sm: 1.5 }} sx={{ flexShrink: 0, minWidth: 0 }}>
+                <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: { xs: 0.4, sm: 0.5 } }}>
                     <Box sx={{
                         width: 22, height: 22,
                         background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`,
@@ -76,7 +76,7 @@ const Header = ({
                     <Typography sx={{
                         color: '#00e701',
                         fontWeight: 900,
-                        fontSize: { xs: '1.3rem', md: '1.6rem' },
+                        fontSize: { xs: '1.2rem', md: '1.6rem' },
                         lineHeight: 1
                     }}>
                         $
@@ -84,8 +84,8 @@ const Header = ({
                     <Typography sx={{
                         color: '#fff',
                         fontWeight: 900,
-                        fontSize: { xs: '0.85rem', md: '1.3rem' },
-                        letterSpacing: 1,
+                        fontSize: { xs: '0.78rem', sm: '1rem', md: '1.3rem' },
+                        letterSpacing: { xs: 0.5, md: 1 },
                         lineHeight: 1,
                         whiteSpace: 'nowrap'
                     }}>
@@ -126,15 +126,15 @@ const Header = ({
             </Stack>
 
             {/* MIDDLE SPACER: pushes left and right groups apart and absorbs all extra width evenly */}
-            <Box sx={{ flex: 1, minWidth: { xs: 12, sm: 24 } }} />
+            <Box sx={{ flex: 1, minWidth: { xs: 8, sm: 24 } }} />
 
-            {/* RIGHT: Actions — spread evenly across remaining space */}
+            {/* RIGHT: Actions — pinned right, evenly spaced, never crowds the profile icon out */}
             <Stack
                 direction="row"
                 alignItems="center"
                 justifyContent="flex-end"
-                spacing={{ xs: 1.25, sm: 2 }}
-                sx={{ flexShrink: 0, width: { xs: 'auto', sm: 'auto' } }}
+                spacing={{ xs: 0.6, sm: 1.5, md: 2 }}
+                sx={{ flexShrink: 0 }}
             >
 
                 {/* NOT LOGGED IN */}
@@ -176,47 +176,47 @@ const Header = ({
                 {/* LOGGED IN */}
                 {isLogined && (
                     <>
-                        {/* Balance - show full on desktop, icon only on mobile */}
+                        {/* Balance - tighter on mobile so it never crowds out what comes after it */}
                         <Stack
                             direction="row"
                             alignItems="center"
-                            spacing={0.6}
+                            spacing={0.4}
                             onClick={() => setShowBalance(v => !v)}
                             ref={anchorBalanceEl2}
                             sx={{
                                 cursor: 'pointer',
                                 bgcolor: 'background.layer3',
                                 borderRadius: 2,
-                                px: { xs: 1.2, sm: 1.5 },
-                                py: 0.7,
+                                px: { xs: 0.9, sm: 1.5 },
+                                py: 0.6,
                                 border: '1px solid',
                                 borderColor: 'background.border',
                                 flexShrink: 0,
                             }}
                         >
                             {/* Mobile: wallet icon + short amount */}
-                            <AccountBalanceWalletIcon sx={{ fontSize: 16, color: '#00e701', display: { xs: 'block', sm: 'none' } }} />
-                            
+                            <AccountBalanceWalletIcon sx={{ fontSize: 15, color: '#00e701', display: { xs: 'block', sm: 'none' } }} />
+
                             {/* Desktop: full text */}
                             <Typography sx={{
                                 fontWeight: 700,
-                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                fontSize: { xs: '0.7rem', sm: '0.85rem' },
                                 whiteSpace: 'nowrap',
                                 color: '#fff',
                                 display: { xs: 'none', sm: 'block' }
                             }}>
                                 {currency}
                             </Typography>
-                            
+
                             <Typography sx={{
                                 fontWeight: 700,
-                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                fontSize: { xs: '0.7rem', sm: '0.85rem' },
                                 whiteSpace: 'nowrap',
                                 color: '#00e701',
                             }}>
                                 {balance.amount.toFixed(2)}
                             </Typography>
-                            <ArrowDropDownIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <ArrowDropDownIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
                         </Stack>
 
                         {/* Balance Popover */}
@@ -256,21 +256,23 @@ const Header = ({
                             </Popover>
                         )}
 
-                        {/* Deposit Button */}
+                        {/* Deposit Button — shrinks to icon-friendly size on mobile so it doesn't push the profile icon out */}
                         <Button
                             onClick={() => onToggleModal('DEPOSIT')}
-                            startIcon={<Add sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                            startIcon={<Add sx={{ fontSize: { xs: 13, sm: 16 } }} />}
                             sx={{
                                 background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                                 color: '#000',
                                 borderRadius: 2,
-                                px: { xs: 1.2, sm: 2.5 },
+                                px: { xs: 0.9, sm: 2.5 },
+                                minWidth: { xs: 0, sm: 'auto' },
                                 height: 36,
-                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                fontSize: { xs: '0.7rem', sm: '0.85rem' },
                                 textTransform: 'none',
                                 fontWeight: 700,
                                 whiteSpace: 'nowrap',
                                 flexShrink: 0,
+                                '& .MuiButton-startIcon': { mr: { xs: 0.3, sm: 1 } },
                                 '&:hover': { background: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)' }
                             }}
                         >
@@ -293,8 +295,10 @@ const Header = ({
                             </Badge>
                         </IconButton>
 
-                        {/* Profile - always visible */}
-                        <AccountPopover />
+                        {/* Profile - always visible, guaranteed minimum tappable size so it never gets squeezed off-screen */}
+                        <Box sx={{ flexShrink: 0, minWidth: 32 }}>
+                            <AccountPopover />
+                        </Box>
                     </>
                 )}
             </Stack>
