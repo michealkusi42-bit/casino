@@ -74,9 +74,10 @@ const Header = ({
                 sx={{
                     width: 1,
                     height: 1,
-                    px: { xs: 1.5, md: 3, lg: 4 },
+                    // ✅ Reduced left padding on mobile so logo sits at the edge
+                    px: { xs: 0.5, md: 3, lg: 4 },
                     maxWidth: 1600,
-                    mx: 'auto'
+                    mx: 0
                 }}
             >
                 <Stack direction="row" alignItems="center" spacing={{ xs: 1, md: 2 }} sx={{ flex: 1, minWidth: 0 }}>
@@ -94,7 +95,6 @@ const Header = ({
                         />
                     </IconButton>
 
-                    {/* ✅ Bigger logo */}
                     <Logo height={44} />
 
                     <Stack
