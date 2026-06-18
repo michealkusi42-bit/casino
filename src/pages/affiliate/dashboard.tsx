@@ -21,8 +21,6 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-// api
-import { affiliateApi } from 'api/affiliate.api';
 // hooks
 import { useAuth } from 'hooks/use-auth-context';
 import { useCopyToClipboard } from 'hooks/use-copy-to-clipboard';
@@ -31,376 +29,227 @@ import {
     OkIcon,
     VKIcon,
     CupIcon,
-    CopyIcon,
-    StarIcon,
     SkypeIcon,
     PeopleIcon,
     FacebookIcon,
     MoneyLogIcon,
     TelegramIcon,
-    WhatsAppIcon
+    WhatsAppIcon,
+    StarIcon
 } from 'icons';
 // utils
-import { fBalance, formatMoney } from 'utils/format-balance';
-// components
-import LoadTable from 'components/load-table';
-import EmptyTable from 'components/empty-table';
-import { fDateTime } from 'utils/format-time';
+import { fBalance } from 'utils/format-balance';
+
+const API = 'https://foretell-backend-production-58a6.up.railway.app';
 
 const DashboardView = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { copy } = useCopyToClipboard();
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
     const [index, setIndex] = useState(-1);
-    const [referralCodes, setReferralCodes] = useState<any[]>([]);
-    const [referralFaq, setReferralFaq] = useState<{ title: string; content: string }[]>([]);
-    const [referralLearnMore, setReferralLearnMore] = useState<{
-        title: string;
-        highlightTitle: string;
-        content: string;
-    }>();
-
     const [isLoading, setIsLoading] = useState(false);
-    const [dashboard, setDashboard] = useState({
-        referralReward: 1000,
-        comissionReward: 25
+    const [copied, setCopied] = useState(false);
+
+    const [referralData, setReferralData] = useState({
+        referralCode: '',
+        referralLink: '',
+        referralCount: 0,
+        referralEarnings: 0
     });
 
-    const [reward, setReward] = useState({
-        totalBetAmount: 0,
-        totalCommissionAmount: 0,
-        totalCommissionWager: 0,
-        totalReferralAmount: 0,
-        totalAvailableReferral: 0,
-        totalReferralWager: 0,
-        friends: 0,
-        code: ''
-    });
+    const authHeader = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+    };
 
-    const shareLink = useMemo(() => `${window.location.origin}/?r=p-${reward.code}`, [reward.code]);
-
-    const loadData = useCallback(async () => {
+    const loadReferralData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await affiliateApi.getRewardDashboard();
-            setReward((pre) => ({ ...pre, ...res }));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.log(typeof error === 'string' ? error : error.message || error.error);
+            const res = await fetch(`${API}/api/auth/referral`, { headers: authHeader });
+            const data = await res.json();
+            if (data.success) {
+                setReferralData(data.data);
+            }
+        } catch (e) {
+            console.error(e);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    const getReferralCode = async () => {
-        try {
-            const res = await affiliateApi.getReferralActivity();
-            setReferralCodes(res);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.log(typeof error === 'string' ? error : error.message || error.error);
-        }
+    useEffect(() => {
+        loadReferralData();
+    }, []);
+
+    const handleCopy = (text: string) => {
+        copy(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
-    useEffect(() => {
-        loadData();
-        getReferralCode();
-        // eslint-disable-next-line
-    }, []);
+    const faqs = [
+        {
+            title: 'How do I earn referral rewards?',
+            content: 'Share your unique referral link with friends. When they sign up and play, you earn a 5% bonus on their starting balance automatically.'
+        },
+        {
+            title: 'When do I receive my referral bonus?',
+            content: 'Your referral bonus is credited instantly to your balance as soon as your referred friend completes registration.'
+        },
+        {
+            title: 'Is there a limit to how many people I can refer?',
+            content: 'No limit! You can refer as many friends as you want and earn rewards for each one.'
+        },
+        {
+            title: 'Can I track my referrals?',
+            content: 'Yes! This dashboard shows your total referral count and total earnings from referrals.'
+        }
+    ];
 
     return (
         <>
-            <Stack>
+            <Stack spacing={3}>
                 <Grid container spacing={2}>
+                    {/* Left - Referral Link Card */}
                     <Grid size={{ md: 8, xs: 12 }}>
-                        <Card
-                            sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                backgroundColor: 'background.card'
-                            }}
-                        >
+                        <Card sx={{ p: 2, borderRadius: 2, backgroundColor: 'background.card' }}>
                             <Stack spacing={2}>
                                 <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: 700, textAlign: { md: 'start', xs: 'center' } }}
-                                    >
-                                        {t('dashboard.invite.title')}
+                                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                        Invite Friends & Earn
                                     </Typography>
-
-                                    {/* <Typography
-                                        component={Link}
-                                        to={'/info?tab=Referral%20Terms%20%26%20Conditions'}
-                                        sx={{ textDecoration: 'none' }}
-                                        variant="button"
-                                        color="primary"
-                                    >
-                                        {t('dashboard.invite.terms.title')}
-                                    </Typography> */}
                                 </Stack>
 
-                                <Stack spacing={4}>
-                                    <Stack direction={{ md: 'row', xs: 'column' }}>
-                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                            <Typography
-                                                variant="h4"
-                                                sx={{
-                                                    color: 'primary.main',
-                                                    fontWeight: 700,
-                                                    textAlign: { md: 'start', xs: 'center' }
-                                                }}
-                                            >
-                                                {formatMoney(user?.currency as string, dashboard.referralReward)}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontWeight: 600, width: { md: 'auto', xs: '100%' } }}
-                                            >
-                                                {t('dashboard.invite.referral.rewards')}
-                                            </Typography>
-                                        </Stack>
-
-                                        <Box>
-                                            <Divider orientation="vertical" sx={{ mx: 3 }} />
-                                        </Box>
-
-                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                            <Typography
-                                                variant="h4"
-                                                sx={{
-                                                    color: 'primary.main',
-                                                    fontWeight: 700,
-                                                    textAlign: { md: 'start', xs: 'center' }
-                                                }}
-                                            >
-                                                {`${dashboard.comissionReward}%`}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontWeight: 600, width: { md: 'auto', xs: '100%' } }}
-                                            >
-                                                Commission Rewards
-                                            </Typography>
-                                        </Stack>
+                                <Stack direction={{ md: 'row', xs: 'column' }} spacing={2}>
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                                            5%
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Referral Bonus
+                                        </Typography>
                                     </Stack>
-                                </Stack>
-
-                                <Stack spacing={4}>
-                                    <Stack sx={{ pl: 1 }}>
-                                        <Typography sx={{ color: 'text.secondary', fontSize: 14, fontWeight: 600 }}>
-                                            {t('dashboard.invite.terms.description')}
+                                    <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                                            {referralData.referralCount}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Friends Referred
                                         </Typography>
                                     </Stack>
                                 </Stack>
-                            </Stack>
-                            <Stack
-                                flexDirection={{ md: 'row', xs: 'column' }}
-                                alignItems="flex-end"
-                                sx={{ wdith: 1, gap: { md: 4, xs: 2 }, my: 4 }}
-                            >
-                                <Stack spacing={1} sx={{ flex: 1, width: { md: 'auto', xs: 1 } }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                                        Referral Link
-                                    </Typography>
-                                    <Stack
-                                        direction="row"
-                                        alignItems="center"
-                                        justifyContent="space-between"
-                                        sx={{ borderRadius: 1, pl: 1, bgcolor: 'background.default' }}
-                                    >
-                                        <Typography variant="body2" sx={{ textWrap: 'wrap' }}>
-                                            {reward.code ? shareLink : ''}
-                                        </Typography>
-                                        <IconButton
-                                            color="primary"
-                                            sx={{ bgcolor: 'primary.main', borderRadius: 1 }}
-                                            onClick={() => copy(reward.code ? shareLink : '')}
-                                        >
-                                            <ContentCopyIcon
-                                                sx={{
-                                                    color: (theme) =>
-                                                        theme.palette.mode === 'dark'
-                                                            ? 'background.paper'
-                                                            : 'common.white'
-                                                }}
-                                            />
-                                        </IconButton>
-                                    </Stack>
-                                </Stack>
-                                <Stack spacing={1} sx={{ flex: 1, width: { md: 'auto', xs: 1 } }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                                        Referral Code
-                                    </Typography>
-                                    <Stack
-                                        direction="row"
-                                        alignItems="center"
-                                        justifyContent="space-between"
-                                        sx={{ borderRadius: 1, pl: 1, bgcolor: 'background.default' }}
-                                    >
-                                        <Typography variant="body2">{reward.code ? reward.code : ''}</Typography>
-                                        <IconButton
-                                            color="primary"
-                                            sx={{ bgcolor: 'primary.main', borderRadius: 1 }}
-                                            onClick={() => copy(reward.code ? reward.code : '')}
-                                        >
-                                            <ContentCopyIcon
-                                                sx={{
-                                                    color: (theme) =>
-                                                        theme.palette.mode === 'dark'
-                                                            ? 'background.paper'
-                                                            : 'common.white'
-                                                }}
-                                            />
-                                        </IconButton>
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                            <Stack spacing={1} sx={{ mb: 2, display: { md: 'none', xs: 'flex' } }}>
-                                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                                    {t('dashboard.referral.terms.description')}
+
+                                <Typography sx={{ color: 'text.secondary', fontSize: 14, fontWeight: 600 }}>
+                                    Share your referral link and earn 5% bonus when your friends sign up and start playing!
                                 </Typography>
-                            </Stack>
 
-                            <Stack direction={{ md: 'row', xs: 'column' }} alignItems="center" justifyContent="center">
-                                <Typography>{t('dashboard.referral.share')}</Typography> &nbsp;
-                                <Stack direction="row" alignItems="center" spacing={1}>
+                                {/* Referral Link */}
+                                <Stack spacing={1}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                                        Your Referral Link
+                                    </Typography>
+                                    <Stack
+                                        direction="row"
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                        sx={{ borderRadius: 1, pl: 1, bgcolor: 'background.default' }}
+                                    >
+                                        <Typography variant="body2" sx={{ textWrap: 'wrap', fontSize: 12 }}>
+                                            {isLoading ? 'Loading...' : referralData.referralLink || 'Sign in to get your link'}
+                                        </Typography>
+                                        <IconButton
+                                            sx={{ bgcolor: 'primary.main', borderRadius: 1 }}
+                                            onClick={() => handleCopy(referralData.referralLink)}
+                                        >
+                                            <ContentCopyIcon sx={{ color: 'white', fontSize: 18 }} />
+                                        </IconButton>
+                                    </Stack>
+                                </Stack>
+
+                                {/* Referral Code */}
+                                <Stack spacing={1}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                                        Your Referral Code
+                                    </Typography>
+                                    <Stack
+                                        direction="row"
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                        sx={{ borderRadius: 1, pl: 1, bgcolor: 'background.default' }}
+                                    >
+                                        <Typography variant="body2" sx={{ fontWeight: 700, letterSpacing: 2 }}>
+                                            {isLoading ? 'Loading...' : referralData.referralCode || '--'}
+                                        </Typography>
+                                        <IconButton
+                                            sx={{ bgcolor: 'primary.main', borderRadius: 1 }}
+                                            onClick={() => handleCopy(referralData.referralCode)}
+                                        >
+                                            <ContentCopyIcon sx={{ color: 'white', fontSize: 18 }} />
+                                        </IconButton>
+                                    </Stack>
+                                    {copied && (
+                                        <Typography variant="caption" sx={{ color: 'primary.main' }}>
+                                            ✅ Copied!
+                                        </Typography>
+                                    )}
+                                </Stack>
+
+                                {/* Share Buttons */}
+                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                    <Typography variant="body2">Share via:</Typography>
                                     <IconButton
                                         target="_blank"
                                         component={Link}
-                                        to={`https://www.facebook.com/sharer.php?u=${shareLink}`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
+                                        to={`https://www.facebook.com/sharer.php?u=${referralData.referralLink}`}
+                                        sx={{ p: 0.8, borderRadius: 0.5, border: '1px solid', borderColor: 'text.secondary' }}
                                     >
-                                        <FacebookIcon sx={{ color: 'text.secondary' }} />
+                                        <FacebookIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
                                     </IconButton>
                                     <IconButton
                                         target="_blank"
                                         component={Link}
-                                        to={`https://twitter.com/share?url=${shareLink}`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
+                                        to={`https://twitter.com/share?url=${referralData.referralLink}`}
+                                        sx={{ p: 0.8, borderRadius: 0.5, border: '1px solid', borderColor: 'text.secondary' }}
                                     >
-                                        <XIcon sx={{ color: 'text.secondary' }} />
+                                        <XIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
                                     </IconButton>
                                     <IconButton
                                         target="_blank"
                                         component={Link}
-                                        to={`https://t.me/share?url=${shareLink}`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
+                                        to={`https://t.me/share?url=${referralData.referralLink}`}
+                                        sx={{ p: 0.8, borderRadius: 0.5, border: '1px solid', borderColor: 'text.secondary' }}
                                     >
-                                        <TelegramIcon sx={{ color: 'text.secondary' }} />
+                                        <TelegramIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
                                     </IconButton>
                                     <IconButton
                                         target="_blank"
                                         component={Link}
-                                        to={`http://vk.com/share.php?url=${shareLink}&title=My%20Referral&text=`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
+                                        to={`https://api.whatsapp.com/send?text=${referralData.referralLink}`}
+                                        sx={{ p: 0.8, borderRadius: 0.5, border: '1px solid', borderColor: 'text.secondary' }}
                                     >
-                                        <VKIcon sx={{ color: 'text.secondary' }} />
-                                    </IconButton>
-                                    <IconButton
-                                        target="_blank"
-                                        component={Link}
-                                        to={`https://web.skype.com/share?url=${shareLink}&title=My%20Referral&text=`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
-                                    >
-                                        <SkypeIcon sx={{ color: 'text.secondary' }} />
-                                    </IconButton>
-                                    <IconButton
-                                        target="_blank"
-                                        component={Link}
-                                        to={`https://connect.ok.ru/offer?url=url=${shareLink}%2Fi-260lb5qik-n%2F&title=My%20Referral&imageUrl=`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
-                                    >
-                                        <OkIcon sx={{ color: 'text.secondary' }} />
-                                    </IconButton>
-                                    <IconButton
-                                        target="_blank"
-                                        component={Link}
-                                        to={`https://api.whatsapp.com/send?url=${shareLink}&text=`}
-                                        sx={{
-                                            p: 0.8,
-                                            borderRadius: 0.5,
-                                            borderWidth: 1,
-                                            borderStyle: 'solid',
-                                            borderColor: 'text.secondary',
-                                            svg: { fontSize: 16 }
-                                        }}
-                                    >
-                                        <WhatsAppIcon sx={{ color: 'text.secondary' }} />
+                                        <WhatsAppIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
                                     </IconButton>
                                 </Stack>
                             </Stack>
                         </Card>
                     </Grid>
+
+                    {/* Right - Stats Card */}
                     <Grid size={{ md: 4, xs: 12 }}>
-                        <Card
-                            sx={{
-                                p: 2,
-                                height: 1,
-                                display: 'flex',
-                                borderRadius: 2,
-                                backgroundColor: 'background.card'
-                            }}
-                        >
+                        <Card sx={{ p: 2, height: 1, display: 'flex', borderRadius: 2, backgroundColor: 'background.card' }}>
                             <Stack justifyContent="center" spacing={5} sx={{ width: 1 }}>
                                 <Stack flexDirection="row" sx={{ width: 1 }}>
                                     <Stack justifyContent="center" alignItems="center" sx={{ flex: 1 }} spacing={1}>
                                         <CupIcon sx={{ fontSize: 40, color: 'primary.main' }} />
                                         <Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ textAlign: 'center', color: 'text.secondary' }}
-                                            >
-                                                Total Reward
+                                            <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                                                Total Earnings
                                             </Typography>
                                             <Typography variant="h5" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                                                {formatMoney(
-                                                    user?.currency as string,
-                                                    Number(reward.totalCommissionAmount + reward.totalReferralAmount)
-                                                )}
+                                                GH₵ {fBalance(referralData.referralEarnings)}
                                             </Typography>
                                         </Box>
                                     </Stack>
@@ -408,51 +257,11 @@ const DashboardView = () => {
                                     <Stack justifyContent="center" alignItems="center" sx={{ flex: 1 }} spacing={1}>
                                         <PeopleIcon sx={{ fontSize: 40, color: 'primary.main' }} />
                                         <Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ textAlign: 'center', color: 'text.secondary' }}
-                                            >
+                                            <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
                                                 Total Friends
                                             </Typography>
                                             <Typography variant="h5" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                                                {reward.friends}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                </Stack>
-                                <Stack flexDirection="row">
-                                    <Stack justifyContent="center" alignItems="center" sx={{ flex: 1 }} spacing={1}>
-                                        <StarIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                                        <Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ textAlign: 'center', color: 'text.secondary' }}
-                                            >
-                                                Referral Rewards
-                                            </Typography>
-                                            <Typography variant="h5" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                                                {formatMoney(
-                                                    user?.currency as string,
-                                                    Number(reward.totalReferralAmount)
-                                                )}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                    <Divider orientation="vertical" sx={{ mx: 2, height: 'auto' }} />
-                                    <Stack justifyContent="center" alignItems="center" sx={{ flex: 1 }} spacing={1}>
-                                        <MoneyLogIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                                        <Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ textAlign: 'center', color: 'text.secondary' }}
-                                            >
-                                                Commission Rewards
-                                            </Typography>
-                                            <Typography variant="h5" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                                                {formatMoney(
-                                                    user?.currency as string,
-                                                    Number(reward.totalCommissionAmount)
-                                                )}
+                                                {referralData.referralCount}
                                             </Typography>
                                         </Box>
                                     </Stack>
@@ -461,226 +270,27 @@ const DashboardView = () => {
                         </Card>
                     </Grid>
                 </Grid>
+
+                {/* FAQ */}
+                <Card sx={{ py: 4, px: { md: 4, xs: 2 }, borderRadius: 2, backgroundColor: 'background.card' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
+                        Frequently Asked Questions
+                    </Typography>
+                    {faqs.map((item, i) => (
+                        <Stack key={i} sx={{ ...(i !== 0 && { borderTop: '2px solid #d9d9d945' }) }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 0.5 }}>
+                                <Typography sx={{ fontWeight: 700 }}>{item.title}</Typography>
+                                <IconButton onClick={() => setIndex(index === i ? -1 : i)}>
+                                    {index === i ? <RemoveIcon /> : <AddIcon />}
+                                </IconButton>
+                            </Stack>
+                            <Collapse in={index === i}>
+                                <Typography sx={{ mb: 2, color: 'text.secondary' }}>{item.content}</Typography>
+                            </Collapse>
+                        </Stack>
+                    ))}
+                </Card>
             </Stack>
-
-            <Card
-                sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'background.card'
-                }}
-            >
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {t('dashboard.activities.title')}
-                </Typography>
-                <TableContainer sx={{ mt: 2 }}>
-                    <Table sx={{ th: { py: 1, whiteSpace: 'nowrap' }, td: { borderColor: 'divider' } }}>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>{t('dashboard.activities.table.name')}</TableCell>
-                                <TableCell>{t('dashboard.activities.table.code')}</TableCell>
-                                <TableCell align="right">{t('dashboard.activities.table.totalReferrals')}</TableCell>
-                                <TableCell align="right">{t('dashboard.activities.table.totalCommission')}</TableCell>
-                                <TableCell align="right">{t('dashboard.activities.table.totalRewards')}</TableCell>
-                                <TableCell align="right">{t('dashboard.activities.table.createdAt')}</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {(() => {
-                                if (isLoading) {
-                                    return <LoadTable colSpan={6} />;
-                                }
-                                if (!referralCodes.length) {
-                                    return <EmptyTable noData={!referralCodes.length && !isLoading} colSpan={6} />;
-                                }
-                                return referralCodes.map((item, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell>{item.name || '--'}</TableCell>
-                                        <TableCell>
-                                            <Typography component="span">{item.code}</Typography>
-                                            <IconButton
-                                                sx={{ borderRadius: 1, ml: 1, p: 0.5 }}
-                                                onClick={() => copy(`p-${item.code}`)}
-                                            >
-                                                <ContentCopyIcon sx={{ fontSize: 16 }} />
-                                            </IconButton>
-                                        </TableCell>
-                                        <TableCell align="right">{fBalance(item.totalReferralAmount)}</TableCell>
-                                        <TableCell align="right">{fBalance(item.totalCommissionAmount)}</TableCell>
-                                        <TableCell align="right">
-                                            {fBalance(item.totalReferralAmount + item.totalCommissionAmount)}
-                                        </TableCell>
-                                        <TableCell align="right">{fDateTime(item.createdAt)}</TableCell>
-                                    </TableRow>
-                                ));
-                            })()}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Card>
-
-            {/* <Card
-                sx={{
-                    py: 4,
-                    px: { md: 4, xs: 2 },
-                    borderRadius: 2,
-                    backgroundColor: 'background.card'
-                }}
-            >
-                <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent={{ md: 'flex-start', xs: 'center' }}
-                    spacing={2}
-                    sx={{ mb: 4 }}
-                >
-                    <LiveIcon />
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {t('dashboard.liveRewards.title')}
-                    </Typography>
-                </Stack>
-                <Stack
-                    spacing={2}
-                    direction={{ md: 'row', xs: 'column' }}
-                    alignItems="center"
-                    justifyContent="space-between"
-                    sx={{ width: 1 }}
-                >
-                    <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        sx={{
-                            bgcolor: 'background.default',
-                            borderRadius: 2,
-                            px: 2,
-                            py: 1.5,
-                            width: { md: '40%', xs: 1 }
-                        }}
-                    >
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {t('dashboard.liveRewards.totalToDate')}
-                        </Typography>
-                        <Typography sx={{ fontWeight: 700 }}>
-                            {formatMoney(user?.currency as string, totalRewards)}
-                        </Typography>
-                    </Stack>
-                    <Stack sx={{ overflow: 'hidden', height: '48px !important', width: { md: '60%', xs: 1 } }}>
-                        <Box
-                            sx={{
-                                gap: 4,
-                                display: 'grid',
-                                gridTemplateColumns: { md: 'repeat(3,minmax(0,1fr))', xs: 'repeat(3,minmax(0,1fr))' },
-                                animationTimeline: 'auto',
-                                animationRangeStart: 'normal',
-                                animationRangeEnd: 'normal',
-                                animation: '18s linear 0s infinite normal none running scroll'
-                            }}
-                        >
-                            {lastRewards.map((rewards, i) => (
-                                <Stack direction="row" spacing={1} key={i}>
-                                    <Typography>{rewards.referralUsername}</Typography>
-                                    <Typography
-                                        sx={{
-                                            bgcolor: 'primary.main',
-                                            color: 'common.white',
-                                            px: 1,
-                                            borderRadius: 1,
-                                            fontWeight: 700
-                                        }}
-                                    >{`+${rewards.prizeAmount}`}</Typography>
-                                    <CircleDollarIcon />
-                                </Stack>
-                            ))}
-                        </Box>
-                    </Stack>
-                </Stack>
-            </Card> */}
-
-            {/* <Card
-                sx={{
-                    p: 4,
-                    pb: { md: 4, xs: 0 },
-                    position: 'relative',
-                    borderRadius: 2,
-                    backgroundColor: 'background.card'
-                }}
-            >
-                <Typography variant="h6" sx={{ fontWeight: 700, textAlign: { md: 'start', xs: 'center' } }}>
-                    {referralLearnMore?.title}
-                    <Typography variant="h6" component="span" sx={{ ml: 1, fontWeight: 700, color: 'primary.main' }}>
-                        {referralLearnMore?.highlightTitle}
-                    </Typography>
-                </Typography>
-                <Stack spacing={2} sx={{ mt: 4, maxWidth: { md: '50%', xs: 1 } }}>
-                    <Typography sx={{ textAlign: { md: 'start', xs: 'center' } }}>
-                        {referralLearnMore?.content}
-                    </Typography>
-                    <Box sx={{ width: { md: '50%', xs: 1 } }}>
-                        <Stack spacing={1}>
-                            <Button variant="contained" size="small" onClick={loadZendesk}>
-                                <Box
-                                    component="span"
-                                    sx={{
-                                        alignItems: 'center',
-                                        color: 'var(--nav-item-color)',
-                                        display: 'inline-flex',
-                                        justifyContent: 'center',
-                                        marginRight: '16px'
-                                    }}
-                                >
-                                    <Icon icon="hugeicons:customer-support" fontSize={16} />
-                                </Box>
-                                <Box
-                                    component="span"
-                                    sx={{
-                                        flexGrow: 1,
-                                        fontSize: 14,
-                                        lineHeight: '24px',
-                                        whiteSpace: 'nowrap',
-                                        fontWeight: 500
-                                    }}
-                                >
-                                    {t('sideNav.liveSupport')}
-                                </Box>
-                            </Button>
-                        </Stack>
-                    </Box>
-                    <Box
-                        component="img"
-                        src={'/images/promotion/affiliate.svg'}
-                        sx={{ position: { md: 'absolute', xs: 'relative' }, bottom: 0, right: { md: 16, xs: 0 } }}
-                    />
-                </Stack>
-            </Card> */}
-
-            <Card
-                sx={{
-                    py: 4,
-                    px: { md: 4, xs: 2 },
-                    position: 'relative',
-                    borderRadius: 2,
-                    backgroundColor: 'background.card'
-                }}
-            >
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
-                    {t('dashboard.faq.title')}
-                </Typography>
-
-                {referralFaq.map((item, i) => (
-                    <Stack key={i} sx={{ ...(i !== 0 && { borderTop: '2px solid #d9d9d945' }) }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 0.5 }}>
-                            <Typography sx={{ fontWeight: 700 }}>{item.title}</Typography>
-                            <IconButton onClick={() => setIndex(index === i ? -1 : i)}>
-                                {index === i ? <RemoveIcon /> : <AddIcon />}
-                            </IconButton>
-                        </Stack>
-                        <Collapse in={index === i}>
-                            <Typography sx={{ mb: 2 }}>{item.content}</Typography>
-                        </Collapse>
-                    </Stack>
-                ))}
-            </Card>
         </>
     );
 };
