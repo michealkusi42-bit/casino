@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Box, Typography, Slide } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
 
 const GAMES = [
     'Mines', 'Dice', 'CoinFlip', 'Roulette', 'HiLo', 'Poker',
@@ -12,20 +12,19 @@ const AMOUNTS = [
     310, 970, 1350, 4500, 750, 88, 430, 2200, 5000, 330
 ];
 
-// All valid Ghanaian mobile prefixes
 const PREFIXES = [
-    '020', '024', '054', '055', '059', // Telecel (Vodafone)
-    '026', '056',                       // AirtelTigo
-    '027', '057',                       // AirtelTigo
-    '050', '053',                       // AirtelTigo
-    '023', '028',                       // MTN
-    '025', '030',                       // MTN
+    '020', '024', '054', '055', '059',
+    '026', '056',
+    '027', '057',
+    '050', '053',
+    '023', '028',
+    '025', '030',
 ];
 
 const randomPhone = () => {
     const prefix = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
-    const mid = Math.floor(10 + Math.random() * 90); // 2 visible digits
-    const suffix = Math.floor(100 + Math.random() * 900); // 3 visible digits
+    const mid = Math.floor(10 + Math.random() * 90);
+    const suffix = Math.floor(100 + Math.random() * 900);
     return `${prefix}${mid}****${suffix}`;
 };
 
@@ -38,16 +37,13 @@ const randomWin = () => ({
 
 const generateWins = () => Array.from({ length: 25 }, randomWin);
 
-// ─── Online player counter ────────────────────────────────────────────────
-// Starts around a believable baseline and drifts slowly up/down,
-// so it never jumps unrealistically between renders.
 const useOnlineCount = () => {
     const [count, setCount] = useState(() => 1200 + Math.floor(Math.random() * 400));
 
     useEffect(() => {
         const id = setInterval(() => {
             setCount((prev) => {
-                const drift = Math.floor(Math.random() * 15) - 6; // slightly biased upward
+                const drift = Math.floor(Math.random() * 15) - 6;
                 const next = prev + drift;
                 return Math.max(900, Math.min(2400, next));
             });
@@ -60,33 +56,11 @@ const useOnlineCount = () => {
 
 const WinTicker = () => {
     const [wins] = useState(generateWins);
-    const [toasts, setToasts] = useState<any[]>([]);
-    const intervalRef = useRef<any>(null);
     const onlineCount = useOnlineCount();
-
-    useEffect(() => {
-        const showToast = () => {
-            const win = randomWin();
-            setToasts(prev => [...prev, win].slice(-3));
-            setTimeout(() => {
-                setToasts(prev => prev.filter(t => t.id !== win.id));
-            }, 4000);
-        };
-
-        const first = setTimeout(showToast, 2000);
-        intervalRef.current = setInterval(() => {
-            showToast();
-        }, 5000 + Math.random() * 3000);
-
-        return () => {
-            clearTimeout(first);
-            clearInterval(intervalRef.current);
-        };
-    }, []);
 
     return (
         <>
-            {/* Scrolling Ticker Bar */}
+            {/* ✅ Scrolling Ticker Bar - slowed down from 50s to 80s */}
             <Box
                 sx={{
                     width: '100%',
@@ -120,8 +94,7 @@ const WinTicker = () => {
                     </Typography>
                 </Box>
 
-                {/* Online players counter — hidden on very small screens to avoid collision,
-                    shown as its own row on mobile instead (see below) */}
+                {/* Online players counter */}
                 <Box
                     sx={{
                         px: 1.5,
@@ -153,13 +126,13 @@ const WinTicker = () => {
                     </Typography>
                 </Box>
 
-                {/* Scrolling content */}
+                {/* ✅ Scrolling content - slowed to 80s for easy reading */}
                 <Box
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 4,
-                        animation: 'tickerScroll 50s linear infinite',
+                        animation: 'tickerScroll 80s linear infinite',
                         whiteSpace: 'nowrap',
                         pl: 3,
                         '@keyframes tickerScroll': {
@@ -190,8 +163,7 @@ const WinTicker = () => {
                 </Box>
             </Box>
 
-            {/* Mobile-only online counter row — sits just below the main ticker bar
-                so it never competes for space with the scrolling win text */}
+            {/* Mobile online counter row */}
             <Box
                 sx={{
                     display: { xs: 'flex', sm: 'none' },
@@ -201,7 +173,7 @@ const WinTicker = () => {
                     height: 26,
                     bgcolor: '#0a141d',
                     position: 'fixed',
-                    top: '106px', // sits directly under the 36px ticker bar (70px + 36px)
+                    top: '106px',
                     left: 0,
                     right: 0,
                     zIndex: 1199,
@@ -224,60 +196,7 @@ const WinTicker = () => {
                 </Typography>
             </Box>
 
-            {/* Toast Popups — positioned above the mobile bottom nav bar */}
-            <Box
-                sx={{
-                    position: 'fixed',
-                    bottom: { xs: 88, sm: 24 }, // clears the bottom tab bar on mobile
-                    left: 16,
-                    zIndex: 1250, // below modals/dialogs, above page content and nav
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                    pointerEvents: 'none',
-                    maxWidth: 'calc(100vw - 32px)',
-                }}
-            >
-                {toasts.map((toast) => (
-                    <Slide key={toast.id} direction="right" in mountOnEnter unmountOnExit>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                bgcolor: '#213743',
-                                border: '1px solid rgba(0,231,1,0.3)',
-                                borderRadius: 2,
-                                px: 2,
-                                py: 1.2,
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                                minWidth: 230,
-                                animation: 'fadeOut 0.5s ease 3.5s forwards',
-                                '@keyframes fadeOut': {
-                                    from: { opacity: 1 },
-                                    to: { opacity: 0 },
-                                },
-                            }}
-                        >
-                            <Typography sx={{ fontSize: '1.2rem' }}>🎉</Typography>
-                            <Box>
-                                <Typography sx={{ color: '#94a3b8', fontSize: '0.7rem' }}>
-                                    {toast.phone}
-                                </Typography>
-                                <Typography sx={{ color: '#fff', fontSize: '0.8rem', fontWeight: 700 }}>
-                                    won{' '}
-                                    <Box component="span" sx={{ color: '#00e701' }}>
-                                        GHS {toast.amount.toLocaleString()}
-                                    </Box>
-                                </Typography>
-                                <Typography sx={{ color: '#64748b', fontSize: '0.65rem' }}>
-                                    {toast.game}
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </Slide>
-                ))}
-            </Box>
+            {/* ✅ Toast popups REMOVED */}
         </>
     );
 };
