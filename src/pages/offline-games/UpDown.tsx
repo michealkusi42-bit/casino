@@ -54,10 +54,10 @@ const UpDown = () => {
     };
 
     return (
-        <Box sx={{ bgcolor: '#1a2c38', minHeight: '100vh', pt: 4, px: 1.5 }}>
+        <Box sx={{ bgcolor: '#1a2c38', minHeight: '100vh', pt: { xs: 2, sm: 4 }, px: 1.5 }}>
             <Box sx={{ bgcolor: '#0f212e', maxWidth: '1536px', mx: 'auto', borderRadius: 2, overflow: 'hidden' }}>
                 <Grid container>
-                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3 }}>
+                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                             <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Bet Amount</Typography>
                             <Box sx={{ display: 'flex', bgcolor: '#2f4553', p: '4px', borderRadius: 1 }}>
@@ -88,29 +88,29 @@ const UpDown = () => {
                         </Box>
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 9 }} sx={{ position: 'relative', minHeight: '85vh', p: 2, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 0.5 }}>
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ position: 'relative', minHeight: { xs: 'auto', md: '85vh' }, p: { xs: 2, md: 3 }, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 0.5, flexWrap: 'wrap', maxWidth: '80%', justifyContent: 'flex-end' }}>
                             {betResultArray.map((item, i) => (
-                                <Box key={i} sx={{ px: 2, py: 1, fontWeight: 'bold', fontSize: '0.75rem', borderRadius: 9999, bgcolor: item.win ? '#00e676' : '#2f4553', color: item.win ? '#000' : '#fff' }}>
-                                    {item.outcome === 'up' ? '⬆' : '⬇'} {item.win ? `Won ${item.payout.toFixed(2)}` : `Lost ${item.amount.toFixed(2)}`}
+                                <Box key={i} sx={{ px: 1.5, py: 0.5, fontWeight: 'bold', fontSize: '0.7rem', borderRadius: 9999, bgcolor: item.win ? '#00e676' : '#2f4553', color: item.win ? '#000' : '#fff' }}>
+                                    {item.outcome === 'up' ? '⬆' : '⬇'} {item.win ? `+${item.payout.toFixed(2)}` : `-${item.amount.toFixed(2)}`}
                                 </Box>
                             ))}
                         </Box>
 
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 2, sm: 4 }, py: { xs: 4, sm: 0 } }}>
                             <Box sx={{
-                                fontSize: '8rem',
+                                fontSize: { xs: '4rem', sm: '8rem' },
                                 color: result === 'up' ? '#00e676' : result === 'down' ? '#f44336' : '#fff',
                                 animation: animating ? 'spin 0.5s linear infinite' : 'none',
                                 '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } }
                             }}>
                                 {animating ? '🔄' : result === 'up' ? '⬆️' : result === 'down' ? '⬇️' : '❓'}
                             </Box>
-                            <Typography sx={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                            <Typography sx={{ color: '#fff', fontSize: { xs: '1.1rem', sm: '1.5rem' }, fontWeight: 'bold', textAlign: 'center' }}>
                                 {animating ? 'Deciding...' : result ? result.toUpperCase() : 'UP or DOWN?'}
                             </Typography>
                             {result && !animating && (
-                                <Typography sx={{ color: betResultArray[0]?.win ? '#00e676' : '#f44336', fontSize: '1.2rem', fontWeight: 700 }}>
+                                <Typography sx={{ color: betResultArray[0]?.win ? '#00e676' : '#f44336', fontSize: { xs: '1rem', sm: '1.2rem' }, fontWeight: 700, textAlign: 'center' }}>
                                     {betResultArray[0]?.win ? `🎉 Won ${betResultArray[0]?.payout.toFixed(2)}` : `😞 Lost ${betResultArray[0]?.amount.toFixed(2)}`}
                                 </Typography>
                             )}
