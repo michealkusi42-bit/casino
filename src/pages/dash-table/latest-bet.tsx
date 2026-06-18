@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 // @mui
 import { styled } from '@mui/material/styles';
@@ -61,12 +61,54 @@ type IBet = {
     profitAmount: number;
 };
 
+// ─── Simulated activity generator ────────────────────────────────────────
+// Mirrors the same approach used by WinTicker so the table never looks
+// "dead" while waiting for real player activity to start flowing in.
+const SIM_GAMES = [
+    { id: 'coinflip', name: 'CoinFlip', image: '/assets/icons/hot-games.svg' },
+    { id: 'dice', name: 'Dice', image: '/assets/icons/hot-games.svg' },
+    { id: 'hilo', name: 'HiLo', image: '/assets/icons/hot-games.svg' },
+    { id: 'mines', name: 'Mines', image: '/assets/icons/hot-games.svg' },
+    { id: 'roulette', name: 'Roulette', image: '/assets/icons/table-games.svg' },
+    { id: 'crash', name: 'Crash', image: '/assets/icons/hot-games.svg' },
+    { id: 'slots', name: 'Slots', image: '/assets/icons/slots.svg' },
+    { id: 'blackjack', name: 'Blackjack', image: '/assets/icons/table-games.svg' }
+];
+
+const NAME_PREFIXES = ['0508', '0244', '0277', '0551', '0203', '0246', '0264', '0596', '0241', '0571'];
+
+const randomPhoneName = () => {
+    const prefix = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
+    const suffix = Math.floor(100 + Math.random() * 900);
+    return `${prefix}****${suffix}`;
+};
+
+const randomBet = (): IBet => {
+    const game = SIM_GAMES[Math.floor(Math.random() * SIM_GAMES.length)];
+    const betAmount = Math.round((5 + Math.random() * 195) * 100) / 100;
+    // Most simulated rows show a win (positive profit) to keep the feed
+    // feeling "alive" — occasional small losses mixed in for realism.
+    const isWin = Math.random() < 0.78;
+    const multiplier = isWin ? 1.2 + Math.random() * 8 : Math.random() * 0.9;
+    const profitAmount = Math.round(betAmount * multiplier * 100) / 100;
+
+    return {
+        game,
+        currencyIcon: '',
+        username: randomPhoneName(),
+        currency: 'GHS',
+        betAmount,
+        profitAmount: isWin ? profitAmount : -betAmount
+    };
+};
+
 const LatestBet = () => {
     const { t } = useTranslate();
     const { socket } = useSocket();
 
-    const [bets, setBets] = useState<IBet[]>([]);
+    const [bets, setBets] = useState<IBet[]>(() => Array.from({ length: 8 }, randomBet));
     const isMobile = useResponsive('down', 'sm');
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
         if (socket) {
@@ -81,6 +123,22 @@ const LatestBet = () => {
             }
         };
     }, [socket]);
+
+    // Keep the feed moving with simulated bets at a natural, uneven pace.
+    useEffect(() => {
+        const scheduleNext = () => {
+            const delay = 2500 + Math.random() * 4000;
+            timerRef.current = setTimeout(() => {
+                setBets((pre) => [randomBet(), ...pre].slice(0, 10));
+                scheduleNext();
+            }, delay);
+        };
+        scheduleNext();
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
 
     return (
         <Box
@@ -147,15 +205,6 @@ const LatestBet = () => {
                                             borderBottomColor: `${theme.palette.background.layer3}!important`
                                         })}
                                     >
-                                        {/* {item.player.isHidden ? (
-                                            <Typography variant="inherit" color="text.secondary">
-                                                {t('hidden')}
-                                            </Typography>
-                                        ) : (
-                                            <StyledLink to={`/user/profile/${item.player.id}`}>
-                                                {item.player.name}
-                                            </StyledLink>
-                                        )} */}
                                         <Typography variant="inherit" color="text.secondary">
                                             {item.username}
                                         </Typography>
@@ -188,6 +237,7 @@ const LatestBet = () => {
                                         align="right"
                                         sx={(theme) => ({
                                             fontWeight: 600,
+                                            color: item.profitAmount >= 0 ? '#00e701' : 'error.main',
                                             borderBottom: '1px solid!important',
                                             borderBottomColor: `${theme.palette.background.layer3}!important`
                                         })}
@@ -203,6 +253,7 @@ const LatestBet = () => {
                                                 {item.currency}
                                             </Typography>
                                             <Typography variant="inherit" noWrap>
+                                                {item.profitAmount >= 0 ? '+' : ''}
                                                 {item.profitAmount}
                                             </Typography>
                                             {item.currencyIcon && (
