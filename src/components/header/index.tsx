@@ -216,7 +216,8 @@ const Header = ({
 
                     {isLogined && (
                         <>
-                            {/* ✅ Balance Display with GH₵ — tappable to reveal Deposit/Withdraw, replacing separate buttons on mobile */}
+                            {/* ✅ Balance Display with GH₵ — tappable to reveal Deposit/Withdraw, replacing separate buttons on mobile.
+                                No maxWidth/ellipsis here anymore — the box just grows to fit the full number. */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -233,9 +234,7 @@ const Header = ({
                                     borderColor: 'background.border',
                                     display: 'flex',
                                     flexShrink: 0,
-                                    whiteSpace: 'nowrap',
-                                    maxWidth: { xs: 110, sm: 'none' },
-                                    overflow: 'hidden'
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
                                 {/* ✅ Ghana Cedis symbol */}
@@ -254,8 +253,7 @@ const Header = ({
                                     sx={{
                                         fontWeight: 700,
                                         fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
+                                        whiteSpace: 'nowrap'
                                     }}
                                 >
                                     {typeof balanceAmount === 'number'
