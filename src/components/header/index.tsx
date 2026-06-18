@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { Box, Button, Stack, Typography, IconButton, Popover, Badge } from '@mui/material';
 import { usePathname, useRouter } from 'routes/hook';
 import { useAuth } from 'hooks/use-auth-context';
-import { useResponsive } from 'hooks/use-responsive';
 import { useTranslate } from 'locales';
 import { SearchIcon, WorldIcon } from 'icons';
 import { Add } from '@mui/icons-material';
@@ -48,7 +47,7 @@ const Header = ({
                 right: 0,
                 zIndex: 1201,
                 height: '56px',
-                px: { xs: 1, md: 3 },
+                px: { xs: 1.5, md: 3 },
                 borderBottom: '1px solid',
                 borderColor: 'background.border',
                 bgcolor: 'background.layer1',
@@ -56,47 +55,32 @@ const Header = ({
             }}
         >
             {/* LEFT: Menu + Logo */}
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-                <IconButton
-                    onClick={onHandleNav}
-                    sx={{ color: 'text.secondary', p: 0.5 }}
-                >
-                    <Box
-                        sx={{
-                            width: 22,
-                            height: 22,
-                            background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`,
-                            backgroundSize: 'cover',
-                        }}
-                    />
+            <Stack direction="row" alignItems="center" spacing={1}>
+                <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: 0.5 }}>
+                    <Box sx={{ width: 22, height: 22, background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`, backgroundSize: 'cover' }} />
                 </IconButton>
 
-                {/* Logo - left aligned, slanted */}
-                <Box
+                {/* FORETELL Logo - text based, always correct */}
+                <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.3}
                     onClick={() => router.push('/')}
                     sx={{
                         cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
                         transform: 'skewX(-8deg)',
                     }}
                 >
-                    <Box
-                        component="img"
-                        src="/logo.webp"
-                        sx={{ height: { xs: 26, md: 34 }, display: 'block' }}
-                        onError={(e: any) => {
-                            e.target.style.display = 'none';
-                        }}
-                    />
-                </Box>
+                    <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: { xs: '1.4rem', md: '1.7rem' }, lineHeight: 1 }}>
+                        $
+                    </Typography>
+                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '1rem', md: '1.3rem' }, letterSpacing: 1, lineHeight: 1 }}>
+                        FORETELL
+                    </Typography>
+                </Stack>
 
                 {/* Desktop Nav Tabs */}
-                <Stack
-                    direction="row"
-                    spacing={0.5}
-                    sx={{ display: { xs: 'none', xl: 'flex' }, ml: 2 }}
-                >
+                <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'none', xl: 'flex' }, ml: 2 }}>
                     {headerTabs.map((tab) => {
                         const isActive = pathname === tab.path;
                         return (
@@ -108,8 +92,7 @@ const Header = ({
                                 spacing={0.5}
                                 sx={{
                                     cursor: 'pointer',
-                                    px: 1.5,
-                                    py: 0.8,
+                                    px: 1.5, py: 0.8,
                                     borderRadius: 2,
                                     bgcolor: isActive ? 'background.layer3' : 'transparent',
                                     '&:hover': { bgcolor: 'background.layer3' }
@@ -126,8 +109,7 @@ const Header = ({
             </Stack>
 
             {/* RIGHT: Actions */}
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-
+            <Stack direction="row" alignItems="center" spacing={0.8}>
                 {!isLogined && (
                     <>
                         <IconButton
@@ -138,20 +120,13 @@ const Header = ({
                         </IconButton>
                         <Button
                             onClick={() => onToggleModal('SIGNIN')}
-                            sx={{
-                                color: 'text.primary',
-                                fontWeight: 600,
-                                textTransform: 'none',
-                                fontSize: '0.8rem',
-                                px: 1.5,
-                                display: { xs: 'none', sm: 'flex' }
-                            }}
+                            sx={{ color: 'text.primary', fontWeight: 600, textTransform: 'none', fontSize: '0.85rem', display: { xs: 'none', sm: 'flex' } }}
                         >
                             {t('Sign in')}
                         </Button>
                         <ColorButton
                             onClick={() => onToggleModal('SIGNUP')}
-                            sx={{ px: 2, height: 34, fontSize: '0.8rem', textTransform: 'none' }}
+                            sx={{ px: 2.5, height: 36, fontSize: '0.85rem', textTransform: 'none', fontWeight: 700 }}
                         >
                             {t('Sign up')}
                         </ColorButton>
@@ -160,42 +135,27 @@ const Header = ({
 
                 {isLogined && (
                     <>
-                        {/* Balance - compact */}
+                        {/* Balance */}
                         <Stack
                             direction="row"
                             alignItems="center"
-                            spacing={0.3}
+                            spacing={0.4}
                             onClick={() => setShowBalance(v => !v)}
                             ref={anchorBalanceEl2}
                             sx={{
                                 cursor: 'pointer',
                                 bgcolor: 'background.layer3',
-                                borderRadius: 1.5,
-                                px: 0.8,
-                                py: 0.5,
+                                borderRadius: 2,
+                                px: 1,
+                                py: 0.6,
                                 border: '1px solid',
                                 borderColor: 'background.border',
-                                maxWidth: { xs: 110, sm: 150 },
                             }}
                         >
-                            <Box
-                                component="img"
-                                src={balance.icon}
-                                sx={{ width: 14, height: 14, flexShrink: 0 }}
-                                onError={(e: any) => { e.target.style.display = 'none'; }}
-                            />
-                            <Typography
-                                sx={{
-                                    fontWeight: 700,
-                                    fontSize: '0.75rem',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                }}
-                            >
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                                 {currency} {balance.amount.toFixed(2)}
                             </Typography>
-                            <ArrowDropDownIcon sx={{ fontSize: 14, color: 'text.secondary', flexShrink: 0 }} />
+                            <ArrowDropDownIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         </Stack>
 
                         {/* Balance Popover */}
@@ -206,14 +166,7 @@ const Header = ({
                                 onClose={() => setShowBalance(false)}
                                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                PaperProps={{
-                                    sx: {
-                                        mt: 1, width: 220, p: 2,
-                                        bgcolor: 'background.layer2',
-                                        backgroundImage: 'none',
-                                        boxShadow: 24
-                                    }
-                                }}
+                                PaperProps={{ sx: { mt: 1, width: 220, p: 2, bgcolor: 'background.layer2', backgroundImage: 'none', boxShadow: 24 } }}
                             >
                                 <Stack spacing={1.5}>
                                     <Stack direction="row" justifyContent="space-between">
@@ -232,20 +185,19 @@ const Header = ({
                             </Popover>
                         )}
 
-                        {/* Deposit Button - compact */}
+                        {/* Deposit Button */}
                         <Button
                             onClick={() => onToggleModal('DEPOSIT')}
                             startIcon={<Add sx={{ fontSize: 14 }} />}
                             sx={{
                                 background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                                 color: '#000',
-                                borderRadius: 1.5,
-                                px: { xs: 1, sm: 1.5 },
-                                height: 34,
-                                fontSize: '0.75rem',
+                                borderRadius: 2,
+                                px: { xs: 1.2, sm: 2 },
+                                height: 36,
+                                fontSize: '0.78rem',
                                 textTransform: 'none',
                                 fontWeight: 700,
-                                minWidth: 0,
                                 whiteSpace: 'nowrap',
                                 '&:hover': { background: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)' }
                             }}
@@ -253,22 +205,17 @@ const Header = ({
                             {t('Deposit')}
                         </Button>
 
-                        {/* Notification - hide on mobile */}
+                        {/* Notification - desktop only */}
                         <IconButton
                             onClick={onHandleNotification}
-                            sx={{
-                                display: { xs: 'none', sm: 'inline-flex' },
-                                color: 'text.secondary',
-                                bgcolor: 'background.layer3',
-                                borderRadius: 1.5,
-                                p: 0.7
-                            }}
+                            sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary', bgcolor: 'background.layer3', borderRadius: 2, p: 0.8 }}
                         >
                             <Badge badgeContent={notification.count} color="error" variant="dot">
                                 <NotificationsIcon sx={{ fontSize: 20 }} />
                             </Badge>
                         </IconButton>
 
+                        {/* Profile */}
                         <AccountPopover />
                     </>
                 )}
