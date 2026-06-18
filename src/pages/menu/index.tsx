@@ -67,6 +67,17 @@ const Icon = memo(({ path, x, y }: IconProps) => (
 
 Icon.displayName = 'Icon';
 
+// ✅ Extra menu items below casinoMenus
+const extraMenuItems = [
+    { name: 'Sports', path: '/sports', emoji: '⚽' },
+    { name: 'Store', path: '/store', emoji: '🛒' },
+    { name: 'VIP Club', path: '/vip', emoji: '👑' },
+    { name: 'Bonus', path: '/bonus', emoji: '🎁' },
+    { name: 'Affiliate', path: '/affiliate/dashboard', emoji: '🔗' },
+    { name: 'Help Center', path: '/help-center', emoji: '❓' },
+    { name: 'About', path: '/about', emoji: '💡' },
+];
+
 const NavItem = memo(
     ({
         item,
@@ -172,7 +183,6 @@ NavItem.displayName = 'NavItem';
 const TheemSwitch = memo(() => {
     const { t } = useTranslate();
     const settings = useSettingsContext();
-
     const [mode, setMode] = useState<'light' | 'dark'>(settings.themeMode);
 
     useEffect(() => {
@@ -182,34 +192,14 @@ const TheemSwitch = memo(() => {
     return (
         <DisplayModeToggle sx={{ ml: 'auto', cursor: 'pointer' }}>
             <Box sx={{ zIndex: 999 }} onClick={() => setMode('dark')}>
-                <DarkModeIcon
-                    //  color={mode === 'dark' ? 'primary' : 'disabled'}
-                    sx={{ fontSize: 16 }}
-                />
-                <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    sx={{
-                        ml: 0.5
-                        // color: mode === 'dark' ? 'primary.main' : 'text.disabled'
-                    }}
-                >
+                <DarkModeIcon sx={{ fontSize: 16 }} />
+                <Typography variant="body2" fontWeight="bold" sx={{ ml: 0.5 }}>
                     {t('dark')}
                 </Typography>
             </Box>
             <Box sx={{ zIndex: 999 }} onClick={() => setMode('light')}>
-                <LightModeIcon
-                    // color={mode === 'light' ? 'primary' : 'disabled'}
-                    sx={{ fontSize: 16 }}
-                />
-                <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    sx={{
-                        ml: 0.5
-                        // color: mode === 'light' ? 'primary.main' : 'text.disabled'
-                    }}
-                >
+                <LightModeIcon sx={{ fontSize: 16 }} />
+                <Typography variant="body2" fontWeight="bold" sx={{ ml: 0.5 }}>
                     {t('light')}
                 </Typography>
             </Box>
@@ -227,9 +217,12 @@ const TheemSwitch = memo(() => {
     );
 });
 
+TheemSwitch.displayName = 'TheemSwitch';
+
 const MenuPage = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const { onToggleModal } = useSettingsContext();
     const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
     const handleExpand = useCallback((itemName: string) => {
@@ -261,6 +254,35 @@ const MenuPage = () => {
             >
                 <Stack direction="column" justifyContent="space-between" gap={0.5} sx={{ height: 1 }}>
                     <Stack direction="column" gap={0.5}>
+
+                        {/* ✅ Lucky Spin Button */}
+                        <ListItem
+                            disablePadding
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: '#ffffff1f'
+                            }}
+                        >
+                            <ListItemButton
+                                onClick={() => onToggleModal('SPIN')}
+                                sx={{
+                                    px: 0.5,
+                                    height: 40,
+                                    borderRadius: 2,
+                                    background: 'transparent',
+                                    '&:hover': {
+                                        background: 'linear-gradient(90deg,#23ee8833,#23ee8800),rgba(255,255,255,.05)'
+                                    }
+                                }}
+                            >
+                                <ListItemIcon sx={{ mr: 0.5 }}>
+                                    <Typography sx={{ fontSize: 22 }}>🎡</Typography>
+                                </ListItemIcon>
+                                <ListItemText primary="Lucky Spin" />
+                            </ListItemButton>
+                        </ListItem>
+
+                        {/* ✅ Casino menus (with children) */}
                         {menuItems.map((item) => (
                             <NavItem
                                 key={item.path}
@@ -270,6 +292,37 @@ const MenuPage = () => {
                                 onExpand={handleExpand}
                                 onNavigate={handleNavigate}
                             />
+                        ))}
+
+                        {/* ✅ Extra menu items */}
+                        {extraMenuItems.map((item) => (
+                            <ListItem
+                                key={item.path}
+                                disablePadding
+                                sx={{ borderBottom: 1, borderColor: '#ffffff1f' }}
+                            >
+                                <ListItemButton
+                                    onClick={() => handleNavigate(item.path)}
+                                    sx={{
+                                        px: 0.5,
+                                        height: 40,
+                                        borderRadius: 2,
+                                        background: 'transparent',
+                                        ...(pathname === item.path && {
+                                            background: 'linear-gradient(90deg,#23ee8833,#23ee8800),rgba(255,255,255,.05)',
+                                            color: 'primary.main'
+                                        }),
+                                        '&:hover': {
+                                            background: 'linear-gradient(90deg,#23ee8833,#23ee8800),rgba(255,255,255,.05)'
+                                        }
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ mr: 0.5 }}>
+                                        <Typography sx={{ fontSize: 22 }}>{item.emoji}</Typography>
+                                    </ListItemIcon>
+                                    <ListItemText primary={item.name} />
+                                </ListItemButton>
+                            </ListItem>
                         ))}
                     </Stack>
 
