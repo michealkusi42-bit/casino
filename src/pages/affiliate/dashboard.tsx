@@ -1,22 +1,16 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 // @mui
 import {
     Box,
     Card,
     Grid,
     Stack,
-    Table,
     Divider,
-    TableRow,
     Collapse,
-    TableHead,
-    TableBody,
-    TableCell,
     Typography,
     IconButton,
-    TableContainer
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -26,16 +20,11 @@ import { useAuth } from 'hooks/use-auth-context';
 import { useCopyToClipboard } from 'hooks/use-copy-to-clipboard';
 import {
     XIcon,
-    OkIcon,
-    VKIcon,
     CupIcon,
-    SkypeIcon,
     PeopleIcon,
     FacebookIcon,
-    MoneyLogIcon,
     TelegramIcon,
     WhatsAppIcon,
-    StarIcon
 } from 'icons';
 // utils
 import { fBalance } from 'utils/format-balance';
@@ -46,7 +35,9 @@ const DashboardView = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { copy } = useCopyToClipboard();
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    // ✅ Fixed: use correct token key
+    const token = localStorage.getItem('betthrob-accessToken') || sessionStorage.getItem('betthrob-accessToken');
 
     const [index, setIndex] = useState(-1);
     const [isLoading, setIsLoading] = useState(false);
@@ -112,7 +103,6 @@ const DashboardView = () => {
         <>
             <Stack spacing={3}>
                 <Grid container spacing={2}>
-                    {/* Left - Referral Link Card */}
                     <Grid size={{ md: 8, xs: 12 }}>
                         <Card sx={{ p: 2, borderRadius: 2, backgroundColor: 'background.card' }}>
                             <Stack spacing={2}>
@@ -146,7 +136,6 @@ const DashboardView = () => {
                                     Share your referral link and earn 5% bonus when your friends sign up and start playing!
                                 </Typography>
 
-                                {/* Referral Link */}
                                 <Stack spacing={1}>
                                     <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                                         Your Referral Link
@@ -158,7 +147,7 @@ const DashboardView = () => {
                                         sx={{ borderRadius: 1, pl: 1, bgcolor: 'background.default' }}
                                     >
                                         <Typography variant="body2" sx={{ textWrap: 'wrap', fontSize: 12 }}>
-                                            {isLoading ? 'Loading...' : referralData.referralLink || 'Sign in to get your link'}
+                                            {isLoading ? 'Loading...' : referralData.referralLink || 'Generating your link...'}
                                         </Typography>
                                         <IconButton
                                             sx={{ bgcolor: 'primary.main', borderRadius: 1 }}
@@ -169,7 +158,6 @@ const DashboardView = () => {
                                     </Stack>
                                 </Stack>
 
-                                {/* Referral Code */}
                                 <Stack spacing={1}>
                                     <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                                         Your Referral Code
@@ -192,12 +180,11 @@ const DashboardView = () => {
                                     </Stack>
                                     {copied && (
                                         <Typography variant="caption" sx={{ color: 'primary.main' }}>
-                                            ✅ Copied!
+                                            Copied!
                                         </Typography>
                                     )}
                                 </Stack>
 
-                                {/* Share Buttons */}
                                 <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                                     <Typography variant="body2">Share via:</Typography>
                                     <IconButton
@@ -237,7 +224,6 @@ const DashboardView = () => {
                         </Card>
                     </Grid>
 
-                    {/* Right - Stats Card */}
                     <Grid size={{ md: 4, xs: 12 }}>
                         <Card sx={{ p: 2, height: 1, display: 'flex', borderRadius: 2, backgroundColor: 'background.card' }}>
                             <Stack justifyContent="center" spacing={5} sx={{ width: 1 }}>
@@ -271,7 +257,6 @@ const DashboardView = () => {
                     </Grid>
                 </Grid>
 
-                {/* FAQ */}
                 <Card sx={{ py: 4, px: { md: 4, xs: 2 }, borderRadius: 2, backgroundColor: 'background.card' }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
                         Frequently Asked Questions
