@@ -20,10 +20,6 @@ export const OfflineGames = ({ categoryName, viewCount }: CustomSwiperProps) => 
         { image: coinflipThumbnail, name: 'CoinFlip', link: '/offline-games/coinflip' },
         { image: rouletteThumbnail, name: 'Roulette', link: '/offline-games/roulette' },
         { image: '/assets/crash-thumbnail.svg', name: 'Crash', link: '/offline-games/crash' },
-        { image: '/assets/updown-DQe7IPlb.webp', name: 'UpDown', link: '/offline-games/updown' },
-        { image: '/assets/racing-BfvuIUJj.webp', name: 'Racing', link: '/offline-games/racing' },
-        { image: '/assets/trophy-B3u8sNrg.webp', name: 'Lottery', link: '/offline-games/lottery' },
-        { image: '/assets/trophy-B3u8sNrg.webp', name: 'Bingo', link: '/offline-games/bingo' },
     ];
 
     return (
