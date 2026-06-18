@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Box, Button, Stack, Typography, IconButton, Popover, Badge } from '@mui/material';
+import { Box, Button, Stack, Typography, IconButton, Popover, Badge, Divider } from '@mui/material';
 import { usePathname, useRouter } from 'routes/hook';
 import { useAuth } from 'hooks/use-auth-context';
 import { useTranslate } from 'locales';
@@ -46,35 +46,33 @@ const Header = ({
                 left: 0,
                 right: 0,
                 zIndex: 1201,
-                height: '56px',
+                height: '60px',
                 px: { xs: 1.5, md: 3 },
                 borderBottom: '1px solid',
                 borderColor: 'background.border',
                 bgcolor: 'background.layer1',
-                backdropFilter: 'blur(6px)'
+                backdropFilter: 'blur(6px)',
+                gap: 1,
             }}
         >
             {/* LEFT: Menu + Logo */}
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
                 <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: 0.5 }}>
                     <Box sx={{ width: 22, height: 22, background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`, backgroundSize: 'cover' }} />
                 </IconButton>
 
-                {/* FORETELL Logo - text based, always correct */}
+                {/* FORETELL Logo */}
                 <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={0.3}
+                    spacing={0.2}
                     onClick={() => router.push('/')}
-                    sx={{
-                        cursor: 'pointer',
-                        transform: 'skewX(-8deg)',
-                    }}
+                    sx={{ cursor: 'pointer', transform: 'skewX(-8deg)', flexShrink: 0 }}
                 >
-                    <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: { xs: '1.4rem', md: '1.7rem' }, lineHeight: 1 }}>
+                    <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: { xs: '1.3rem', md: '1.6rem' }, lineHeight: 1 }}>
                         $
                     </Typography>
-                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '1rem', md: '1.3rem' }, letterSpacing: 1, lineHeight: 1 }}>
+                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '0.95rem', md: '1.3rem' }, letterSpacing: 1, lineHeight: 1 }}>
                         FORETELL
                     </Typography>
                 </Stack>
@@ -109,50 +107,55 @@ const Header = ({
             </Stack>
 
             {/* RIGHT: Actions */}
-            <Stack direction="row" alignItems="center" spacing={0.8}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
                 {!isLogined && (
                     <>
-                        <IconButton
-                            onClick={() => onToggleModal('EXPLORE')}
-                            sx={{ color: 'text.secondary', bgcolor: 'background.layer3', borderRadius: '50%', p: 0.8 }}
-                        >
-                            <SearchIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
                         <Button
                             onClick={() => onToggleModal('SIGNIN')}
-                            sx={{ color: 'text.primary', fontWeight: 600, textTransform: 'none', fontSize: '0.85rem', display: { xs: 'none', sm: 'flex' } }}
+                            variant="outlined"
+                            sx={{
+                                color: '#fff',
+                                borderColor: '#fff',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                fontSize: '0.85rem',
+                                px: 2,
+                                height: 36,
+                                borderRadius: 2,
+                            }}
                         >
-                            {t('Sign in')}
+                            Sign in
                         </Button>
                         <ColorButton
                             onClick={() => onToggleModal('SIGNUP')}
-                            sx={{ px: 2.5, height: 36, fontSize: '0.85rem', textTransform: 'none', fontWeight: 700 }}
+                            sx={{ px: 2.5, height: 36, fontSize: '0.85rem', textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
                         >
-                            {t('Sign up')}
+                            Sign up
                         </ColorButton>
                     </>
                 )}
 
                 {isLogined && (
                     <>
-                        {/* Balance */}
+                        {/* Balance Button */}
                         <Stack
                             direction="row"
                             alignItems="center"
-                            spacing={0.4}
+                            spacing={0.5}
                             onClick={() => setShowBalance(v => !v)}
                             ref={anchorBalanceEl2}
                             sx={{
                                 cursor: 'pointer',
                                 bgcolor: 'background.layer3',
                                 borderRadius: 2,
-                                px: 1,
-                                py: 0.6,
+                                px: 1.2,
+                                py: 0.7,
                                 border: '1px solid',
                                 borderColor: 'background.border',
+                                flexShrink: 0,
                             }}
                         >
-                            <Typography sx={{ fontWeight: 700, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', color: '#fff' }}>
                                 {currency} {balance.amount.toFixed(2)}
                             </Typography>
                             <ArrowDropDownIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
@@ -188,21 +191,22 @@ const Header = ({
                         {/* Deposit Button */}
                         <Button
                             onClick={() => onToggleModal('DEPOSIT')}
-                            startIcon={<Add sx={{ fontSize: 14 }} />}
+                            startIcon={<Add sx={{ fontSize: 16 }} />}
                             sx={{
                                 background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                                 color: '#000',
                                 borderRadius: 2,
-                                px: { xs: 1.2, sm: 2 },
+                                px: { xs: 1.5, sm: 2.5 },
                                 height: 36,
-                                fontSize: '0.78rem',
+                                fontSize: '0.85rem',
                                 textTransform: 'none',
                                 fontWeight: 700,
                                 whiteSpace: 'nowrap',
+                                flexShrink: 0,
                                 '&:hover': { background: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)' }
                             }}
                         >
-                            {t('Deposit')}
+                            Deposit
                         </Button>
 
                         {/* Notification - desktop only */}
