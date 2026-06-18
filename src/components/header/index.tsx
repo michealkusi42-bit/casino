@@ -75,16 +75,16 @@ const Header = ({
                 sx={{
                     width: 1,
                     height: 1,
-                    px: { xs: 2, md: 3, lg: 4 },
+                    px: { xs: 1.5, md: 3, lg: 4 },
                     maxWidth: 1600,
                     mx: 'auto'
                 }}
             >
                 {/* Left Section — flex:1 + minWidth:0 lets it absorb leftover space without pushing the right side */}
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={{ xs: 1, md: 2 }} sx={{ flex: 1, minWidth: 0 }}>
                     <IconButton
                         onClick={onHandleNav}
-                        sx={{ display: { lg: 'none' }, color: 'text.secondary', flexShrink: 0 }}
+                        sx={{ display: { lg: 'none' }, color: 'text.secondary', flexShrink: 0, p: { xs: 0.5, sm: 1 } }}
                     >
                         <Box
                             sx={{
@@ -96,7 +96,7 @@ const Header = ({
                         />
                     </IconButton>
 
-                    <Logo height={36} />
+                    <Logo height={32} />
 
                     {/* Tabs — scrolls horizontally instead of wrapping, so it can never collide with the search icon */}
                     <Stack
@@ -166,7 +166,7 @@ const Header = ({
                 <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={{ xs: 1, sm: 2 }}
+                    spacing={{ xs: 0.75, sm: 2 }}
                     sx={{ flexShrink: 0 }}
                 >
                     <IconButton
@@ -216,11 +216,11 @@ const Header = ({
 
                     {isLogined && (
                         <>
-                            {/* ✅ Balance Display with GH₵ — now visible on mobile too */}
+                            {/* ✅ Balance Display with GH₵ — tappable to reveal Deposit/Withdraw, replacing separate buttons on mobile */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
-                                spacing={1}
+                                spacing={0.5}
                                 onClick={anchorBalanceOpen}
                                 ref={anchorBalanceEl2}
                                 sx={{
@@ -233,7 +233,9 @@ const Header = ({
                                     borderColor: 'background.border',
                                     display: 'flex',
                                     flexShrink: 0,
-                                    whiteSpace: 'nowrap'
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: { xs: 110, sm: 'none' },
+                                    overflow: 'hidden'
                                 }}
                             >
                                 {/* ✅ Ghana Cedis symbol */}
@@ -242,17 +244,25 @@ const Header = ({
                                     sx={{
                                         fontWeight: 700,
                                         color: '#FCD116',
-                                        fontSize: { xs: '0.8125rem', sm: '1rem' }
+                                        fontSize: { xs: '0.75rem', sm: '1rem' }
                                     }}
                                 >
                                     GH₵
                                 </Typography>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                        fontWeight: 700,
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
+                                    }}
+                                >
                                     {typeof balanceAmount === 'number'
                                         ? balanceAmount.toFixed(2)
                                         : parseFloat(balanceAmount || '0').toFixed(2)}
                                 </Typography>
-                                <ArrowDropDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                                <ArrowDropDownIcon sx={{ fontSize: 18, color: 'text.secondary', flexShrink: 0 }} />
                             </Stack>
 
                             {anchorBalanceEl2.current && (
@@ -311,7 +321,7 @@ const Header = ({
                                 </Popover>
                             )}
 
-                            {/* ✅ Deposit Button */}
+                            {/* ✅ Deposit Button — hidden on mobile, accessible via balance popover instead */}
                             <Button
                                 onClick={() => onToggleModal('DEPOSIT')}
                                 startIcon={<Add />}
@@ -321,13 +331,14 @@ const Header = ({
                                     backgroundImage: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                                     boxShadow: '0px 4px 10px rgba(0, 186, 230, 0.4)',
                                     borderRadius: 2,
-                                    px: { xs: 1.5, sm: 2.5 },
-                                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                                    height: { xs: 32, sm: 40 },
+                                    px: { sm: 2.5 },
+                                    fontSize: { sm: '0.875rem' },
+                                    height: { sm: 40 },
                                     textTransform: 'none',
                                     fontWeight: 700,
                                     flexShrink: 0,
                                     whiteSpace: 'nowrap',
+                                    display: { xs: 'none', sm: 'flex' },
                                     '&:hover': {
                                         backgroundImage: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)'
                                     }
@@ -336,7 +347,7 @@ const Header = ({
                                 {t('Deposit')}
                             </Button>
 
-                            {/* ✅ Withdraw Button — now visible on mobile too */}
+                            {/* ✅ Withdraw Button — hidden on mobile, accessible via balance popover instead */}
                             <Button
                                 onClick={() => router.push('/wallet/withdraw')}
                                 startIcon={<Remove />}
@@ -344,12 +355,12 @@ const Header = ({
                                     bgcolor: '#2f4553',
                                     color: '#fff',
                                     borderRadius: 2,
-                                    px: { xs: 1.5, sm: 2.5 },
-                                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                                    height: { xs: 32, sm: 40 },
+                                    px: { sm: 2.5 },
+                                    fontSize: { sm: '0.875rem' },
+                                    height: { sm: 40 },
                                     textTransform: 'none',
                                     fontWeight: 700,
-                                    display: 'flex',
+                                    display: { xs: 'none', sm: 'flex' },
                                     flexShrink: 0,
                                     whiteSpace: 'nowrap',
                                     '&:hover': { bgcolor: '#3e5b6d' }
