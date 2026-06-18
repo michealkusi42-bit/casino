@@ -43,7 +43,6 @@ const Header = ({
         setShowBalance(false);
     };
 
-    // ✅ Get the actual balance amount safely
     const balanceAmount = typeof balance === 'object' && balance !== null
         ? (balance.amount ?? balance)
         : balance;
@@ -80,7 +79,6 @@ const Header = ({
                     mx: 'auto'
                 }}
             >
-                {/* Left Section — flex:1 + minWidth:0 lets it absorb leftover space without pushing the right side */}
                 <Stack direction="row" alignItems="center" spacing={{ xs: 1, md: 2 }} sx={{ flex: 1, minWidth: 0 }}>
                     <IconButton
                         onClick={onHandleNav}
@@ -96,9 +94,9 @@ const Header = ({
                         />
                     </IconButton>
 
-                    <Logo height={32} />
+                    {/* ✅ Bigger logo */}
+                    <Logo height={44} />
 
-                    {/* Tabs — scrolls horizontally instead of wrapping, so it can never collide with the search icon */}
                     <Stack
                         direction="row"
                         spacing={1}
@@ -162,7 +160,6 @@ const Header = ({
                     </Stack>
                 </Stack>
 
-                {/* Right Section — flexShrink:0 so this group is never compressed by the left side */}
                 <Stack
                     direction="row"
                     alignItems="center"
@@ -216,8 +213,6 @@ const Header = ({
 
                     {isLogined && (
                         <>
-                            {/* ✅ Balance Display with GH₵ — tappable to reveal Deposit/Withdraw, replacing separate buttons on mobile.
-                                No maxWidth/ellipsis here anymore — the box just grows to fit the full number. */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -237,7 +232,6 @@ const Header = ({
                                     whiteSpace: 'nowrap'
                                 }}
                             >
-                                {/* ✅ Ghana Cedis symbol */}
                                 <Typography
                                     variant="subtitle2"
                                     sx={{
@@ -319,7 +313,6 @@ const Header = ({
                                 </Popover>
                             )}
 
-                            {/* ✅ Deposit Button — hidden on mobile, accessible via balance popover instead */}
                             <Button
                                 onClick={() => onToggleModal('DEPOSIT')}
                                 startIcon={<Add />}
@@ -345,7 +338,6 @@ const Header = ({
                                 {t('Deposit')}
                             </Button>
 
-                            {/* ✅ Withdraw Button — hidden on mobile, accessible via balance popover instead */}
                             <Button
                                 onClick={() => router.push('/wallet/withdraw')}
                                 startIcon={<Remove />}
