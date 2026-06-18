@@ -13,6 +13,7 @@ import { useSettingsContext } from 'components/settings';
 import { useSelector } from 'store/store';
 import { fBalance } from 'utils/format-balance';
 import AccountPopover from './account-popover';
+import Logo from 'components/logo';
 import { headerTabs } from 'data';
 
 const Header = ({
@@ -95,12 +96,7 @@ const Header = ({
                         />
                     </IconButton>
 
-                    <Box
-                        component="img"
-                        src="/logo.webp"
-                        onClick={() => router.push('/')}
-                        sx={{ height: { xs: 32, md: 40 }, cursor: 'pointer', display: 'block', flexShrink: 0 }}
-                    />
+                    <Logo height={36} />
 
                     {/* Tabs — scrolls horizontally instead of wrapping, so it can never collide with the search icon */}
                     <Stack
