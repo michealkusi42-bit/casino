@@ -6,89 +6,43 @@ import ruppee from 'assets/ruppee.svg';
 import clickSound from '../../assets/audio-mines-2.mp3';
 import Loader from 'components/Loader';
 import { useSelector, useDispatch } from 'store/store';
-import { Box, Button, FormControl, FormLabel, Grid, MenuItem, Select, TextField, Typography, Fade, Slide } from '@mui/material';
+import { Box, Button, FormControl, FormLabel, Grid, MenuItem, Select, TextField, Typography, Fade } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { startMines, clickMinesTile, cashoutMines, getActiveMinesGame, getUserBalance } from 'api';
 
-// Animated Win Popup
 const WinPopup = ({ show, profitRatio, totalWin }: { show: boolean; profitRatio: string; totalWin: string }) => (
     <Fade in={show} timeout={400}>
-        <Box
-            sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 10,
-                textAlign: 'center',
-                bgcolor: 'rgba(15, 33, 46, 0.95)',
-                border: '2px solid #00e701',
-                borderRadius: 4,
-                px: 5,
-                py: 4,
-                boxShadow: '0 0 40px rgba(0,231,1,0.4)',
-                backdropFilter: 'blur(8px)',
-                animation: show ? 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' : 'none',
-                '@keyframes popIn': {
-                    '0%': { transform: 'translate(-50%, -40%) scale(0.8)', opacity: 0 },
-                    '100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                },
-            }}
-        >
-            <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>🎉</Typography>
-            <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: '1.8rem', letterSpacing: 2 }}>
-                YOU WON!
-            </Typography>
-            <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.3rem', mt: 1 }}>
-                {profitRatio}×
-            </Typography>
-            <Typography sx={{ color: '#FFD700', fontWeight: 900, fontSize: '1.5rem', mt: 0.5 }}>
-                GH₵ {totalWin} 🤑
-            </Typography>
-            <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', mt: 1.5 }}>
-                Congratulations! 🏆
-            </Typography>
+        <Box sx={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)', zIndex: 10, textAlign: 'center',
+            bgcolor: 'rgba(15, 33, 46, 0.95)', border: '2px solid #00e701',
+            borderRadius: 4, px: { xs: 3, sm: 5 }, py: { xs: 3, sm: 4 },
+            boxShadow: '0 0 40px rgba(0,231,1,0.4)', backdropFilter: 'blur(8px)',
+            width: { xs: '80vw', sm: 'auto' }
+        }}>
+            <Typography sx={{ fontSize: '2rem', mb: 1 }}>🎉</Typography>
+            <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: { xs: '1.3rem', sm: '1.8rem' }, letterSpacing: 2 }}>YOU WON!</Typography>
+            <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '1rem', sm: '1.3rem' }, mt: 1 }}>{profitRatio}×</Typography>
+            <Typography sx={{ color: '#FFD700', fontWeight: 900, fontSize: { xs: '1.1rem', sm: '1.5rem' }, mt: 0.5 }}>GH₵ {totalWin} 🤑</Typography>
+            <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', mt: 1.5 }}>Congratulations! 🏆</Typography>
         </Box>
     </Fade>
 );
 
-// Animated Lost Popup
 const LostPopup = ({ show }: { show: boolean }) => (
     <Fade in={show} timeout={400}>
-        <Box
-            sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 10,
-                textAlign: 'center',
-                bgcolor: 'rgba(15, 33, 46, 0.95)',
-                border: '2px solid #ef4444',
-                borderRadius: 4,
-                px: 5,
-                py: 4,
-                boxShadow: '0 0 40px rgba(239,68,68,0.4)',
-                backdropFilter: 'blur(8px)',
-                animation: show ? 'shakeIn 0.5s ease' : 'none',
-                '@keyframes shakeIn': {
-                    '0%': { transform: 'translate(-50%, -50%) scale(0.8)', opacity: 0 },
-                    '30%': { transform: 'translate(-48%, -50%) scale(1.05)' },
-                    '60%': { transform: 'translate(-52%, -50%) scale(1.05)' },
-                    '100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                },
-            }}
-        >
-            <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>😢</Typography>
-            <Typography sx={{ color: '#ef4444', fontWeight: 900, fontSize: '1.8rem', letterSpacing: 2 }}>
-                OH NO!
-            </Typography>
-            <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '1rem', mt: 1 }}>
-                You hit a bomb! 💣
-            </Typography>
-            <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', mt: 1 }}>
-                Better luck next time! 🍀
-            </Typography>
+        <Box sx={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)', zIndex: 10, textAlign: 'center',
+            bgcolor: 'rgba(15, 33, 46, 0.95)', border: '2px solid #ef4444',
+            borderRadius: 4, px: { xs: 3, sm: 5 }, py: { xs: 3, sm: 4 },
+            boxShadow: '0 0 40px rgba(239,68,68,0.4)', backdropFilter: 'blur(8px)',
+            width: { xs: '80vw', sm: 'auto' }
+        }}>
+            <Typography sx={{ fontSize: '2rem', mb: 1 }}>😢</Typography>
+            <Typography sx={{ color: '#ef4444', fontWeight: 900, fontSize: { xs: '1.3rem', sm: '1.8rem' }, letterSpacing: 2 }}>OH NO!</Typography>
+            <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '1rem', mt: 1 }}>You hit a bomb! 💣</Typography>
+            <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', mt: 1 }}>Better luck next time! 🍀</Typography>
         </Box>
     </Fade>
 );
@@ -150,7 +104,7 @@ const Mine = () => {
         } else {
             try {
                 const balanceData = await getUserBalance();
-                if (balanceData && balanceData.amount !== undefined) {
+                if (balanceData?.amount !== undefined) {
                     dispatch({ type: 'balance/setBalance', payload: balanceData.amount });
                 }
             } catch (error) {
@@ -180,7 +134,6 @@ const Mine = () => {
                     const { payout, multiplier, newBalance } = response.data;
                     setSentBet(payout);
                     setShowPop(true);
-                    // Auto close after 3 seconds
                     setTimeout(() => setShowPop(false), 3000);
                     setIsBetStarted(false);
                     setVisibleImages(Array(totalCells).fill(true));
@@ -223,11 +176,9 @@ const Mine = () => {
     const handleClick = useCallback(
         async (e: React.MouseEvent, index: number) => {
             if (!isBetStarted || firstBombClicked || visibleImages[index] || loading) return;
-
             const target = e.target as HTMLElement;
             target.classList.add('animate-click');
             setTimeout(() => target.classList.remove('animate-click'), 600);
-
             try {
                 const response = await clickMinesTile(index);
                 if (response.success) {
@@ -237,7 +188,6 @@ const Mine = () => {
                         setFirstBombClicked(true);
                         setVisibleImages(Array(totalCells).fill(true));
                         setShowLostPop(true);
-                        // Auto close after 3 seconds
                         setTimeout(() => setShowLostPop(false), 3000);
                         setIsBetStarted(false);
                         updateBalance();
@@ -270,25 +220,18 @@ const Mine = () => {
             <Box sx={{ bgcolor: '#0f212e', maxWidth: '1536px', margin: '0 auto', borderRadius: 2, overflow: 'hidden' }}>
                 <Grid container>
                     {/* Left Panel */}
-                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3 }}>
+                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                             <Box display="flex" flexDirection="column" gap={1}>
-                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>
-                                    Bet Amount
-                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Bet Amount</Typography>
                                 <Box sx={{ display: 'flex', bgcolor: '#2f4553', p: '4px', borderRadius: 1 }}>
                                     <TextField
-                                        id="betAmount"
                                         type="number"
                                         disabled={isBetStarted}
                                         value={betAmount}
                                         onChange={(e) => setBetAmount(e.target.value)}
                                         size="small"
-                                        sx={{
-                                            width: '55%',
-                                            input: { bgcolor: '#0f212e', color: '#fff', fontWeight: 500, padding: '10px' },
-                                            '& fieldset': { border: 'none' }
-                                        }}
+                                        sx={{ width: '55%', input: { bgcolor: '#0f212e', color: '#fff', fontWeight: 500, padding: '10px' }, '& fieldset': { border: 'none' } }}
                                     />
                                     <Box sx={{ display: 'flex', width: '45%', color: '#fff', fontWeight: 600, fontSize: '14px', alignItems: 'center' }}>
                                         <Button disabled={isBetStarted} onClick={() => setBetAmount((amt) => (Number(amt) / 2).toFixed(2))} sx={{ width: '50%', color: '#fff', '&:hover': { bgcolor: '#557086' } }}>½</Button>
@@ -303,19 +246,19 @@ const Mine = () => {
                                         <Grid size={6}>
                                             <Box display="flex" flexDirection="column" gap={1}>
                                                 <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Mines</Typography>
-                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500 }}>{noOfBombs}</Box>
+                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, fontSize: '14px', fontWeight: 500 }}>{noOfBombs}</Box>
                                             </Box>
                                         </Grid>
                                         <Grid size={6}>
                                             <Box display="flex" flexDirection="column" gap={1}>
                                                 <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Gems</Typography>
-                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500 }}>{25 - noOfBombs - clickedIndices.length}</Box>
+                                                <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, fontSize: '14px', fontWeight: 500 }}>{25 - noOfBombs - clickedIndices.length}</Box>
                                             </Box>
                                         </Grid>
                                     </Grid>
                                     <Box display="flex" flexDirection="column" gap={1}>
                                         <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Total Profit ({profitRatio}×)</Typography>
-                                        <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, border: '2px solid #2f4553', fontSize: '14px', fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Box sx={{ bgcolor: '#2f4553', color: '#fff', px: 2, py: 1.5, borderRadius: 1, fontSize: '14px', fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span>{totalProfit}</span>
                                             <Box component="img" src={ruppee} sx={{ width: 16, height: 16 }} alt="Rs." />
                                         </Box>
@@ -337,16 +280,14 @@ const Mine = () => {
                             )}
                         </Box>
                         <Button
-                            fullWidth
-                            variant="contained"
+                            fullWidth variant="contained"
                             onClick={handleBetClicked}
                             disabled={loading}
                             sx={{
                                 mt: 2, py: 1.5, fontWeight: 700, fontSize: '1rem',
                                 backgroundColor: isBetStarted ? '#00BAE6' : '#00e701',
                                 '&:hover': { backgroundColor: isBetStarted ? '#0099cc' : '#1fff20' },
-                                borderRadius: 2,
-                                transition: 'all 0.3s ease',
+                                borderRadius: 2, transition: 'all 0.3s ease',
                                 boxShadow: isBetStarted ? '0 4px 15px rgba(0,186,230,0.4)' : '0 4px 15px rgba(0,231,1,0.4)',
                             }}
                         >
@@ -355,68 +296,60 @@ const Mine = () => {
                     </Grid>
 
                     {/* Right Panel - Game Grid */}
-                    <Grid size={{ xs: 12, md: 9 }} sx={{ m: '0 auto', py: { sm: 3, xs: 1.5 }, position: 'relative', width: '100%', boxSizing: 'border-box', order: { xs: 1, md: 2 } }}>
-                        {/* Win Popup */}
-                        {showPop && (
-                            <WinPopup show={showPop} profitRatio={profitRatio} totalWin={sentBet.toFixed(2)} />
-                        )}
-                        {/* Lost Popup */}
-                        {showLostPop && (
-                            <LostPopup show={showLostPop} />
-                        )}
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ order: { xs: 1, md: 2 }, py: { xs: 2, sm: 3 }, px: { xs: 1.5, sm: 3 }, position: 'relative' }}>
+                        {showPop && <WinPopup show={showPop} profitRatio={profitRatio} totalWin={sentBet.toFixed(2)} />}
+                        {showLostPop && <LostPopup show={showLostPop} />}
 
-                        <Box sx={{ px: 1.5 }}>
-                            <Grid container spacing={{ xs: 1.5, sm: 3 }}>
-                                {Array.from({ length: totalCells }).map((_, index) => {
-                                    const visible = !!visibleImages[index];
-                                    const isBomb = bombIndices.includes(index);
-                                    const clickedByUser = isClickedByUser(index);
-                                    return (
-                                        <Grid key={index} size={12 / 5}>
+                        {/* FIX: use width:'100%' + aspectRatio instead of fixed px/rem heights */}
+                        <Grid container spacing={{ xs: 1, sm: 2 }}>
+                            {Array.from({ length: totalCells }).map((_, index) => {
+                                const visible = !!visibleImages[index];
+                                const isBomb = bombIndices.includes(index);
+                                const clickedByUser = isClickedByUser(index);
+                                return (
+                                    <Grid key={index} size={12 / 5}>
+                                        <Box
+                                            onClick={(e) => handleClick(e, index)}
+                                            role="button"
+                                            tabIndex={0}
+                                            sx={{
+                                                width: '100%',
+                                                aspectRatio: '1 / 1',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease',
+                                                bgcolor: visible ? (isBomb ? '#3d0f0f' : '#071822') : '#2f4553',
+                                                cursor: visible ? 'default' : 'pointer',
+                                                borderBottom: visible ? 'none' : '4px solid #213743',
+                                                '&:hover': visible ? {} : { transform: 'translateY(-4px) scale(1.05)', bgcolor: '#557086', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' },
+                                                animation: visible ? 'revealCard 0.3s ease' : 'none',
+                                                '@keyframes revealCard': {
+                                                    '0%': { transform: 'scale(0.8) rotateY(90deg)', opacity: 0 },
+                                                    '100%': { transform: 'scale(1) rotateY(0deg)', opacity: 1 },
+                                                },
+                                                p: { xs: 0.5, sm: 1 },
+                                                boxSizing: 'border-box'
+                                            }}
+                                        >
                                             <Box
-                                                onClick={(e) => handleClick(e, index)}
-                                                role="button"
-                                                tabIndex={0}
+                                                component="img"
+                                                src={isBomb ? bomb2 : gem}
+                                                alt={isBomb ? 'bomb' : 'gem'}
                                                 sx={{
-                                                    width: { sm: '6.5rem', xs: 'auto' },
-                                                    height: { sm: '7rem', xs: '4.1rem' },
-                                                    maxWidth: '100%',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    borderRadius: 2,
-                                                    transition: 'all 0.2s ease',
-                                                    bgcolor: visible ? (isBomb ? '#3d0f0f' : '#071822') : '#2f4553',
-                                                    cursor: visible ? 'default' : 'pointer',
-                                                    borderBottom: visible ? 'none' : { xs: '4px solid #213743', sm: '8px solid #213743' },
-                                                    '&:hover': visible ? {} : { transform: 'translateY(-6px) scale(1.05)', bgcolor: '#557086', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' },
-                                                    animation: visible ? 'revealCard 0.3s ease' : 'none',
-                                                    '@keyframes revealCard': {
-                                                        '0%': { transform: 'scale(0.8) rotateY(90deg)', opacity: 0 },
-                                                        '100%': { transform: 'scale(1) rotateY(0deg)', opacity: 1 },
-                                                    },
-                                                    p: 1,
-                                                    boxSizing: 'border-box'
+                                                    display: visible ? 'block' : 'none',
+                                                    width: clickedByUser ? '70%' : '50%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain',
+                                                    filter: isBomb ? 'drop-shadow(0 0 8px #ef4444)' : 'drop-shadow(0 0 8px #00e701)',
                                                 }}
-                                            >
-                                                <Box
-                                                    component="img"
-                                                    src={isBomb ? bomb2 : gem}
-                                                    alt={isBomb ? 'bomb' : 'gem'}
-                                                    sx={{
-                                                        display: visible ? 'block' : 'none',
-                                                        width: clickedByUser ? { sm: 80, xs: 40 } : { sm: 48, xs: 24 },
-                                                        height: clickedByUser ? { sm: 80, xs: 40 } : { sm: 48, xs: 24 },
-                                                        objectFit: 'contain',
-                                                        filter: isBomb ? 'drop-shadow(0 0 8px #ef4444)' : 'drop-shadow(0 0 8px #00e701)',
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Grid>
-                                    );
-                                })}
-                            </Grid>
-                        </Box>
+                                            />
+                                        </Box>
+                                    </Grid>
+                                );
+                            })}
+                        </Grid>
                     </Grid>
                 </Grid>
             </Box>
