@@ -12,7 +12,8 @@ import Notification from 'components/notification';
 import { LoadingScreen } from 'components/loading-screen';
 import { useSettingsContext } from 'components/settings';
 import DepositModal from 'components/deposit';
-import WinTicker from 'components/WinTicker';
+import CustomerService from 'components/customer-service';
+// ✅ WinTicker removed
 //
 import Wrapper from './Wrapper';
 
@@ -36,7 +37,7 @@ const MainLayout = () => {
                 onHandleNav={() => setNavStatus((pre) => !pre)}
                 onHandleNotification={() => setNotificationState(true)}
             />
-            <WinTicker />
+            {/* ✅ WinTicker removed from here */}
             {isDesktop ? (
                 <Navbar open={navStatus} />
             ) : (
@@ -45,6 +46,9 @@ const MainLayout = () => {
             <Wrapper open={navStatus} />
             {!isDesktop && <Tabbar navStatus={navStatus} onHandleNav={() => setNavStatus((pre) => !pre)} />}
             <Notification open={notificationState} onClose={() => setNotificationState(false)} />
+
+            {/* ✅ Customer Service floating button */}
+            <CustomerService />
 
             <Dialog
                 open={modal === 'DEPOSIT'}
