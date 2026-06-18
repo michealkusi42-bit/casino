@@ -110,7 +110,7 @@ const Footer = () => {
             component="footer"
             sx={{
                 width: '100%',
-                bgcolor: 'background.site', // Perfectly match the page background color!
+                bgcolor: 'background.site',
                 color: 'text.secondary',
                 borderTop: '1px solid',
                 borderColor: 'rgba(255, 255, 255, 0.05)',
@@ -119,7 +119,7 @@ const Footer = () => {
             }}
         >
             <Container maxWidth={false} sx={{ maxWidth: '1248px !important' }}>
-                {/* 1. Partner Awards & Brand Logos Row (Using User's brand-logo webp assets dynamically based on dark/light mode!) */}
+                {/* 1. Partner Awards & Brand Logos Row */}
                 <Box sx={{ mb: 6 }}>
                     <Grid container spacing={2} justifyContent="space-between" alignItems="center">
                         {logos.map((logoUrl, index) => (
@@ -147,7 +147,6 @@ const Footer = () => {
 
                 {/* 2. Top Link & Community Grid */}
                 <Grid container spacing={4} sx={{ mb: 6 }}>
-                    {/* Render Columns dynamically */}
                     {footerSections.map((section) => (
                         <Grid key={section.title} size={{ xs: 6, sm: 4, md: 2.5 }}>
                             <Typography
@@ -185,9 +184,7 @@ const Footer = () => {
                         </Grid>
                     ))}
 
-                    {/* Join Our Community Column */}
                     <Grid size={{ xs: 12, sm: 12, md: 4.5 }}>
-                        {/* Global Community */}
                         <Typography
                             variant="subtitle2"
                             sx={{
@@ -209,7 +206,6 @@ const Footer = () => {
                             ))}
                         </Grid>
 
-                        {/* Local Community */}
                         <Typography
                             variant="subtitle2"
                             sx={{
@@ -227,7 +223,6 @@ const Footer = () => {
                     </Grid>
                 </Grid>
 
-                {/* Divider Line */}
                 <Box
                     sx={{
                         width: '100%',
@@ -239,12 +234,10 @@ const Footer = () => {
 
                 {/* Bottom Row: Logo, Disclaimer, and Verification Text */}
                 <Grid container spacing={4} sx={{ mb: 6 }}>
-                    {/* Left Column: Brand Logo and Basic Signoff */}
                     <Grid size={{ xs: 12, md: 6 }}>
                         <Stack spacing={3} alignItems="flex-start">
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <Box component="img" src="/logo.webp" sx={{ height: 32 }} />
-                                {/* Football verification shield */}
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -267,12 +260,11 @@ const Footer = () => {
                                     maxWidth: '460px'
                                 }}
                             >
-                                Your use of and access to this website signifies that you fully understand and agree to be legally bound by the contents of our Terms of Service and Responsible Gaming Policy.
+                                Your use of and access to Foretell.com signifies that you fully understand and agree to be legally bound by the contents of our Terms of Service and Responsible Gaming Policy.
                             </Typography>
                         </Stack>
                     </Grid>
 
-                    {/* Right Column: Licensing Text & Verification Badge Row (Using User's public/img/footer sprite webp assets!) */}
                     <Grid size={{ xs: 12, md: 6 }}>
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 1.5, sm: 1 }}>
@@ -300,10 +292,9 @@ const Footer = () => {
                                             color: 'rgba(255, 255, 255, 0.4)'
                                         }}
                                     >
-                                        BCBET.NG is owned and managed by BlockDance Africa Limited, licensed and authorized by the Government of Nigeria's National Lottery Regulatory Commission to operate under a National Sports Betting Permit no. #2005793 and the Lagos State Lotteries and Gaming Authority to operate as a gaming operator in Lagos State under category Sport Betting / Online Casino with license no. LSLGA/OP/OSB/210325.
+                                        Foretell.com is committed to responsible gaming. Betting and casino games involve financial risk and may be habit-forming. Only play with funds you can afford to lose. You must be 18 years or older to use this platform. If you or someone you know shows signs of a gambling problem, please seek support from a counsellor or support service in your area.
                                     </Typography>
-                                    
-                                    {/* Certification Icons from user's /img/footer assets */}
+
                                     <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center" sx={{ pt: 1, gap: 1.5 }}>
                                         {CERTIFICATION_SPRITES.map((spritePath, idx) => (
                                             <Box
@@ -329,7 +320,6 @@ const Footer = () => {
                     </Grid>
                 </Grid>
 
-                {/* Copyright Line */}
                 <Typography
                     sx={{
                         fontSize: '0.75rem',
@@ -340,7 +330,7 @@ const Footer = () => {
                         pt: 3
                     }}
                 >
-                    Copyright ©2026 BlockDance Africa Limited ALL RIGHTS RESERVED.
+                    Copyright ©2026 Foretell.com ALL RIGHTS RESERVED.
                 </Typography>
             </Container>
         </Box>
