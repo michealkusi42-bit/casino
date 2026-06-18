@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Box, Button, Stack, Typography, IconButton, Popover, Badge, Divider } from '@mui/material';
+import { Box, Button, Stack, Typography, IconButton, Popover, Badge } from '@mui/material';
 import { usePathname, useRouter } from 'routes/hook';
 import { useAuth } from 'hooks/use-auth-context';
 import { useTranslate } from 'locales';
@@ -7,6 +7,7 @@ import { SearchIcon, WorldIcon } from 'icons';
 import { Add } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ColorButton from 'components/ColorButton';
 import { useSettingsContext } from 'components/settings';
 import { useSelector } from 'store/store';
@@ -52,13 +53,16 @@ const Header = ({
                 borderColor: 'background.border',
                 bgcolor: 'background.layer1',
                 backdropFilter: 'blur(6px)',
-                gap: 1,
             }}
         >
             {/* LEFT: Menu + Logo */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
                 <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: 0.5 }}>
-                    <Box sx={{ width: 22, height: 22, background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`, backgroundSize: 'cover' }} />
+                    <Box sx={{
+                        width: 22, height: 22,
+                        background: `url(/assets/icons/icons-1.webp) -128px -128px no-repeat`,
+                        backgroundSize: 'cover'
+                    }} />
                 </IconButton>
 
                 {/* FORETELL Logo */}
@@ -69,10 +73,21 @@ const Header = ({
                     onClick={() => router.push('/')}
                     sx={{ cursor: 'pointer', transform: 'skewX(-8deg)', flexShrink: 0 }}
                 >
-                    <Typography sx={{ color: '#00e701', fontWeight: 900, fontSize: { xs: '1.3rem', md: '1.6rem' }, lineHeight: 1 }}>
+                    <Typography sx={{
+                        color: '#00e701',
+                        fontWeight: 900,
+                        fontSize: { xs: '1.3rem', md: '1.6rem' },
+                        lineHeight: 1
+                    }}>
                         $
                     </Typography>
-                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '0.95rem', md: '1.3rem' }, letterSpacing: 1, lineHeight: 1 }}>
+                    <Typography sx={{
+                        color: '#fff',
+                        fontWeight: 900,
+                        fontSize: { xs: '0.9rem', md: '1.3rem' },
+                        letterSpacing: 1,
+                        lineHeight: 1
+                    }}>
                         FORETELL
                     </Typography>
                 </Stack>
@@ -97,7 +112,10 @@ const Header = ({
                                 }}
                             >
                                 <Box component="img" src={tab.icon} sx={{ width: 18, height: 18 }} />
-                                <Typography variant="caption" sx={{ fontWeight: 600, color: isActive ? 'primary.main' : 'text.secondary' }}>
+                                <Typography variant="caption" sx={{
+                                    fontWeight: 600,
+                                    color: isActive ? 'primary.main' : 'text.secondary'
+                                }}>
                                     {t(tab.label)}
                                 </Typography>
                             </Stack>
@@ -107,7 +125,9 @@ const Header = ({
             </Stack>
 
             {/* RIGHT: Actions */}
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" alignItems="center" spacing={{ xs: 0.8, sm: 1.2 }} sx={{ flexShrink: 0 }}>
+
+                {/* NOT LOGGED IN */}
                 {!isLogined && (
                     <>
                         <Button
@@ -115,29 +135,38 @@ const Header = ({
                             variant="outlined"
                             sx={{
                                 color: '#fff',
-                                borderColor: '#fff',
+                                borderColor: 'rgba(255,255,255,0.3)',
                                 fontWeight: 600,
                                 textTransform: 'none',
-                                fontSize: '0.85rem',
-                                px: 2,
+                                fontSize: '0.82rem',
+                                px: { xs: 1.5, sm: 2 },
                                 height: 36,
                                 borderRadius: 2,
+                                '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.05)' }
                             }}
                         >
                             Sign in
                         </Button>
                         <ColorButton
                             onClick={() => onToggleModal('SIGNUP')}
-                            sx={{ px: 2.5, height: 36, fontSize: '0.85rem', textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+                            sx={{
+                                px: { xs: 1.5, sm: 2.5 },
+                                height: 36,
+                                fontSize: '0.82rem',
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                borderRadius: 2
+                            }}
                         >
                             Sign up
                         </ColorButton>
                     </>
                 )}
 
+                {/* LOGGED IN */}
                 {isLogined && (
                     <>
-                        {/* Balance Button */}
+                        {/* Balance - show full on desktop, icon only on mobile */}
                         <Stack
                             direction="row"
                             alignItems="center"
@@ -148,15 +177,34 @@ const Header = ({
                                 cursor: 'pointer',
                                 bgcolor: 'background.layer3',
                                 borderRadius: 2,
-                                px: 1.2,
+                                px: { xs: 1, sm: 1.5 },
                                 py: 0.7,
                                 border: '1px solid',
                                 borderColor: 'background.border',
                                 flexShrink: 0,
                             }}
                         >
-                            <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', color: '#fff' }}>
-                                {currency} {balance.amount.toFixed(2)}
+                            {/* Mobile: wallet icon + short amount */}
+                            <AccountBalanceWalletIcon sx={{ fontSize: 16, color: '#00e701', display: { xs: 'block', sm: 'none' } }} />
+                            
+                            {/* Desktop: full text */}
+                            <Typography sx={{
+                                fontWeight: 700,
+                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                whiteSpace: 'nowrap',
+                                color: '#fff',
+                                display: { xs: 'none', sm: 'block' }
+                            }}>
+                                {currency}
+                            </Typography>
+                            
+                            <Typography sx={{
+                                fontWeight: 700,
+                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                whiteSpace: 'nowrap',
+                                color: '#00e701',
+                            }}>
+                                {balance.amount.toFixed(2)}
                             </Typography>
                             <ArrowDropDownIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         </Stack>
@@ -169,9 +217,19 @@ const Header = ({
                                 onClose={() => setShowBalance(false)}
                                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                PaperProps={{ sx: { mt: 1, width: 220, p: 2, bgcolor: 'background.layer2', backgroundImage: 'none', boxShadow: 24 } }}
+                                PaperProps={{
+                                    sx: {
+                                        mt: 1, width: 230, p: 2,
+                                        bgcolor: 'background.layer2',
+                                        backgroundImage: 'none',
+                                        boxShadow: 24
+                                    }
+                                }}
                             >
                                 <Stack spacing={1.5}>
+                                    <Typography variant="subtitle2" sx={{ color: '#00e701', mb: 0.5 }}>
+                                        My Balance
+                                    </Typography>
                                     <Stack direction="row" justifyContent="space-between">
                                         <Typography variant="body2" color="text.secondary">Main</Typography>
                                         <Typography variant="subtitle2">{fBalance(balance.amount)} {currency}</Typography>
@@ -191,14 +249,14 @@ const Header = ({
                         {/* Deposit Button */}
                         <Button
                             onClick={() => onToggleModal('DEPOSIT')}
-                            startIcon={<Add sx={{ fontSize: 16 }} />}
+                            startIcon={<Add sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                             sx={{
                                 background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                                 color: '#000',
                                 borderRadius: 2,
-                                px: { xs: 1.5, sm: 2.5 },
+                                px: { xs: 1.2, sm: 2.5 },
                                 height: 36,
-                                fontSize: '0.85rem',
+                                fontSize: { xs: '0.78rem', sm: '0.85rem' },
                                 textTransform: 'none',
                                 fontWeight: 700,
                                 whiteSpace: 'nowrap',
@@ -212,14 +270,20 @@ const Header = ({
                         {/* Notification - desktop only */}
                         <IconButton
                             onClick={onHandleNotification}
-                            sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary', bgcolor: 'background.layer3', borderRadius: 2, p: 0.8 }}
+                            sx={{
+                                display: { xs: 'none', md: 'inline-flex' },
+                                color: 'text.secondary',
+                                bgcolor: 'background.layer3',
+                                borderRadius: 2,
+                                p: 0.8
+                            }}
                         >
                             <Badge badgeContent={notification.count} color="error" variant="dot">
                                 <NotificationsIcon sx={{ fontSize: 20 }} />
                             </Badge>
                         </IconButton>
 
-                        {/* Profile */}
+                        {/* Profile - always visible */}
                         <AccountPopover />
                     </>
                 )}
