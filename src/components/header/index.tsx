@@ -216,7 +216,7 @@ const Header = ({
 
                     {isLogined && (
                         <>
-                            {/* ✅ Balance Display with GH₵ */}
+                            {/* ✅ Balance Display with GH₵ — now visible on mobile too */}
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -227,11 +227,11 @@ const Header = ({
                                     cursor: 'pointer',
                                     bgcolor: 'background.layer3',
                                     borderRadius: 2,
-                                    px: 1.5,
+                                    px: { xs: 1, sm: 1.5 },
                                     py: 0.8,
                                     border: '1px solid',
                                     borderColor: 'background.border',
-                                    display: { xs: 'none', sm: 'flex' },
+                                    display: 'flex',
                                     flexShrink: 0,
                                     whiteSpace: 'nowrap'
                                 }}
@@ -242,12 +242,12 @@ const Header = ({
                                     sx={{
                                         fontWeight: 700,
                                         color: '#FCD116',
-                                        fontSize: '1rem'
+                                        fontSize: { xs: '0.8125rem', sm: '1rem' }
                                     }}
                                 >
                                     GH₵
                                 </Typography>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
                                     {typeof balanceAmount === 'number'
                                         ? balanceAmount.toFixed(2)
                                         : parseFloat(balanceAmount || '0').toFixed(2)}
@@ -336,7 +336,7 @@ const Header = ({
                                 {t('Deposit')}
                             </Button>
 
-                            {/* ✅ Withdraw Button */}
+                            {/* ✅ Withdraw Button — now visible on mobile too */}
                             <Button
                                 onClick={() => router.push('/wallet/withdraw')}
                                 startIcon={<Remove />}
@@ -349,7 +349,7 @@ const Header = ({
                                     height: { xs: 32, sm: 40 },
                                     textTransform: 'none',
                                     fontWeight: 700,
-                                    display: { xs: 'none', sm: 'flex' },
+                                    display: 'flex',
                                     flexShrink: 0,
                                     whiteSpace: 'nowrap',
                                     '&:hover': { bgcolor: '#3e5b6d' }
