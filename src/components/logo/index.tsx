@@ -1,9 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { useRouter } from 'routes/hook';
 
-// ─── Code-based "Foretell" logo ──────────────────────────────────────────────
-// Replaces the static /logo.webp image so the brand name lives in code,
-// not an image file that needs re-uploading every time it changes.
 const Logo = ({ height = 40 }: { height?: number }) => {
     const router = useRouter();
 
@@ -15,7 +12,6 @@ const Logo = ({ height = 40 }: { height?: number }) => {
             onClick={() => router.push('/')}
             sx={{ cursor: 'pointer', flexShrink: 0, userSelect: 'none' }}
         >
-            {/* Dollar-sign mark, styled like the original icon */}
             <Box
                 sx={{
                     position: 'relative',
@@ -37,7 +33,6 @@ const Logo = ({ height = 40 }: { height?: number }) => {
                 >
                     $
                 </Typography>
-                {/* small crown accent above the $ to echo the original mark */}
                 <Box
                     sx={{
                         position: 'absolute',
@@ -55,12 +50,13 @@ const Logo = ({ height = 40 }: { height?: number }) => {
 
             <Typography
                 sx={{
-                    fontSize: height * 0.55,
-                    fontWeight: 800,
-                    letterSpacing: 0.5,
+                    fontSize: { xs: height * 0.75, sm: height * 0.65 },
+                    fontWeight: 900,
+                    letterSpacing: { xs: 2, sm: 1 },
                     color: '#fff',
                     lineHeight: 1,
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    textShadow: '0 0 20px rgba(255,255,255,0.3)'
                 }}
             >
                 FORETELL
