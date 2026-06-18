@@ -48,7 +48,7 @@ const Header = ({
                 right: 0,
                 zIndex: 1201,
                 height: '60px',
-                px: { xs: 1.5, md: 3 },
+                px: { xs: 2, md: 3 },
                 borderBottom: '1px solid',
                 borderColor: 'background.border',
                 bgcolor: 'background.layer1',
@@ -56,7 +56,7 @@ const Header = ({
             }}
         >
             {/* LEFT: Menu + Logo */}
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flexShrink: 0, minWidth: 0 }}>
                 <IconButton onClick={onHandleNav} sx={{ color: 'text.secondary', p: 0.5 }}>
                     <Box sx={{
                         width: 22, height: 22,
@@ -69,7 +69,7 @@ const Header = ({
                 <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={0.2}
+                    spacing={0.3}
                     onClick={() => router.push('/')}
                     sx={{ cursor: 'pointer', transform: 'skewX(-8deg)', flexShrink: 0 }}
                 >
@@ -84,9 +84,10 @@ const Header = ({
                     <Typography sx={{
                         color: '#fff',
                         fontWeight: 900,
-                        fontSize: { xs: '0.9rem', md: '1.3rem' },
+                        fontSize: { xs: '0.85rem', md: '1.3rem' },
                         letterSpacing: 1,
-                        lineHeight: 1
+                        lineHeight: 1,
+                        whiteSpace: 'nowrap'
                     }}>
                         FORETELL
                     </Typography>
@@ -124,8 +125,17 @@ const Header = ({
                 </Stack>
             </Stack>
 
-            {/* RIGHT: Actions */}
-            <Stack direction="row" alignItems="center" spacing={{ xs: 0.8, sm: 1.2 }} sx={{ flexShrink: 0 }}>
+            {/* MIDDLE SPACER: pushes left and right groups apart and absorbs all extra width evenly */}
+            <Box sx={{ flex: 1, minWidth: { xs: 12, sm: 24 } }} />
+
+            {/* RIGHT: Actions — spread evenly across remaining space */}
+            <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="flex-end"
+                spacing={{ xs: 1.25, sm: 2 }}
+                sx={{ flexShrink: 0, width: { xs: 'auto', sm: 'auto' } }}
+            >
 
                 {/* NOT LOGGED IN */}
                 {!isLogined && (
@@ -170,14 +180,14 @@ const Header = ({
                         <Stack
                             direction="row"
                             alignItems="center"
-                            spacing={0.5}
+                            spacing={0.6}
                             onClick={() => setShowBalance(v => !v)}
                             ref={anchorBalanceEl2}
                             sx={{
                                 cursor: 'pointer',
                                 bgcolor: 'background.layer3',
                                 borderRadius: 2,
-                                px: { xs: 1, sm: 1.5 },
+                                px: { xs: 1.2, sm: 1.5 },
                                 py: 0.7,
                                 border: '1px solid',
                                 borderColor: 'background.border',
