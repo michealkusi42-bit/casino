@@ -27,7 +27,10 @@ import { LoadingScreen } from 'components/loading-screen';
 import { t } from 'i18next';
 
 const BetHistoryPage = () => {
-    const rangeCalendarPicker = useDateRangePicker(new Date(), null);
+    // Pass a real Date instead of null for the initial end date — some
+    // date-range-picker implementations call methods on endDate (e.g.
+    // formatting) immediately on mount, which crashes if it's null.
+    const rangeCalendarPicker = useDateRangePicker(new Date(), new Date());
     const { user } = useAuth();
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -43,18 +46,9 @@ const BetHistoryPage = () => {
     const [selectedDuration, setSelectedDuration] = useState<string>('60');
 
     const typeOptions = [
-        {
-            name: 'all',
-            label: 'all'
-        },
-        {
-            name: 'win',
-            label: 'win'
-        },
-        {
-            name: 'bet',
-            label: 'bet'
-        }
+        { name: 'all', label: 'all' },
+        { name: 'win', label: 'win' },
+        { name: 'bet', label: 'bet' }
     ];
     const [data, setData] = useState<Itransaction[]>([]);
 
@@ -101,10 +95,15 @@ const BetHistoryPage = () => {
                 rowsPerPage,
                 date
             });
-            setTotalRows(response.total);
-            setData(response.data);
+            // Defensive: don't assume the API always returns { total, data }.
+            const rows = Array.isArray(response?.data) ? response.data : [];
+            const total = Number.isFinite(response?.total) ? response.total : rows.length;
+            setTotalRows(total);
+            setData(rows);
         } catch (error) {
             console.log('Get Transaction Error:', error);
+            setData([]);
+            setTotalRows(0);
         } finally {
             setLoading(false);
         }
@@ -187,34 +186,40 @@ const BetHistoryPage = () => {
                     </TableRow>
                 </TableHead>
 
-                {!loading &&
-                    (data.length === 0 ? (
-                        <TableBody>
+                {!loading && (
+                    <TableBody>
+                        {data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={4}>
                                     <EmptyData />
                                 </TableCell>
                             </TableRow>
-                        </TableBody>
-                    ) : (
-                        data.map((item, index) => (
-                            <TableBody key={index}>
-                                <TableCell sx={{ textTransform: 'capitalize' }}>
-                                    <Typography fontWeight={700}>{item.typeDescription}</Typography>
-                                    <Typography variant="caption" color="textDisabled">
-                                        {item.gameName}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>{fDateTime(item.createdAt)}</TableCell>
-                                <TableCell>
-                                    <Typography variant="button" color={item.amount > 0 ? 'primary' : 'error'}>
-                                        {item.amount}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell sx={{ textAlign: 'right', fontWeight: '800' }}>{item.afterAmount}</TableCell>
-                            </TableBody>
-                        ))
-                    ))}
+                        ) : (
+                            data.map((item, index) => (
+                                // FIX: cells must be wrapped in a TableRow, not placed
+                                // directly inside TableBody. This alone could crash
+                                // or render a broken table.
+                                <TableRow key={index}>
+                                    <TableCell sx={{ textTransform: 'capitalize' }}>
+                                        <Typography fontWeight={700}>{item?.typeDescription}</Typography>
+                                        <Typography variant="caption" color="textDisabled">
+                                            {item?.gameName}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>{item?.createdAt ? fDateTime(item.createdAt) : '-'}</TableCell>
+                                    <TableCell>
+                                        <Typography variant="button" color={(item?.amount ?? 0) > 0 ? 'primary' : 'error'}>
+                                            {item?.amount ?? 0}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ textAlign: 'right', fontWeight: '800' }}>
+                                        {item?.afterAmount ?? 0}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                )}
             </Table>
             {loading && (
                 <Stack width="100%" minHeight={300}>
