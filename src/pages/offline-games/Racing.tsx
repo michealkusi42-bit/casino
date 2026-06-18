@@ -80,10 +80,10 @@ const Racing = () => {
     };
 
     return (
-        <Box sx={{ bgcolor: '#1a2c38', minHeight: '100vh', pt: 4, px: 1.5 }}>
+        <Box sx={{ bgcolor: '#1a2c38', minHeight: '100vh', pt: { xs: 2, sm: 4 }, px: 1.5 }}>
             <Box sx={{ bgcolor: '#0f212e', maxWidth: '1536px', mx: 'auto', borderRadius: 2, overflow: 'hidden' }}>
                 <Grid container>
-                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: 5, px: 3 }}>
+                    <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 1 }, bgcolor: '#213743', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                             <Typography variant="body2" sx={{ color: 'rgb(148 163 184)', fontWeight: 500 }}>Bet Amount</Typography>
                             <Box sx={{ display: 'flex', bgcolor: '#2f4553', p: '4px', borderRadius: 1 }}>
@@ -100,7 +100,7 @@ const Racing = () => {
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 {HORSES.map(h => (
                                     <Button key={h.id} disabled={isBetStarted} onClick={() => setSelectedHorse(h.id)}
-                                        sx={{ justifyContent: 'flex-start', px: 2, py: 1, borderRadius: 1, bgcolor: selectedHorse === h.id ? h.color : '#2f4553', color: '#fff', '&:hover': { bgcolor: h.color } }}>
+                                        sx={{ justifyContent: 'flex-start', px: 2, py: 0.75, borderRadius: 1, bgcolor: selectedHorse === h.id ? h.color : '#2f4553', color: '#fff', '&:hover': { bgcolor: h.color } }}>
                                         #{h.id} {h.name}
                                     </Button>
                                 ))}
@@ -112,12 +112,14 @@ const Racing = () => {
                         </Button>
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 9 }} sx={{ minHeight: '85vh', p: 3, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ minHeight: { xs: 'auto', md: '85vh' }, p: { xs: 2, md: 3 }, order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: { xs: 1, sm: 2 } }}>
                         {HORSES.map(h => (
-                            <Box key={h.id} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Typography sx={{ color: h.color, width: 80, fontWeight: 700, fontSize: '0.85rem' }}>#{h.id} {h.name}</Typography>
-                                <Box sx={{ flex: 1, bgcolor: '#2f4553', borderRadius: 1, height: 32, position: 'relative', overflow: 'hidden' }}>
-                                    <Box sx={{ position: 'absolute', left: `${positions[h.id] || 0}%`, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontSize: '1.4rem', transition: 'left 0.15s linear', transform: 'translateX(-50%)' }}>
+                            <Box key={h.id} sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+                                <Typography sx={{ color: h.color, width: { xs: 50, sm: 80 }, fontWeight: 700, fontSize: { xs: '0.7rem', sm: '0.85rem' }, flexShrink: 0 }}>
+                                    #{h.id} {h.name}
+                                </Typography>
+                                <Box sx={{ flex: 1, bgcolor: '#2f4553', borderRadius: 1, height: { xs: 24, sm: 32 }, position: 'relative', overflow: 'hidden' }}>
+                                    <Box sx={{ position: 'absolute', left: `${positions[h.id] || 0}%`, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontSize: { xs: '1rem', sm: '1.4rem' }, transition: 'left 0.15s linear', transform: 'translateX(-50%)' }}>
                                         🐎
                                     </Box>
                                 </Box>
@@ -127,7 +129,7 @@ const Racing = () => {
 
                         {result && (
                             <Box sx={{ textAlign: 'center', mt: 2 }}>
-                                <Typography sx={{ color: result.win ? '#00e676' : '#f44336', fontSize: '1.5rem', fontWeight: 700 }}>
+                                <Typography sx={{ color: result.win ? '#00e676' : '#f44336', fontSize: { xs: '1rem', sm: '1.5rem' }, fontWeight: 700 }}>
                                     {result.win
                                         ? `🎉 ${HORSES.find(h => h.id === result.winner)?.name} wins! You won ${result.payout.toFixed(2)}`
                                         : `😞 ${HORSES.find(h => h.id === result.winner)?.name} wins. Better luck!`}
