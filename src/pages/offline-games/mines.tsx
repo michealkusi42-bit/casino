@@ -296,12 +296,11 @@ const Mine = () => {
                     </Grid>
 
                     {/* Right Panel - Game Grid */}
-                    <Grid size={{ xs: 12, md: 9 }} sx={{ order: { xs: 1, md: 2 }, py: { xs: 2, sm: 3 }, px: { xs: 1.5, sm: 3 }, position: 'relative' }}>
+                    <Grid size={{ xs: 12, md: 9 }} sx={{ order: { xs: 1, md: 2 }, py: { xs: 1, sm: 3 }, px: { xs: 1, sm: 3 }, position: 'relative' }}>
                         {showPop && <WinPopup show={showPop} profitRatio={profitRatio} totalWin={sentBet.toFixed(2)} />}
                         {showLostPop && <LostPopup show={showLostPop} />}
 
-                        {/* FIX: use width:'100%' + aspectRatio instead of fixed px/rem heights */}
-                        <Grid container spacing={{ xs: 1, sm: 2 }}>
+                        <Grid container spacing={{ xs: 0.75, sm: 2 }}>
                             {Array.from({ length: totalCells }).map((_, index) => {
                                 const visible = !!visibleImages[index];
                                 const isBomb = bombIndices.includes(index);
@@ -314,22 +313,22 @@ const Mine = () => {
                                             tabIndex={0}
                                             sx={{
                                                 width: '100%',
-                                                aspectRatio: '1 / 1',
+                                                aspectRatio: { xs: '1 / 0.75', sm: '1 / 1' },
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                borderRadius: 2,
+                                                borderRadius: { xs: 1, sm: 2 },
                                                 transition: 'all 0.2s ease',
                                                 bgcolor: visible ? (isBomb ? '#3d0f0f' : '#071822') : '#2f4553',
                                                 cursor: visible ? 'default' : 'pointer',
-                                                borderBottom: visible ? 'none' : '4px solid #213743',
+                                                borderBottom: visible ? 'none' : '3px solid #213743',
                                                 '&:hover': visible ? {} : { transform: 'translateY(-4px) scale(1.05)', bgcolor: '#557086', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' },
                                                 animation: visible ? 'revealCard 0.3s ease' : 'none',
                                                 '@keyframes revealCard': {
                                                     '0%': { transform: 'scale(0.8) rotateY(90deg)', opacity: 0 },
                                                     '100%': { transform: 'scale(1) rotateY(0deg)', opacity: 1 },
                                                 },
-                                                p: { xs: 0.5, sm: 1 },
+                                                p: { xs: 0.25, sm: 1 },
                                                 boxSizing: 'border-box'
                                             }}
                                         >
