@@ -1,17 +1,16 @@
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import {
     Box,
+    Chip,
     MenuItem,
     Select,
     Stack,
-    styled,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography
+    Typography,
+    Avatar
 } from '@mui/material';
 import { _dateRangeOptions } from '_mock';
 import { useEffect, useState } from 'react';
@@ -26,82 +25,151 @@ import { fDateTime } from 'utils/format-time';
 import { LoadingScreen } from 'components/loading-screen';
 import { t } from 'i18next';
 
+const gameIconMap: Record<string, string> = {
+    dice: '🎲',
+    coinflip: '🪙',
+    mines: '💎',
+    hilo: '🃏',
+    roulette: '🎡',
+    poker: '♠️',
+    crash: '🚀',
+    luckyspin: '🎰',
+};
+
+const BetCard = ({ item }: { item: any }) => {
+    const isWin = (item?.amount ?? 0) > 0;
+    const gameType = item?.gameName?.toLowerCase() || '';
+    const icon = gameIconMap[gameType] || '🎮';
+
+    return (
+        <Box
+            sx={{
+                p: 2,
+                borderRadius: 2.5,
+                border: '1px solid',
+                borderColor: isWin ? 'rgba(0,231,1,0.2)' : 'rgba(255,68,68,0.15)',
+                bgcolor: isWin ? 'rgba(0,231,1,0.04)' : 'rgba(255,68,68,0.04)',
+                transition: 'transform 0.15s',
+                '&:hover': { transform: 'translateY(-1px)' }
+            }}
+        >
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                {/* Left: icon + game info */}
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Avatar
+                        sx={{
+                            width: 42,
+                            height: 42,
+                            bgcolor: isWin ? 'rgba(0,231,1,0.12)' : 'rgba(255,68,68,0.1)',
+                            fontSize: '1.3rem',
+                            border: '1px solid',
+                            borderColor: isWin ? 'rgba(0,231,1,0.25)' : 'rgba(255,68,68,0.2)'
+                        }}
+                    >
+                        {icon}
+                    </Avatar>
+                    <Box>
+                        <Typography
+                            variant="body2"
+                            fontWeight={700}
+                            sx={{ textTransform: 'capitalize', color: 'text.primary' }}
+                        >
+                            {item?.gameName || item?.typeDescription || 'Game'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {item?.createdAt ? fDateTime(item.createdAt) : '-'}
+                        </Typography>
+                    </Box>
+                </Stack>
+
+                {/* Right: amount + balance */}
+                <Stack alignItems="flex-end" spacing={0.3}>
+                    <Stack direction="row" alignItems="center" spacing={0.4}>
+                        {isWin
+                            ? <TrendingUpIcon sx={{ fontSize: 16, color: '#00e701' }} />
+                            : <TrendingDownIcon sx={{ fontSize: 16, color: '#ff4444' }} />
+                        }
+                        <Typography
+                            fontWeight={800}
+                            sx={{
+                                color: isWin ? '#00e701' : '#ff4444',
+                                fontSize: '0.95rem'
+                            }}
+                        >
+                            {isWin ? '+' : ''}{item?.amount ?? 0}
+                        </Typography>
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                        Bal: {item?.afterAmount ?? 0}
+                    </Typography>
+                    <Chip
+                        label={isWin ? 'WIN' : 'LOSS'}
+                        size="small"
+                        sx={{
+                            height: 18,
+                            fontSize: '0.6rem',
+                            fontWeight: 800,
+                            bgcolor: isWin ? 'rgba(0,231,1,0.15)' : 'rgba(255,68,68,0.15)',
+                            color: isWin ? '#00e701' : '#ff4444',
+                            border: '1px solid',
+                            borderColor: isWin ? 'rgba(0,231,1,0.3)' : 'rgba(255,68,68,0.3)'
+                        }}
+                    />
+                </Stack>
+            </Stack>
+        </Box>
+    );
+};
+
 const BetHistoryPage = () => {
-    // Pass a real Date instead of null for the initial end date — some
-    // date-range-picker implementations call methods on endDate (e.g.
-    // formatting) immediately on mount, which crashes if it's null.
     const rangeCalendarPicker = useDateRangePicker(new Date(), new Date());
     const { user } = useAuth();
     const [loading, setLoading] = useState<boolean>(false);
-
     const [totalRows, setTotalRows] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-
     const [type, setType] = useState<string>('all');
-    const [date, setDate] = useState<{ start: Date; end: Date }>({
-        start: new Date(),
-        end: new Date()
-    });
+    const [date, setDate] = useState<{ start: Date; end: Date }>({ start: new Date(), end: new Date() });
     const [selectedDuration, setSelectedDuration] = useState<string>('60');
+    const [data, setData] = useState<Itransaction[]>([]);
 
     const typeOptions = [
         { name: 'all', label: 'all' },
         { name: 'win', label: 'win' },
         { name: 'bet', label: 'bet' }
     ];
-    const [data, setData] = useState<Itransaction[]>([]);
+
+    const getPastDate = (days: number) => ({
+        start: moment().add(-days, 'days').startOf('day').toDate(),
+        end: moment().endOf('day').toDate()
+    });
 
     const changeDuration = (value: string) => {
         if (value === 'custom' && rangeCalendarPicker.onOpen) {
             rangeCalendarPicker.onOpen();
         } else {
-            const dateRange = getPastDate(Number(value));
-            setDate(dateRange);
+            setDate(getPastDate(Number(value)));
         }
         setSelectedDuration(value);
     };
 
-    useEffect(() => {
-        changeDuration(selectedDuration);
-    }, [selectedDuration]);
+    useEffect(() => { changeDuration(selectedDuration); }, [selectedDuration]);
 
     useEffect(() => {
         if (rangeCalendarPicker.startDate && rangeCalendarPicker.endDate) {
-            setDate({
-                start: rangeCalendarPicker.startDate,
-                end: rangeCalendarPicker.endDate
-            });
+            setDate({ start: rangeCalendarPicker.startDate, end: rangeCalendarPicker.endDate });
         }
     }, [rangeCalendarPicker.startDate, rangeCalendarPicker.endDate]);
-
-    const getPastDate = (days: number) => {
-        return {
-            start: moment().add(-days, 'days').startOf('day').toDate(),
-            end: moment().endOf('day').toDate()
-        };
-    };
-
-    useEffect(() => {
-        setData([]);
-    }, []);
 
     const getTransactionHistories = async () => {
         try {
             setLoading(true);
-            const response = await getTransactions({
-                type,
-                currentPage: currentPage + 1,
-                rowsPerPage,
-                date
-            });
-            // Defensive: don't assume the API always returns { total, data }.
+            const response = await getTransactions({ type, currentPage: currentPage + 1, rowsPerPage, date });
             const rows = Array.isArray(response?.data) ? response.data : [];
             const total = Number.isFinite(response?.total) ? response.total : rows.length;
             setTotalRows(total);
             setData(rows);
         } catch (error) {
-            console.log('Get Transaction Error:', error);
             setData([]);
             setTotalRows(0);
         } finally {
@@ -109,123 +177,84 @@ const BetHistoryPage = () => {
         }
     };
 
-    useEffect(() => {
-        getTransactionHistories();
-    }, [type, date, rowsPerPage, currentPage]);
+    useEffect(() => { getTransactionHistories(); }, [type, date, rowsPerPage, currentPage]);
+
+    // Stats summary
+    const wins = data.filter(d => (d?.amount ?? 0) > 0);
+    const losses = data.filter(d => (d?.amount ?? 0) <= 0);
+    const totalWon = wins.reduce((s, d) => s + (d?.amount ?? 0), 0);
+    const totalLost = losses.reduce((s, d) => s + Math.abs(d?.amount ?? 0), 0);
 
     return (
-        <Stack
-            direction="column"
-            gap={2}
-            sx={{ py: { xs: 1, sm: 2 }, px: { xs: 2, sm: 4 }, bgcolor: 'background.card', borderRadius: 3 }}
-        >
-            <Stack
-                gap={1}
-                sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' }
-                }}
-            >
+        <Stack direction="column" gap={2} sx={{ py: { xs: 1, sm: 2 } }}>
+
+            {/* Summary Stats */}
+            <Stack direction="row" spacing={1.5}>
+                <Box sx={{
+                    flex: 1, p: 1.5, borderRadius: 2,
+                    bgcolor: 'rgba(0,231,1,0.07)',
+                    border: '1px solid rgba(0,231,1,0.2)',
+                    textAlign: 'center'
+                }}>
+                    <EmojiEventsIcon sx={{ color: '#00e701', fontSize: 20 }} />
+                    <Typography variant="caption" display="block" color="text.secondary">Wins</Typography>
+                    <Typography fontWeight={800} sx={{ color: '#00e701', fontSize: '0.9rem' }}>
+                        {wins.length} (+{totalWon.toFixed(2)})
+                    </Typography>
+                </Box>
+                <Box sx={{
+                    flex: 1, p: 1.5, borderRadius: 2,
+                    bgcolor: 'rgba(255,68,68,0.07)',
+                    border: '1px solid rgba(255,68,68,0.2)',
+                    textAlign: 'center'
+                }}>
+                    <TrendingDownIcon sx={{ color: '#ff4444', fontSize: 20 }} />
+                    <Typography variant="caption" display="block" color="text.secondary">Losses</Typography>
+                    <Typography fontWeight={800} sx={{ color: '#ff4444', fontSize: '0.9rem' }}>
+                        {losses.length} (-{totalLost.toFixed(2)})
+                    </Typography>
+                </Box>
+                <Box sx={{
+                    flex: 1, p: 1.5, borderRadius: 2,
+                    bgcolor: 'rgba(0,186,230,0.07)',
+                    border: '1px solid rgba(0,186,230,0.2)',
+                    textAlign: 'center'
+                }}>
+                    <SportsEsportsIcon sx={{ color: '#00BAE6', fontSize: 20 }} />
+                    <Typography variant="caption" display="block" color="text.secondary">Total</Typography>
+                    <Typography fontWeight={800} sx={{ color: '#00BAE6', fontSize: '0.9rem' }}>
+                        {data.length} bets
+                    </Typography>
+                </Box>
+            </Stack>
+
+            {/* Filters */}
+            <Stack gap={1} sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
                 <Select size="small" fullWidth value={type} onChange={(e) => setType(e.target.value)}>
                     {typeOptions.map((item, index) => (
-                        <MenuItem key={index} value={item.name}>
-                            {t(`${item.label}`)}
-                        </MenuItem>
+                        <MenuItem key={index} value={item.name}>{t(`${item.label}`)}</MenuItem>
                     ))}
                 </Select>
-
-                <Select
-                    size="small"
-                    fullWidth
-                    value={selectedDuration}
-                    onChange={(e) => setSelectedDuration(e.target.value)}
-                >
+                <Select size="small" fullWidth value={selectedDuration} onChange={(e) => setSelectedDuration(e.target.value)}>
                     {_dateRangeOptions.map((item, index) => (
-                        <MenuItem key={index} value={item.name}>
-                            {t(`${item.label}`)}
-                        </MenuItem>
+                        <MenuItem key={index} value={item.name}>{t(`${item.label}`)}</MenuItem>
                     ))}
                 </Select>
             </Stack>
 
-            <Stack direction="row" alignItems="center">
-                <Stack
-                    direction="row"
-                    alignItems="center"
-                    sx={{
-                        cursor: 'pointer',
-                        color: 'text.secondary',
-                        textDecoration: 'underline',
-                        gap: 0.5,
-                        '&:hover': {
-                            opacity: 0.8
-                        }
-                    }}
-                >
-                    <InfoOutlinedIcon sx={{ fontSize: 17 }} />
-                    <Typography variant="body2">{t('fiat_deposit_issues_or_disputes')}</Typography>
-                </Stack>
-            </Stack>
-
-            <Table
-                sx={{
-                    th: {
-                        py: 1
-                    },
-                    td: {
-                        borderBottom: 0
-                    }
-                }}
-            >
-                <TableHead>
-                    <TableRow>
-                        <TableCell>{t('type')}</TableCell>
-                        <TableCell>{t('time')}</TableCell>
-                        <TableCell>{t('amount')}</TableCell>
-                        <TableCell>{t('balance')}</TableCell>
-                    </TableRow>
-                </TableHead>
-
-                {!loading && (
-                    <TableBody>
-                        {data.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={4}>
-                                    <EmptyData />
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            data.map((item, index) => (
-                                // FIX: cells must be wrapped in a TableRow, not placed
-                                // directly inside TableBody. This alone could crash
-                                // or render a broken table.
-                                <TableRow key={index}>
-                                    <TableCell sx={{ textTransform: 'capitalize' }}>
-                                        <Typography fontWeight={700}>{item?.typeDescription}</Typography>
-                                        <Typography variant="caption" color="textDisabled">
-                                            {item?.gameName}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>{item?.createdAt ? fDateTime(item.createdAt) : '-'}</TableCell>
-                                    <TableCell>
-                                        <Typography variant="button" color={(item?.amount ?? 0) > 0 ? 'primary' : 'error'}>
-                                            {item?.amount ?? 0}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ textAlign: 'right', fontWeight: '800' }}>
-                                        {item?.afterAmount ?? 0}
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                )}
-            </Table>
-            {loading && (
-                <Stack width="100%" minHeight={300}>
-                    <LoadingScreen />
+            {/* Bet Cards */}
+            {loading ? (
+                <Stack width="100%" minHeight={300}><LoadingScreen /></Stack>
+            ) : data.length === 0 ? (
+                <EmptyData />
+            ) : (
+                <Stack spacing={1}>
+                    {data.map((item, index) => (
+                        <BetCard key={index} item={item} />
+                    ))}
                 </Stack>
             )}
+
             <TablePaginationCustom
                 count={totalRows}
                 page={currentPage}
@@ -233,6 +262,7 @@ const BetHistoryPage = () => {
                 onPageChange={(_, newPage) => setCurrentPage(newPage)}
                 onRowsPerPageChange={(e) => setRowsPerPage(Number(e.target.value))}
             />
+
             <CustomDateRangePicker
                 variant="calendar"
                 open={rangeCalendarPicker.open}
