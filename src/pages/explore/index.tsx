@@ -13,6 +13,12 @@ import { useTranslate } from 'locales';
 import { useSettingsContext } from 'components/settings';
 import { useRouter } from 'routes/hook';
 
+export interface IGameList {
+    id: string | number;
+    name: string;
+    image: string;
+}
+
 const OFFLINE_GAMES = [
     { name: 'Poker', icon: '🃏', color: '#1a3a5c', path: '/casino/offline-games/poker' },
     { name: 'Racing', icon: '🏇', color: '#3a1a1a', path: '/casino/offline-games/racing' },
