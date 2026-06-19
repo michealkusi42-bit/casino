@@ -23,27 +23,14 @@ import { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 
 const SplashScreen = ({ onDone }: { onDone: () => void }) => {
-    const [progress, setProgress] = useState(0);
     const [fadeOut, setFadeOut] = useState(false);
 
     useEffect(() => {
-        // Animate progress bar from 0 to 100 over 2 seconds
-        const start = Date.now();
-        const duration = 2000;
-        const interval = setInterval(() => {
-            const elapsed = Date.now() - start;
-            const p = Math.min((elapsed / duration) * 100, 100);
-            setProgress(p);
-            if (p >= 100) {
-                clearInterval(interval);
-                // Start fade out
-                setTimeout(() => {
-                    setFadeOut(true);
-                    setTimeout(onDone, 500);
-                }, 300);
-            }
-        }, 16);
-        return () => clearInterval(interval);
+        const timer = setTimeout(() => {
+            setFadeOut(true);
+            setTimeout(onDone, 600);
+        }, 2800);
+        return () => clearTimeout(timer);
     }, []);
 
     return (
@@ -58,10 +45,30 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: fadeOut ? 0 : 1,
-                transition: 'opacity 0.5s ease',
-                backgroundImage: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,231,1,0.07) 0%, transparent 70%)'
+                transition: 'opacity 0.6s ease',
             }}
         >
+            {/* Outer glow ring — pulses like a heartbeat */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    width: 260,
+                    height: 260,
+                    borderRadius: '50%',
+                    animation: 'ringPulse 1.2s ease-in-out infinite',
+                    '@keyframes ringPulse': {
+                        '0%, 100%': {
+                            boxShadow: '0 0 0 0 rgba(0,231,1,0)',
+                            transform: 'scale(0.95)'
+                        },
+                        '50%': {
+                            boxShadow: '0 0 60px 30px rgba(0,231,1,0.15)',
+                            transform: 'scale(1.05)'
+                        }
+                    }
+                }}
+            />
+
             {/* Logo */}
             <Box
                 sx={{
@@ -69,13 +76,15 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
                     alignItems: 'center',
                     gap: 0.5,
                     transform: 'skewX(-8deg)',
-                    animation: 'logoPulse 1.5s ease-in-out infinite',
-                    '@keyframes logoPulse': {
+                    animation: 'logoBeat 1.2s ease-in-out infinite',
+                    '@keyframes logoBeat': {
                         '0%, 100%': {
-                            filter: 'drop-shadow(0 0 12px rgba(0,231,1,0.5))'
+                            filter: 'drop-shadow(0 0 6px rgba(0,231,1,0.3))',
+                            opacity: 0.7
                         },
                         '50%': {
-                            filter: 'drop-shadow(0 0 28px rgba(0,231,1,0.9))'
+                            filter: 'drop-shadow(0 0 40px rgba(0,231,1,1)) drop-shadow(0 0 80px rgba(0,231,1,0.5))',
+                            opacity: 1
                         }
                     }
                 }}
@@ -84,7 +93,7 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
                     sx={{
                         color: '#00e701',
                         fontWeight: 900,
-                        fontSize: '3rem',
+                        fontSize: '3.2rem',
                         lineHeight: 1
                     }}
                 >
@@ -94,7 +103,7 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
                     sx={{
                         color: '#fff',
                         fontWeight: 900,
-                        fontSize: '2.2rem',
+                        fontSize: '2.4rem',
                         letterSpacing: 3,
                         lineHeight: 1
                     }}
@@ -103,41 +112,24 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
                 </Typography>
             </Box>
 
-            {/* Tagline */}
+            {/* Tagline — fades in slowly */}
             <Typography
                 sx={{
-                    color: 'rgba(255,255,255,0.35)',
-                    fontSize: '0.75rem',
-                    letterSpacing: 4,
+                    color: 'rgba(255,255,255,0.3)',
+                    fontSize: '0.7rem',
+                    letterSpacing: 5,
                     textTransform: 'uppercase',
-                    mt: 1.5,
-                    fontWeight: 500
+                    mt: 2,
+                    fontWeight: 500,
+                    animation: 'fadeInUp 1s ease forwards',
+                    '@keyframes fadeInUp': {
+                        from: { opacity: 0, transform: 'translateY(8px)' },
+                        to: { opacity: 1, transform: 'translateY(0)' }
+                    }
                 }}
             >
                 Bet Smart. Win Big.
             </Typography>
-
-            {/* Progress bar */}
-            <Box
-                sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    bgcolor: 'rgba(255,255,255,0.06)'
-                }}
-            >
-                <Box
-                    sx={{
-                        height: '100%',
-                        width: `${progress}%`,
-                        background: 'linear-gradient(90deg, #00e701, #00BAE6)',
-                        transition: 'width 0.05s linear',
-                        boxShadow: '0 0 10px rgba(0,231,1,0.7)'
-                    }}
-                />
-            </Box>
         </Box>
     );
 };
