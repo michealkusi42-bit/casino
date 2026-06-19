@@ -4,6 +4,7 @@ import VipBonus from './vip-bonus';
 import VipFaq from './vip-faq';
 import VipStatus from './vip-status';
 import VipType from './vip-type';
+import LuckyWheel from './lucky-wheel';
 import { useAuth } from 'hooks/use-auth-context';
 import { useEffect, useState } from 'react';
 import { settingApi } from 'api/setting.api';
@@ -11,7 +12,6 @@ import { IVip } from 'types/site';
 
 const VipPage = () => {
     const { isLogined } = useAuth();
-
     const [data, setData] = useState<IVip[]>([]);
 
     const loadData = async () => {
@@ -23,7 +23,6 @@ const VipPage = () => {
         if (isLogined) {
             loadData();
         }
-        // eslint-disable-next-line
     }, [isLogined]);
 
     return (
@@ -33,6 +32,7 @@ const VipPage = () => {
             {isLogined && (
                 <>
                     <VipStatus vipData={data} />
+                    <LuckyWheel />
                     <VipBonus />
                 </>
             )}
