@@ -9,7 +9,6 @@ import SignModal from 'pages/sign-modal';
 import ExploreModal from 'pages/explore';
 import LanguageModal from 'pages/settings/modal/language-modal';
 import ScrollToTop from 'components/ScrollToTop';
-import DepositPage from 'components/deposit';  // ✅ fixed
 import { SettingsProvider } from 'components/settings';
 import { SnackbarProvider } from 'components/snackbar';
 import AuthProvider from 'context/auth/auth-provider';
@@ -47,7 +46,6 @@ const App = () => {
                                                     <ScrollToTop />
                                                     <ExploreModal />
                                                     <SignModal />
-                                                    <DepositPage />  {/* ✅ fixed */}
                                                     <LanguageModal />
                                                     <FreeSpinDialog />
                                                 </LocalizationProvider>
