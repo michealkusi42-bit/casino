@@ -64,7 +64,6 @@ const BalancePage = () => {
                     overflow: 'hidden',
                 }}
             >
-                {/* Background decoration */}
                 <Box sx={{
                     position: 'absolute', top: -20, right: -20,
                     width: 120, height: 120, borderRadius: '50%',
@@ -105,7 +104,7 @@ const BalancePage = () => {
             {/* Balance Cards Grid */}
             <Grid container spacing={2}>
                 {cards.map((card, i) => (
-                    <Grid item xs={6} key={i}>
+                    <Grid size={{ xs: 6 }} key={i}>
                         <Card sx={{
                             p: 2, borderRadius: 3,
                             bgcolor: card.bg,
