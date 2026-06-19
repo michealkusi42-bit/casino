@@ -15,6 +15,7 @@ import UpDown from 'pages/offline-games/UpDown';
 import Crash from 'pages/offline-games/Crash';
 import Lottery from 'pages/offline-games/Lottery';
 import Bingo from 'pages/offline-games/Bingo';
+import LuckyWheel from 'pages/spin'; // ✅ Added
 
 const HomePage = Loadable(lazy(() => import('pages/home')));
 const CasinoPage = Loadable(lazy(() => import('pages/casino')));
@@ -61,6 +62,7 @@ export const mainRoutes = [
             { path: 'sports', element: <Sports /> },
             { path: 'casino', element: <CasinoPage /> },
             { path: 'store', element: <Store /> },
+            { path: 'spin', element: <LuckyWheel /> }, // ✅ Added
             { path: 'casino/SLOT', element: <SlotGames /> },
             { path: 'casino/:gameType', element: <GameList /> },
             { path: 'game/:gameCode', element: <GamePage /> },
