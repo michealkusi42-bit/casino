@@ -25,58 +25,36 @@ const statusChip = (status: string) => {
     return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.7rem' }} />;
 };
 
-// ✅ Extracted so each row owns its own useState calls (fixes a Hooks-in-map bug)
-function UserRow({
-    u,
-    onAdjust,
-    onSuspend
-}: {
-    u: any;
-    onAdjust: (username: string, action: string, amount: string) => void;
-    onSuspend: (username: string) => void;
-}) {
+function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: string, action: string, amount: string) => void; onSuspend: (username: string) => void; }) {
     const [adjAmt, setAdjAmt] = useState('');
     const [adjAction, setAdjAction] = useState('add');
-
     return (
         <TableRow>
-            <TableCell sx={{ color: '#fff', fontWeight: 700 }}>{u.username}</TableCell>
-            <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{u.email}</TableCell>
-            <TableCell sx={{ color: '#00e701', fontWeight: 700 }}>GHS {u.balance?.toFixed(2)}</TableCell>
-            <TableCell>
-                <Chip
-                    label={u.suspended ? '🔴 Suspended' : '🟢 Active'}
-                    size="small"
-                    sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }}
-                />
+            <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{u.username}</TableCell>
+            <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', sm: 'table-cell' } }}>{u.email}</TableCell>
+            <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {u.balance?.toFixed(2)}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                <Chip label={u.suspended ? '🔴 Suspended' : '🟢 Active'} size="small"
+                    sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }} />
             </TableCell>
             <TableCell>
-                <Stack direction="row" spacing={1} alignItems="center">
-                    <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: 80 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                    <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small"
+                        sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: { xs: 60, sm: 80 }, fontSize: '0.75rem' }}>
                         <MenuItem value="add">Add</MenuItem>
                         <MenuItem value="deduct">Deduct</MenuItem>
                         <MenuItem value="set">Set</MenuItem>
                     </Select>
-                    <TextField
-                        size="small"
-                        value={adjAmt}
-                        onChange={(e) => setAdjAmt(e.target.value)}
-                        placeholder="Amount"
-                        type="number"
-                        sx={{ width: 90, input: { color: '#fff' }, bgcolor: '#0f212e' }}
-                    />
-                    <Button size="small" variant="contained" onClick={() => onAdjust(u.username, adjAction, adjAmt)} sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto' }}>
-                        Go
-                    </Button>
+                    <TextField size="small" value={adjAmt} onChange={(e) => setAdjAmt(e.target.value)}
+                        placeholder="Amt" type="number"
+                        sx={{ width: { xs: 60, sm: 90 }, input: { color: '#fff', fontSize: '0.75rem', p: '6px' }, bgcolor: '#0f212e' }} />
+                    <Button size="small" variant="contained" onClick={() => onAdjust(u.username, adjAction, adjAmt)}
+                        sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto', px: 1, fontSize: '0.7rem' }}>Go</Button>
                 </Stack>
             </TableCell>
             <TableCell>
-                <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => onSuspend(u.username)}
-                    sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336' }}
-                >
+                <Button size="small" variant="outlined" onClick={() => onSuspend(u.username)}
+                    sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336', fontSize: '0.7rem', px: { xs: 0.5, sm: 1 } }}>
                     {u.suspended ? 'Unsuspend' : 'Suspend'}
                 </Button>
             </TableCell>
@@ -85,7 +63,6 @@ function UserRow({
 }
 
 export default function AdminPanel() {
-    // ✅ NEW: password-gate state
     const [unlocked, setUnlocked] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const [passwordInput, setPasswordInput] = useState('');
@@ -100,14 +77,12 @@ export default function AdminPanel() {
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
 
-    // Game control state
     const [selectedUser, setSelectedUser] = useState('');
     const [selectedGame, setSelectedGame] = useState('coinflip');
     const [overrideValue, setOverrideValue] = useState('win');
     const [customValue, setCustomValue] = useState('');
     const [userOverrides, setUserOverrides] = useState<any>({});
 
-    // On first load, check if we already have a saved password from this browser session
     useEffect(() => {
         const saved = sessionStorage.getItem(ADMIN_PASSWORD_KEY);
         if (saved) {
@@ -119,7 +94,6 @@ export default function AdminPanel() {
 
     useEffect(() => {
         if (unlocked) load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unlocked]);
 
     const handleUnlock = async () => {
@@ -152,7 +126,6 @@ export default function AdminPanel() {
             setStats(s.data.data);
         } catch (e: any) {
             if (e?.response?.status === 403) {
-                // Saved password is wrong/stale — kick back to the prompt
                 sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
                 setUnlocked(false);
                 setAuthError('Session expired — enter the password again');
@@ -169,9 +142,7 @@ export default function AdminPanel() {
             await axios.post(`${API}/${type}/${id}/approve`);
             setMsg('✅ Approved successfully');
             load();
-        } catch (e: any) {
-            setMsg(e?.response?.data?.error || 'Failed');
-        }
+        } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const reject = async (type: string, id: string) => {
@@ -179,9 +150,7 @@ export default function AdminPanel() {
             await axios.post(`${API}/${type}/${id}/reject`);
             setMsg('❌ Rejected');
             load();
-        } catch (e: any) {
-            setMsg(e?.response?.data?.error || 'Failed');
-        }
+        } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const setOverride = async () => {
@@ -194,9 +163,7 @@ export default function AdminPanel() {
             await axios.post(`${API}/overrides/${selectedUser}`, { game: selectedGame, value });
             setMsg(`✅ Override set: ${selectedUser} → ${selectedGame} → ${JSON.stringify(value)}`);
             loadOverrides(selectedUser);
-        } catch (e: any) {
-            setMsg(e?.response?.data?.error || 'Failed');
-        }
+        } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const clearOverride = async (username: string, game: string) => {
@@ -220,9 +187,7 @@ export default function AdminPanel() {
             await axios.post(`${API}/users/${username}/adjust-balance`, { action, amount: parseFloat(amount) });
             setMsg(`✅ Balance updated for ${username}`);
             load();
-        } catch (e: any) {
-            setMsg(e?.response?.data?.error || 'Failed');
-        }
+        } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const suspend = async (username: string) => {
@@ -233,37 +198,21 @@ export default function AdminPanel() {
         } catch (e) {}
     };
 
-    // Avoid a flash of the password screen while we check sessionStorage
     if (checkingAuth) return null;
 
-    // ✅ NEW: password prompt instead of the panel
     if (!unlocked) {
         return (
             <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', p: 2 }}>
                 <Stack spacing={2} alignItems="center" sx={{ width: '100%', maxWidth: 320 }}>
                     <LockIcon sx={{ fontSize: 48, color: '#00e701' }} />
                     <Typography variant="h5" fontWeight={800}>Admin Access</Typography>
-                    {authError && (
-                        <Alert severity="error" sx={{ width: '100%' }}>
-                            {authError}
-                        </Alert>
-                    )}
-                    <TextField
-                        fullWidth
-                        type="password"
-                        placeholder="Enter admin password"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
+                    {authError && <Alert severity="error" sx={{ width: '100%' }}>{authError}</Alert>}
+                    <TextField fullWidth type="password" placeholder="Enter admin password"
+                        value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-                        sx={{ input: { color: '#fff' }, bgcolor: '#213743', borderRadius: 1 }}
-                    />
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        disabled={authLoading || !passwordInput}
-                        onClick={handleUnlock}
-                        sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, py: 1.2 }}
-                    >
+                        sx={{ input: { color: '#fff' }, bgcolor: '#213743', borderRadius: 1 }} />
+                    <Button fullWidth variant="contained" disabled={authLoading || !passwordInput} onClick={handleUnlock}
+                        sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, py: 1.2 }}>
                         {authLoading ? <CircularProgress size={20} sx={{ color: '#000' }} /> : 'Unlock'}
                     </Button>
                 </Stack>
@@ -272,77 +221,79 @@ export default function AdminPanel() {
     }
 
     return (
-        <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', p: { xs: 2, md: 4 }, color: '#fff' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" fontWeight={800} sx={{ color: '#00e701' }}>
+        <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', p: { xs: 1.5, md: 4 }, color: '#fff' }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h5" fontWeight={800} sx={{ color: '#00e701', fontSize: { xs: '1.2rem', md: '1.5rem' } }}>
                     🛡 Admin Panel
                 </Typography>
-                <IconButton onClick={load} sx={{ color: '#fff' }}>
-                    <RefreshIcon />
-                </IconButton>
+                <IconButton onClick={load} sx={{ color: '#fff' }}><RefreshIcon /></IconButton>
             </Stack>
 
-            {msg && (
-                <Alert severity="info" onClose={() => setMsg('')} sx={{ mb: 2 }}>
-                    {msg}
-                </Alert>
-            )}
+            {msg && <Alert severity="info" onClose={() => setMsg('')} sx={{ mb: 2, fontSize: '0.8rem' }}>{msg}</Alert>}
 
+            {/* Stats - 2 cols on mobile, 4 on desktop */}
             {stats && (
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: 2, mb: 3 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: { xs: 1, md: 2 }, mb: 2 }}>
                     {[
                         { label: 'Total Users', value: stats.totalUsers },
                         { label: 'Pending Deposits', value: stats.pendingDeposits, color: '#ffc107' },
                         { label: 'Pending Withdrawals', value: stats.pendingWithdrawals, color: '#ffc107' },
                         { label: 'House Profit', value: `GHS ${stats.houseProfit?.toFixed(2)}`, color: '#00e701' },
                     ].map((s) => (
-                        <Box key={s.label} sx={{ bgcolor: '#213743', borderRadius: 2, p: 2 }}>
-                            <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                            <Typography variant="h5" fontWeight={800} sx={{ color: s.color || '#fff' }}>{s.value}</Typography>
+                        <Box key={s.label} sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 1.5, md: 2 } }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>{s.label}</Typography>
+                            <Typography fontWeight={800} sx={{ color: s.color || '#fff', fontSize: { xs: '1.1rem', md: '1.5rem' } }}>{s.value}</Typography>
                         </Box>
                     ))}
                 </Box>
             )}
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, bgcolor: '#213743', borderRadius: 2 }}>
-                <Tab label="💰 Deposits" sx={{ color: '#fff' }} />
-                <Tab label="💸 Withdrawals" sx={{ color: '#fff' }} />
-                <Tab label="🎮 Game Control" sx={{ color: '#fff' }} />
-                <Tab label="👥 Users" sx={{ color: '#fff' }} />
+            {/* Tabs - scrollable on mobile */}
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
+                sx={{ mb: 2, bgcolor: '#213743', borderRadius: 2, '& .MuiTab-root': { color: '#fff', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: { xs: 'auto', sm: 90 }, px: { xs: 1, sm: 2 } } }}>
+                <Tab label="💰 Deposits" />
+                <Tab label="💸 Withdrawals" />
+                <Tab label="🎮 Game Control" />
+                <Tab label="👥 Users" />
             </Tabs>
 
             {loading && <CircularProgress sx={{ color: '#00e701', display: 'block', mx: 'auto', my: 4 }} />}
 
+            {/* DEPOSITS */}
             {tab === 0 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
-                    <Table>
+                    <Table size="small">
                         <TableHead>
                             <TableRow>
-                                {['User', 'Amount', 'Method', 'Reference', 'Time', 'Status', 'Action'].map(h => (
-                                    <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700 }}>{h}</TableCell>
-                                ))}
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>User</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Amount</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Method</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Reference</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Time</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {deposits.map((d) => (
                                 <TableRow key={d.id}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 700 }}>{d.username}</TableCell>
-                                    <TableCell sx={{ color: '#00e701', fontWeight: 700 }}>GHS {d.amount}</TableCell>
-                                    <TableCell sx={{ color: '#fff' }}>{d.method || 'MoMo'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{d.reference || '-'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{new Date(d.timestamp).toLocaleString()}</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{d.username}</TableCell>
+                                    <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {d.amount}</TableCell>
+                                    <TableCell sx={{ color: '#fff', display: { xs: 'none', sm: 'table-cell' } }}>{d.method || 'MoMo'}</TableCell>
+                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{d.reference || '-'}</TableCell>
+                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{new Date(d.timestamp).toLocaleString()}</TableCell>
                                     <TableCell>{statusChip(d.status)}</TableCell>
                                     <TableCell>
                                         {d.status === 'pending' && (
-                                            <Stack direction="row" spacing={1}>
-                                                <Tooltip title="Approve — credits user balance">
+                                            <Stack direction="row" spacing={0.5}>
+                                                <Tooltip title="Approve">
                                                     <IconButton onClick={() => approve('deposits', d.id)} size="small" sx={{ color: '#00e701' }}>
-                                                        <CheckCircleIcon />
+                                                        <CheckCircleIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-                                                <Tooltip title="Reject — no balance change">
+                                                <Tooltip title="Reject">
                                                     <IconButton onClick={() => reject('deposits', d.id)} size="small" sx={{ color: '#f44336' }}>
-                                                        <CancelIcon />
+                                                        <CancelIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack>
@@ -358,36 +309,41 @@ export default function AdminPanel() {
                 </Box>
             )}
 
+            {/* WITHDRAWALS */}
             {tab === 1 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
-                    <Table>
+                    <Table size="small">
                         <TableHead>
                             <TableRow>
-                                {['User', 'Amount', 'Method', 'Address', 'Time', 'Status', 'Action'].map(h => (
-                                    <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700 }}>{h}</TableCell>
-                                ))}
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>User</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Amount</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Method</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Address</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Time</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {withdrawals.map((w) => (
                                 <TableRow key={w.id}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 700 }}>{w.username}</TableCell>
-                                    <TableCell sx={{ color: '#f44336', fontWeight: 700 }}>GHS {w.amount}</TableCell>
-                                    <TableCell sx={{ color: '#fff' }}>{w.method || 'MoMo'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{w.address || '-'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{new Date(w.timestamp).toLocaleString()}</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{w.username}</TableCell>
+                                    <TableCell sx={{ color: '#f44336', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {w.amount}</TableCell>
+                                    <TableCell sx={{ color: '#fff', display: { xs: 'none', sm: 'table-cell' } }}>{w.method || 'MoMo'}</TableCell>
+                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{w.address || '-'}</TableCell>
+                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{new Date(w.timestamp).toLocaleString()}</TableCell>
                                     <TableCell>{statusChip(w.status)}</TableCell>
                                     <TableCell>
                                         {w.status === 'pending' && (
-                                            <Stack direction="row" spacing={1}>
-                                                <Tooltip title="Approve — mark as paid (balance already deducted)">
+                                            <Stack direction="row" spacing={0.5}>
+                                                <Tooltip title="Approve">
                                                     <IconButton onClick={() => approve('withdrawals', w.id)} size="small" sx={{ color: '#00e701' }}>
-                                                        <CheckCircleIcon />
+                                                        <CheckCircleIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-                                                <Tooltip title="Reject — refunds user balance">
+                                                <Tooltip title="Reject">
                                                     <IconButton onClick={() => reject('withdrawals', w.id)} size="small" sx={{ color: '#f44336' }}>
-                                                        <CancelIcon />
+                                                        <CancelIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack>
@@ -403,51 +359,46 @@ export default function AdminPanel() {
                 </Box>
             )}
 
+            {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
-                    <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 3 }}>
+                    <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                         <Typography variant="h6" fontWeight={700} mb={2}>🎮 Set Game Override</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
                             One-shot: override applies to the user's NEXT bet only, then clears automatically.
                         </Typography>
-
                         <Stack spacing={2}>
                             <Select value={selectedUser} onChange={(e) => { setSelectedUser(e.target.value); loadOverrides(e.target.value); }}
-                                displayEmpty sx={{ bgcolor: '#0f212e', color: '#fff' }}>
+                                displayEmpty size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
                                 <MenuItem value="" disabled>Select User</MenuItem>
                                 {users.map(u => <MenuItem key={u.username} value={u.username}>{u.username} — GHS {u.balance?.toFixed(2)}</MenuItem>)}
                             </Select>
-
-                            <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)} sx={{ bgcolor: '#0f212e', color: '#fff' }}>
+                            <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
                                 {GAMES.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
                             </Select>
-
-                            <Select value={overrideValue} onChange={(e) => setOverrideValue(e.target.value)} sx={{ bgcolor: '#0f212e', color: '#fff' }}>
+                            <Select value={overrideValue} onChange={(e) => setOverrideValue(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
                                 <MenuItem value="win">🏆 Force WIN</MenuItem>
                                 <MenuItem value="lose">💀 Force LOSE</MenuItem>
                                 <MenuItem value="custom">🎯 Custom value (JSON)</MenuItem>
                             </Select>
-
                             {overrideValue === 'custom' && (
                                 <Box>
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                                        Examples: mines positions → [0,1,2] | dice roll → 45 | crash point → 1.5 | lottery numbers → [5,12,23,34,45]
+                                        mines → [0,1,2] | dice → 45 | crash → 1.5 | lottery → [5,12,23,34,45]
                                     </Typography>
                                     <TextField fullWidth value={customValue} onChange={(e) => setCustomValue(e.target.value)}
                                         placeholder='e.g. [0,1,2] or 45 or 1.5' size="small"
                                         sx={{ input: { color: '#fff' }, bgcolor: '#0f212e' }} />
                                 </Box>
                             )}
-
                             <Button variant="contained" onClick={setOverride}
                                 sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, py: 1.5 }}>
                                 Set Override
                             </Button>
                         </Stack>
                     </Box>
-
                     {selectedUser && Object.keys(userOverrides).length > 0 && (
-                        <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 3 }}>
+                        <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                             <Typography variant="h6" fontWeight={700} mb={2}>Active Overrides for {selectedUser}</Typography>
                             <Stack spacing={1}>
                                 {Object.entries(userOverrides).map(([game, value]) => (
@@ -468,14 +419,18 @@ export default function AdminPanel() {
                 </Stack>
             )}
 
+            {/* USERS */}
             {tab === 3 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
-                    <Table>
+                    <Table size="small">
                         <TableHead>
                             <TableRow>
-                                {['Username', 'Email', 'Balance', 'Status', 'Adjust Balance', 'Actions'].map(h => (
-                                    <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700 }}>{h}</TableCell>
-                                ))}
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Username</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Email</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Balance</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Status</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Adjust</TableCell>
+                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
