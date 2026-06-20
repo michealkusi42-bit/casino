@@ -1,15 +1,12 @@
 import { useSnackbar } from 'notistack';
 import { useTranslate } from 'locales';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     Tab, Box, Tabs, Stack, Button, Typography, TextField,
-    IconButton, Chip, CircularProgress, Card
+    IconButton, CircularProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useDispatch } from 'store/store';
 
 const API = 'https://foretell-backend-production-58a6.up.railway.app';
@@ -27,64 +24,7 @@ const CRYPTO_ACCOUNTS = [
     { coin: 'USDT', network: 'Tron (TRC20)', address: 'TLqkvwEbTFhn8TVvPZffJVTDi2a3QW37yn', icon: '₮' },
 ];
 
-type Stage = 'choose' | 'details' | 'history';
-
-const AnimatedDots = () => {
-    const [dots, setDots] = useState('.');
-    useEffect(() => {
-        const id = setInterval(() => {
-            setDots(prev => prev.length >= 3 ? '.' : prev + '.');
-        }, 500);
-        return () => clearInterval(id);
-    }, []);
-    return <span>{dots}</span>;
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-    if (status === 'pending') return (
-        <Chip
-            icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
-            label="Pending"
-            size="small"
-            sx={{ bgcolor: 'rgba(255,193,7,0.15)', color: '#FFC107', fontWeight: 700, border: '1px solid #FFC107' }}
-        />
-    );
-    if (status === 'under_review') return (
-        <Chip
-            icon={<CircularProgress size={12} sx={{ color: '#00BAE6' }} />}
-            label={<>Processing<AnimatedDots /></>}
-            size="small"
-            sx={{
-                bgcolor: 'rgba(0,186,230,0.15)',
-                color: '#00BAE6',
-                fontWeight: 700,
-                border: '1px solid #00BAE6',
-                animation: 'pulse 1.5s ease-in-out infinite',
-                '@keyframes pulse': {
-                    '0%, 100%': { boxShadow: '0 0 0 0 rgba(0,186,230,0.4)' },
-                    '50%': { boxShadow: '0 0 0 6px rgba(0,186,230,0)' }
-                }
-            }}
-        />
-    );
-    if (status === 'success') return (
-        <Chip
-            icon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
-            label="Success"
-            size="small"
-            sx={{ bgcolor: 'rgba(0,231,1,0.15)', color: '#00e701', fontWeight: 700, border: '1px solid #00e701' }}
-        />
-    );
-    if (status === 'rejected') return (
-        <Chip
-            icon={<CancelIcon sx={{ fontSize: 14 }} />}
-            label="Rejected"
-            size="small"
-            sx={{ bgcolor: 'rgba(244,67,54,0.15)', color: '#f44336', fontWeight: 700, border: '1px solid #f44336' }}
-        />
-    );
-    return <Chip label={status} size="small" />;
-};
+type Stage = 'choose' | 'details';
 
 const DepositPage = () => {
     const { enqueueSnackbar } = useSnackbar();
@@ -101,8 +41,6 @@ const DepositPage = () => {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawAddress, setWithdrawAddress] = useState('');
     const [loading, setLoading] = useState(false);
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
 
     const authHeader = {
         'Content-Type': 'application/json',
@@ -123,25 +61,6 @@ const DepositPage = () => {
         setStage('details');
     };
 
-    const loadHistory = useCallback(async () => {
-        setLoadingHistory(true);
-        try {
-            const res = await fetch(`${API}/api/wallet/transactions`, { headers: authHeader });
-            const data = await res.json();
-            if (data.success) setTransactions(data.data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoadingHistory(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadHistory();
-        const id = setInterval(loadHistory, 30000);
-        return () => clearInterval(id);
-    }, [loadHistory]);
-
     const handleDepositSubmit = async () => {
         if (!reference) {
             enqueueSnackbar('Please enter a transaction reference/ID', { variant: 'error' });
@@ -160,11 +79,10 @@ const DepositPage = () => {
             });
             const data = await res.json();
             if (data.success) {
-                enqueueSnackbar('Deposit submitted! Awaiting review.', { variant: 'success' });
+                enqueueSnackbar('✅ Deposit submitted! Awaiting review.', { variant: 'success' });
                 setAmount('');
                 setReference('');
-                setStage('history');
-                loadHistory();
+                setStage('choose');
             } else {
                 enqueueSnackbar(data.error || 'Failed', { variant: 'error' });
             }
@@ -193,12 +111,11 @@ const DepositPage = () => {
             });
             const data = await res.json();
             if (data.success) {
-                enqueueSnackbar('Withdrawal submitted!', { variant: 'success' });
+                enqueueSnackbar('✅ Withdrawal submitted!', { variant: 'success' });
                 dispatch({ type: 'balance/setBalance', payload: data.balance });
                 setWithdrawAmount('');
                 setWithdrawAddress('');
-                setStage('history');
-                loadHistory();
+                setStage('choose');
             } else {
                 enqueueSnackbar(data.error || 'Failed', { variant: 'error' });
             }
@@ -208,64 +125,6 @@ const DepositPage = () => {
             setLoading(false);
         }
     };
-
-    const TransactionList = () => (
-        <Stack spacing={1.5}>
-            {transactions.length === 0 && !loadingHistory && (
-                <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-                    No transactions yet
-                </Typography>
-            )}
-            {loadingHistory && (
-                <Stack alignItems="center" py={3}>
-                    <CircularProgress size={24} />
-                </Stack>
-            )}
-            {transactions.map((tx, i) => (
-                <Card key={i} sx={{
-                    p: 2,
-                    bgcolor: 'background.layer2',
-                    border: '1px solid',
-                    borderColor: tx.status === 'success' ? 'rgba(0,231,1,0.2)'
-                        : tx.status === 'under_review' ? 'rgba(0,186,230,0.2)'
-                        : tx.status === 'rejected' ? 'rgba(244,67,54,0.2)'
-                        : 'rgba(255,193,7,0.2)',
-                    borderRadius: 2
-                }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                            <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                                <Typography variant="body2" sx={{
-                                    color: tx.type === 'deposit' ? '#00e701' : '#f44336',
-                                    fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    fontSize: '0.7rem'
-                                }}>
-                                    {tx.type === 'deposit' ? '+ Deposit' : '- Withdraw'}
-                                </Typography>
-                                <StatusBadge status={tx.status || 'pending'} />
-                            </Stack>
-                            <Typography variant="h6" fontWeight={800}>
-                                GH₵ {Number(tx.amount).toFixed(2)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {new Date(tx.timestamp).toLocaleString()}
-                            </Typography>
-                            {tx.reference && (
-                                <Typography variant="caption" color="text.secondary" display="block">
-                                    Ref: {tx.reference}
-                                </Typography>
-                            )}
-                        </Box>
-                        {tx.status === 'under_review' && <CircularProgress size={24} sx={{ color: '#00BAE6' }} />}
-                        {tx.status === 'success' && <CheckCircleIcon sx={{ color: '#00e701', fontSize: 28 }} />}
-                        {tx.status === 'rejected' && <CancelIcon sx={{ color: '#f44336', fontSize: 28 }} />}
-                        {tx.status === 'pending' && <AccessTimeIcon sx={{ color: '#FFC107', fontSize: 28 }} />}
-                    </Stack>
-                </Card>
-            ))}
-        </Stack>
-    );
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 600, mx: 'auto' }}>
@@ -311,16 +170,6 @@ const DepositPage = () => {
                             </Button>
                         </Stack>
                     )}
-
-                    <Box sx={{ mt: 4 }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="h6" fontWeight={700}>Transaction History</Typography>
-                            <Button size="small" onClick={loadHistory} disabled={loadingHistory}>
-                                {loadingHistory ? <CircularProgress size={14} /> : '↻ Refresh'}
-                            </Button>
-                        </Stack>
-                        <TransactionList />
-                    </Box>
                 </Box>
             )}
 
@@ -443,18 +292,6 @@ const DepositPage = () => {
                             )}
                         </Box>
                     )}
-                </Box>
-            )}
-
-            {stage === 'history' && (
-                <Box>
-                    <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-                        <IconButton onClick={() => setStage('choose')} size="small">
-                            <ArrowBackIcon />
-                        </IconButton>
-                        <Typography variant="h6" fontWeight={700}>Transaction History</Typography>
-                    </Stack>
-                    <TransactionList />
                 </Box>
             )}
         </Box>
