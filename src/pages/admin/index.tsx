@@ -7,6 +7,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import LockIcon from '@mui/icons-material/Lock';
 import axios from 'utils/axios';
 
 const API = '/api/admin';
@@ -23,6 +24,66 @@ const statusChip = (status: string) => {
     return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.7rem' }} />;
 };
 
+// ✅ FIX: extracted into its own component so each row owns its own
+// useState calls instead of calling useState inside .map() (Rules of Hooks violation).
+function UserRow({
+    u,
+    onAdjust,
+    onSuspend
+}: {
+    u: any;
+    onAdjust: (username: string, action: string, amount: string) => void;
+    onSuspend: (username: string) => void;
+}) {
+    const [adjAmt, setAdjAmt] = useState('');
+    const [adjAction, setAdjAction] = useState('add');
+
+    return (
+        <TableRow>
+            <TableCell sx={{ color: '#fff', fontWeight: 700 }}>{u.username}</TableCell>
+            <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{u.email}</TableCell>
+            <TableCell sx={{ color: '#00e701', fontWeight: 700 }}>GHS {u.balance?.toFixed(2)}</TableCell>
+            <TableCell>
+                <Chip
+                    label={u.suspended ? '🔴 Suspended' : '🟢 Active'}
+                    size="small"
+                    sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }}
+                />
+            </TableCell>
+            <TableCell>
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: 80 }}>
+                        <MenuItem value="add">Add</MenuItem>
+                        <MenuItem value="deduct">Deduct</MenuItem>
+                        <MenuItem value="set">Set</MenuItem>
+                    </Select>
+                    <TextField
+                        size="small"
+                        value={adjAmt}
+                        onChange={(e) => setAdjAmt(e.target.value)}
+                        placeholder="Amount"
+                        type="number"
+                        sx={{ width: 90, input: { color: '#fff' }, bgcolor: '#0f212e' }}
+                    />
+                    <Button size="small" variant="contained" onClick={() => onAdjust(u.username, adjAction, adjAmt)} sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto' }}>
+                        Go
+                    </Button>
+                </Stack>
+            </TableCell>
+            <TableCell>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => onSuspend(u.username)}
+                    sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336' }}
+                >
+                    {u.suspended ? 'Unsuspend' : 'Suspend'}
+                </Button>
+            </TableCell>
+        </TableRow>
+    );
+}
+
 export default function AdminPanel() {
     const [tab, setTab] = useState(0);
     const [deposits, setDeposits] = useState<any[]>([]);
@@ -31,6 +92,8 @@ export default function AdminPanel() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
+    // ✅ NEW: real access-denied state instead of showing an empty admin shell
+    const [unauthorized, setUnauthorized] = useState(false);
 
     // Game control state
     const [selectedUser, setSelectedUser] = useState('');
@@ -52,8 +115,13 @@ export default function AdminPanel() {
             setWithdrawals(w.data.data || []);
             setUsers(u.data.data || []);
             setStats(s.data.data);
-        } catch (e) {
-            setMsg('Failed to load data');
+        } catch (e: any) {
+            // ✅ NEW: distinguish "not an admin" from other failures
+            if (e?.response?.status === 403) {
+                setUnauthorized(true);
+            } else {
+                setMsg('Failed to load data');
+            }
         } finally {
             setLoading(false);
         }
@@ -129,6 +197,19 @@ export default function AdminPanel() {
             load();
         } catch (e) {}
     };
+
+    // ✅ NEW: block non-admins from seeing the panel at all
+    if (unauthorized) {
+        return (
+            <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                <Stack spacing={2} alignItems="center">
+                    <LockIcon sx={{ fontSize: 48, color: '#f44336' }} />
+                    <Typography variant="h5" fontWeight={800}>Access Denied</Typography>
+                    <Typography color="text.secondary">You don't have permission to view this page.</Typography>
+                </Stack>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', p: { xs: 2, md: 4 }, color: '#fff' }}>
@@ -344,42 +425,9 @@ export default function AdminPanel() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {users.map((u) => {
-                                const [adjAmt, setAdjAmt] = useState('');
-                                const [adjAction, setAdjAction] = useState('add');
-                                return (
-                                    <TableRow key={u.username}>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 700 }}>{u.username}</TableCell>
-                                        <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>{u.email}</TableCell>
-                                        <TableCell sx={{ color: '#00e701', fontWeight: 700 }}>GHS {u.balance?.toFixed(2)}</TableCell>
-                                        <TableCell>
-                                            <Chip label={u.suspended ? '🔴 Suspended' : '🟢 Active'} size="small"
-                                                sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Stack direction="row" spacing={1} alignItems="center">
-                                                <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small"
-                                                    sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: 80 }}>
-                                                    <MenuItem value="add">Add</MenuItem>
-                                                    <MenuItem value="deduct">Deduct</MenuItem>
-                                                    <MenuItem value="set">Set</MenuItem>
-                                                </Select>
-                                                <TextField size="small" value={adjAmt} onChange={(e) => setAdjAmt(e.target.value)}
-                                                    placeholder="Amount" type="number" sx={{ width: 90, input: { color: '#fff' }, bgcolor: '#0f212e' }} />
-                                                <Button size="small" variant="contained" onClick={() => adjustBalance(u.username, adjAction, adjAmt)}
-                                                    sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto' }}>Go</Button>
-                                            </Stack>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button size="small" variant="outlined"
-                                                onClick={() => suspend(u.username)}
-                                                sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336' }}>
-                                                {u.suspended ? 'Unsuspend' : 'Suspend'}
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
+                            {users.map((u) => (
+                                <UserRow key={u.username} u={u} onAdjust={adjustBalance} onSuspend={suspend} />
+                            ))}
                         </TableBody>
                     </Table>
                 </Box>
