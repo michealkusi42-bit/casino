@@ -1,18 +1,12 @@
 import { useSnackbar } from 'notistack';
 import { useTranslate } from 'locales';
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import {
-    Box, Button, Chip, CircularProgress, Divider, IconButton,
-    Stack, Tab, Table, TableBody, TableCell, TableHead, TableRow,
-    Tabs, TextField, Typography, Card
+    Box, Button, CircularProgress, IconButton,
+    Stack, Tab, Tabs, TextField, Typography
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { fDateTime } from 'utils/format-time';
-import EmptyTable from 'components/empty-table';
 import { useDispatch } from 'store/store';
 
 const API = 'https://foretell-backend-production-58a6.up.railway.app';
@@ -30,54 +24,7 @@ const CRYPTO_ACCOUNTS = [
     { coin: 'USDT', network: 'Tron (TRC20)', address: 'TLqkvwEbTFhn8TVvPZffJVTDi2a3QW37yn', icon: '₮' },
 ];
 
-type Stage = 'list' | 'form' | 'details';
-
-// ✅ Animated UNDER REVIEW dots
-const AnimatedUnderReview = () => {
-    const [dots, setDots] = useState('.');
-    useEffect(() => {
-        const id = setInterval(() => {
-            setDots(prev => prev.length >= 3 ? '.' : prev + '.');
-        }, 500);
-        return () => clearInterval(id);
-    }, []);
-    return (
-        <Chip
-            icon={<CircularProgress size={12} sx={{ color: '#00BAE6' }} />}
-            label={`UNDER REVIEW${dots}`}
-            size="small"
-            sx={{
-                bgcolor: 'rgba(0,186,230,0.15)',
-                color: '#00BAE6',
-                fontWeight: 700,
-                fontSize: '0.65rem',
-                border: '1px solid #00BAE6',
-                animation: 'pulse 1.5s ease-in-out infinite',
-                '@keyframes pulse': {
-                    '0%, 100%': { boxShadow: '0 0 0 0 rgba(0,186,230,0.4)' },
-                    '50%': { boxShadow: '0 0 0 6px rgba(0,186,230,0)' }
-                }
-            }}
-        />
-    );
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-    if (status === 'pending') return (
-        <Chip icon={<AccessTimeIcon sx={{ fontSize: 12 }} />} label="Pending" size="small"
-            sx={{ bgcolor: 'rgba(255,193,7,0.15)', color: '#FFC107', fontWeight: 700, border: '1px solid #FFC107' }} />
-    );
-    if (status === 'under_review') return <AnimatedUnderReview />;
-    if (status === 'success') return (
-        <Chip icon={<CheckCircleIcon sx={{ fontSize: 12 }} />} label="Success" size="small"
-            sx={{ bgcolor: 'rgba(0,231,1,0.15)', color: '#00e701', fontWeight: 700, border: '1px solid #00e701' }} />
-    );
-    if (status === 'rejected') return (
-        <Chip icon={<CancelIcon sx={{ fontSize: 12 }} />} label="Rejected" size="small"
-            sx={{ bgcolor: 'rgba(244,67,54,0.15)', color: '#f44336', fontWeight: 700, border: '1px solid #f44336' }} />
-    );
-    return <Chip label={status} size="small" />;
-};
+type Stage = 'form' | 'details';
 
 const DepositPage = () => {
     const { t } = useTranslate();
@@ -85,39 +32,16 @@ const DepositPage = () => {
     const dispatch = useDispatch();
     const token = localStorage.getItem('betthrob-accessToken') || sessionStorage.getItem('betthrob-accessToken');
 
-    const [stage, setStage] = useState<Stage>('list');
+    const [stage, setStage] = useState<Stage>('form');
     const [tab, setTab] = useState(0);
     const [amount, setAmount] = useState('');
     const [reference, setReference] = useState('');
     const [loading, setLoading] = useState(false);
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
 
     const authHeader = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
     };
-
-    const loadHistory = useCallback(async () => {
-        setLoadingHistory(true);
-        try {
-            const res = await fetch(`${API}/api/wallet/transactions`, { headers: authHeader });
-            const data = await res.json();
-            if (data.success) {
-                setTransactions(data.data.filter((tx: any) => tx.type === 'deposit'));
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoadingHistory(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadHistory();
-        const id = setInterval(loadHistory, 30000);
-        return () => clearInterval(id);
-    }, [loadHistory]);
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -149,8 +73,7 @@ const DepositPage = () => {
                 enqueueSnackbar('Deposit submitted! Awaiting review.', { variant: 'success' });
                 setAmount('');
                 setReference('');
-                setStage('list');
-                loadHistory();
+                setStage('form');
             } else {
                 enqueueSnackbar(data.error || 'Failed', { variant: 'error' });
             }
@@ -164,82 +87,13 @@ const DepositPage = () => {
     return (
         <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }}>
 
-            {/* ─── LIST: deposit history + button ─── */}
-            {stage === 'list' && (
-                <Stack spacing={2}>
-                    <Stack width={1} alignItems="end">
-                        <Button onClick={() => setStage('form')} variant="contained" color="primary">
-                            + {t('deposit')}
-                        </Button>
-                    </Stack>
-
-                    <Typography variant="h6" fontWeight={700}>Deposit History</Typography>
-
-                    {loadingHistory && <Stack alignItems="center" py={3}><CircularProgress /></Stack>}
-
-                    {!loadingHistory && transactions.length === 0 && (
-                        <Stack alignItems="center" py={4}>
-                            <Typography color="text.secondary">No deposits yet</Typography>
-                        </Stack>
-                    )}
-
-                    <Stack spacing={1.5}>
-                        {transactions.map((tx, i) => (
-                            <Card key={i} sx={{
-                                p: 2, borderRadius: 2,
-                                border: '1px solid',
-                                borderColor: tx.status === 'success' ? 'rgba(0,231,1,0.2)'
-                                    : tx.status === 'under_review' ? 'rgba(0,186,230,0.2)'
-                                    : tx.status === 'rejected' ? 'rgba(244,67,54,0.2)'
-                                    : 'rgba(255,193,7,0.2)',
-                                bgcolor: 'background.layer2'
-                            }}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Box>
-                                        <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                                            <Typography variant="caption" sx={{ color: '#00e701', fontWeight: 700, textTransform: 'uppercase' }}>
-                                                + Deposit
-                                            </Typography>
-                                            <StatusBadge status={tx.status || 'pending'} />
-                                        </Stack>
-                                        <Typography variant="h6" fontWeight={800}>
-                                            GH₵ {Number(tx.amount).toFixed(2)}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {tx.timestamp ? fDateTime(tx.timestamp) : '-'}
-                                        </Typography>
-                                        {tx.reference && (
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                Ref: {tx.reference}
-                                            </Typography>
-                                        )}
-                                        {tx.method && (
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                Via: {tx.method === 'momo' ? '🇬🇭 MoMo' : '₿ Crypto'}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    {tx.status === 'under_review' && <CircularProgress size={24} sx={{ color: '#00BAE6' }} />}
-                                    {tx.status === 'success' && <CheckCircleIcon sx={{ color: '#00e701', fontSize: 28 }} />}
-                                    {tx.status === 'rejected' && <CancelIcon sx={{ color: '#f44336', fontSize: 28 }} />}
-                                    {tx.status === 'pending' && <AccessTimeIcon sx={{ color: '#FFC107', fontSize: 28 }} />}
-                                </Stack>
-                            </Card>
-                        ))}
-                    </Stack>
-                </Stack>
-            )}
-
             {/* ─── FORM: enter amount ─── */}
             {stage === 'form' && (
                 <Stack spacing={2}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <IconButton onClick={() => setStage('list')} size="small">
-                            <ArrowBackIcon />
-                        </IconButton>
-                        <Typography variant="h6" fontWeight={700}>Make a Deposit</Typography>
-                    </Stack>
-
+                    <Typography variant="h6" fontWeight={700}>Make a Deposit</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Enter how much you'd like to deposit.
+                    </Typography>
                     <TextField
                         label="Amount (GHS)"
                         value={amount}
@@ -247,7 +101,6 @@ const DepositPage = () => {
                         type="number"
                         fullWidth size="small" autoFocus
                     />
-
                     <Button
                         variant="contained"
                         onClick={() => {
