@@ -11,6 +11,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import axios from 'utils/axios';
 
 const API = '/api/admin';
+const ADMIN_PASSWORD_KEY = 'adminPanelPassword';
 
 const GAMES = ['coinflip', 'dice', 'hilo', 'mines', 'roulette', 'updown', 'crash', 'lottery', 'racing', 'bingo', 'poker'];
 
@@ -24,8 +25,7 @@ const statusChip = (status: string) => {
     return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.7rem' }} />;
 };
 
-// ✅ FIX: extracted into its own component so each row owns its own
-// useState calls instead of calling useState inside .map() (Rules of Hooks violation).
+// ✅ Extracted so each row owns its own useState calls (fixes a Hooks-in-map bug)
 function UserRow({
     u,
     onAdjust,
@@ -85,6 +85,13 @@ function UserRow({
 }
 
 export default function AdminPanel() {
+    // ✅ NEW: password-gate state
+    const [unlocked, setUnlocked] = useState(false);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [authError, setAuthError] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
+
     const [tab, setTab] = useState(0);
     const [deposits, setDeposits] = useState<any[]>([]);
     const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -92,8 +99,6 @@ export default function AdminPanel() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
-    // ✅ NEW: real access-denied state instead of showing an empty admin shell
-    const [unauthorized, setUnauthorized] = useState(false);
 
     // Game control state
     const [selectedUser, setSelectedUser] = useState('');
@@ -101,6 +106,36 @@ export default function AdminPanel() {
     const [overrideValue, setOverrideValue] = useState('win');
     const [customValue, setCustomValue] = useState('');
     const [userOverrides, setUserOverrides] = useState<any>({});
+
+    // On first load, check if we already have a saved password from this browser session
+    useEffect(() => {
+        const saved = sessionStorage.getItem(ADMIN_PASSWORD_KEY);
+        if (saved) {
+            axios.defaults.headers.common['x-admin-password'] = saved;
+            setUnlocked(true);
+        }
+        setCheckingAuth(false);
+    }, []);
+
+    useEffect(() => {
+        if (unlocked) load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unlocked]);
+
+    const handleUnlock = async () => {
+        setAuthError('');
+        setAuthLoading(true);
+        try {
+            await axios.post(`${API}/login`, { password: passwordInput });
+            sessionStorage.setItem(ADMIN_PASSWORD_KEY, passwordInput);
+            axios.defaults.headers.common['x-admin-password'] = passwordInput;
+            setUnlocked(true);
+        } catch (e: any) {
+            setAuthError(e?.response?.data?.error || 'Incorrect password');
+        } finally {
+            setAuthLoading(false);
+        }
+    };
 
     const load = async () => {
         setLoading(true);
@@ -116,9 +151,11 @@ export default function AdminPanel() {
             setUsers(u.data.data || []);
             setStats(s.data.data);
         } catch (e: any) {
-            // ✅ NEW: distinguish "not an admin" from other failures
             if (e?.response?.status === 403) {
-                setUnauthorized(true);
+                // Saved password is wrong/stale — kick back to the prompt
+                sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
+                setUnlocked(false);
+                setAuthError('Session expired — enter the password again');
             } else {
                 setMsg('Failed to load data');
             }
@@ -126,8 +163,6 @@ export default function AdminPanel() {
             setLoading(false);
         }
     };
-
-    useEffect(() => { load(); }, []);
 
     const approve = async (type: string, id: string) => {
         try {
@@ -198,14 +233,39 @@ export default function AdminPanel() {
         } catch (e) {}
     };
 
-    // ✅ NEW: block non-admins from seeing the panel at all
-    if (unauthorized) {
+    // Avoid a flash of the password screen while we check sessionStorage
+    if (checkingAuth) return null;
+
+    // ✅ NEW: password prompt instead of the panel
+    if (!unlocked) {
         return (
-            <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                <Stack spacing={2} alignItems="center">
-                    <LockIcon sx={{ fontSize: 48, color: '#f44336' }} />
-                    <Typography variant="h5" fontWeight={800}>Access Denied</Typography>
-                    <Typography color="text.secondary">You don't have permission to view this page.</Typography>
+            <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', p: 2 }}>
+                <Stack spacing={2} alignItems="center" sx={{ width: '100%', maxWidth: 320 }}>
+                    <LockIcon sx={{ fontSize: 48, color: '#00e701' }} />
+                    <Typography variant="h5" fontWeight={800}>Admin Access</Typography>
+                    {authError && (
+                        <Alert severity="error" sx={{ width: '100%' }}>
+                            {authError}
+                        </Alert>
+                    )}
+                    <TextField
+                        fullWidth
+                        type="password"
+                        placeholder="Enter admin password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                        sx={{ input: { color: '#fff' }, bgcolor: '#213743', borderRadius: 1 }}
+                    />
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        disabled={authLoading || !passwordInput}
+                        onClick={handleUnlock}
+                        sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, py: 1.2 }}
+                    >
+                        {authLoading ? <CircularProgress size={20} sx={{ color: '#000' }} /> : 'Unlock'}
+                    </Button>
                 </Stack>
             </Box>
         );
@@ -228,7 +288,6 @@ export default function AdminPanel() {
                 </Alert>
             )}
 
-            {/* Stats */}
             {stats && (
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: 2, mb: 3 }}>
                     {[
@@ -254,7 +313,6 @@ export default function AdminPanel() {
 
             {loading && <CircularProgress sx={{ color: '#00e701', display: 'block', mx: 'auto', my: 4 }} />}
 
-            {/* DEPOSITS */}
             {tab === 0 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
                     <Table>
@@ -300,7 +358,6 @@ export default function AdminPanel() {
                 </Box>
             )}
 
-            {/* WITHDRAWALS */}
             {tab === 1 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
                     <Table>
@@ -346,7 +403,6 @@ export default function AdminPanel() {
                 </Box>
             )}
 
-            {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 3 }}>
@@ -390,7 +446,6 @@ export default function AdminPanel() {
                         </Stack>
                     </Box>
 
-                    {/* Active overrides for selected user */}
                     {selectedUser && Object.keys(userOverrides).length > 0 && (
                         <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 3 }}>
                             <Typography variant="h6" fontWeight={700} mb={2}>Active Overrides for {selectedUser}</Typography>
@@ -413,7 +468,6 @@ export default function AdminPanel() {
                 </Stack>
             )}
 
-            {/* USERS */}
             {tab === 3 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
                     <Table>
