@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import {
     Box, Stack, Typography, Button, Chip, Tab, Tabs, Table, TableBody,
     TableCell, TableHead, TableRow, TextField, Select, MenuItem,
-    CircularProgress, Alert, IconButton, Tooltip
+    CircularProgress, Alert, IconButton, Tooltip, Card
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import LockIcon from '@mui/icons-material/Lock';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import axios from 'utils/axios';
 
 const API = '/api/admin';
@@ -18,6 +19,8 @@ const GAMES = ['coinflip', 'dice', 'hilo', 'mines', 'roulette', 'updown', 'crash
 const statusChip = (status: string) => {
     const map: any = {
         pending: { label: '⏳ Pending', color: '#ffc107', bg: 'rgba(255,193,7,0.12)' },
+        under_review: { label: '🔄 Under Review', color: '#00BAE6', bg: 'rgba(0,186,230,0.12)' },
+        success: { label: '✅ Success', color: '#00e701', bg: 'rgba(0,231,1,0.12)' },
         approved: { label: '✅ Approved', color: '#00e701', bg: 'rgba(0,231,1,0.12)' },
         rejected: { label: '❌ Rejected', color: '#f44336', bg: 'rgba(244,67,54,0.12)' },
     };
@@ -198,6 +201,11 @@ export default function AdminPanel() {
         } catch (e) {}
     };
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setMsg(`📋 Copied: ${text}`);
+    };
+
     if (checkingAuth) return null;
 
     if (!unlocked) {
@@ -224,21 +232,21 @@ export default function AdminPanel() {
         <Box sx={{ bgcolor: '#0f212e', minHeight: '100vh', p: { xs: 1.5, md: 4 }, color: '#fff' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h5" fontWeight={800} sx={{ color: '#00e701', fontSize: { xs: '1.2rem', md: '1.5rem' } }}>
-                    🛡 Admin Panel
+                    🛡 Foretell Admin
                 </Typography>
                 <IconButton onClick={load} sx={{ color: '#fff' }}><RefreshIcon /></IconButton>
             </Stack>
 
             {msg && <Alert severity="info" onClose={() => setMsg('')} sx={{ mb: 2, fontSize: '0.8rem' }}>{msg}</Alert>}
 
-            {/* Stats - 2 cols on mobile, 4 on desktop */}
+            {/* Stats */}
             {stats && (
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: { xs: 1, md: 2 }, mb: 2 }}>
                     {[
                         { label: 'Total Users', value: stats.totalUsers },
                         { label: 'Pending Deposits', value: stats.pendingDeposits, color: '#ffc107' },
                         { label: 'Pending Withdrawals', value: stats.pendingWithdrawals, color: '#ffc107' },
-                        { label: 'House Profit', value: `GHS ${stats.houseProfit?.toFixed(2)}`, color: '#00e701' },
+                        { label: 'House Profit', value: `GHS ${stats.houseProfit?.toFixed(2)}`, color: stats.houseProfit >= 0 ? '#00e701' : '#f44336' },
                     ].map((s) => (
                         <Box key={s.label} sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 1.5, md: 2 } }}>
                             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>{s.label}</Typography>
@@ -248,7 +256,7 @@ export default function AdminPanel() {
                 </Box>
             )}
 
-            {/* Tabs - scrollable on mobile */}
+            {/* Tabs */}
             <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
                 sx={{ mb: 2, bgcolor: '#213743', borderRadius: 2, '& .MuiTab-root': { color: '#fff', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: { xs: 'auto', sm: 90 }, px: { xs: 1, sm: 2 } } }}>
                 <Tab label="💰 Deposits" />
@@ -261,111 +269,157 @@ export default function AdminPanel() {
 
             {/* DEPOSITS */}
             {tab === 0 && !loading && (
-                <Box sx={{ overflowX: 'auto' }}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>User</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Amount</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Method</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Reference</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Time</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {deposits.map((d) => (
-                                <TableRow key={d.id}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{d.username}</TableCell>
-                                    <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {d.amount}</TableCell>
-                                    <TableCell sx={{ color: '#fff', display: { xs: 'none', sm: 'table-cell' } }}>{d.method || 'MoMo'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{d.reference || '-'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{new Date(d.timestamp).toLocaleString()}</TableCell>
-                                    <TableCell>{statusChip(d.status)}</TableCell>
-                                    <TableCell>
-                                        {d.status === 'pending' && (
-                                            <Stack direction="row" spacing={0.5}>
-                                                <Tooltip title="Approve">
-                                                    <IconButton onClick={() => approve('deposits', d.id)} size="small" sx={{ color: '#00e701' }}>
-                                                        <CheckCircleIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Reject">
-                                                    <IconButton onClick={() => reject('deposits', d.id)} size="small" sx={{ color: '#f44336' }}>
-                                                        <CancelIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {deposits.length === 0 && (
-                                <TableRow><TableCell colSpan={7} align="center" sx={{ color: '#94a3b8' }}>No deposits yet</TableCell></TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </Box>
+                <Stack spacing={1.5}>
+                    {deposits.length === 0 && (
+                        <Box sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>No deposits yet</Box>
+                    )}
+                    {deposits.map((d) => (
+                        <Card key={d.id} sx={{
+                            p: 2, bgcolor: '#213743', borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: d.status === 'pending' ? 'rgba(255,193,7,0.3)'
+                                : d.status === 'success' ? 'rgba(0,231,1,0.2)'
+                                : 'rgba(244,67,54,0.2)'
+                        }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                                <Box>
+                                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                                        <Typography fontWeight={800} sx={{ color: '#00e701', fontSize: '1.1rem' }}>
+                                            + GHS {d.amount}
+                                        </Typography>
+                                        {statusChip(d.status)}
+                                    </Stack>
+                                    <Typography variant="caption" sx={{ color: '#fff', fontWeight: 700 }}>
+                                        👤 {d.username}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block">
+                                        📱 {d.method === 'crypto' ? '₿ Crypto' : '🇬🇭 MoMo'} • {new Date(d.timestamp).toLocaleString()}
+                                    </Typography>
+                                    {d.reference && (
+                                        <Stack direction="row" alignItems="center" spacing={0.5} mt={0.5}>
+                                            <Typography variant="caption" sx={{ color: '#00BAE6' }}>
+                                                Ref: {d.reference}
+                                            </Typography>
+                                            <IconButton size="small" onClick={() => copyToClipboard(d.reference)} sx={{ p: 0.2 }}>
+                                                <ContentCopyIcon sx={{ fontSize: 12, color: '#00BAE6' }} />
+                                            </IconButton>
+                                        </Stack>
+                                    )}
+                                </Box>
+                                {d.status === 'pending' && (
+                                    <Stack direction="row" spacing={0.5}>
+                                        <Tooltip title="Approve & Credit User">
+                                            <IconButton onClick={() => approve('deposits', d.id)} sx={{ color: '#00e701', bgcolor: 'rgba(0,231,1,0.1)', borderRadius: 2 }}>
+                                                <CheckCircleIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Reject">
+                                            <IconButton onClick={() => reject('deposits', d.id)} sx={{ color: '#f44336', bgcolor: 'rgba(244,67,54,0.1)', borderRadius: 2 }}>
+                                                <CancelIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
+                                )}
+                            </Stack>
+                        </Card>
+                    ))}
+                </Stack>
             )}
 
             {/* WITHDRAWALS */}
             {tab === 1 && !loading && (
-                <Box sx={{ overflowX: 'auto' }}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>User</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Amount</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Method</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Address</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', md: 'table-cell' } }}>Time</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {withdrawals.map((w) => (
-                                <TableRow key={w.id}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{w.username}</TableCell>
-                                    <TableCell sx={{ color: '#f44336', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {w.amount}</TableCell>
-                                    <TableCell sx={{ color: '#fff', display: { xs: 'none', sm: 'table-cell' } }}>{w.method || 'MoMo'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{w.address || '-'}</TableCell>
-                                    <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', md: 'table-cell' } }}>{new Date(w.timestamp).toLocaleString()}</TableCell>
-                                    <TableCell>{statusChip(w.status)}</TableCell>
-                                    <TableCell>
-                                        {w.status === 'pending' && (
-                                            <Stack direction="row" spacing={0.5}>
-                                                <Tooltip title="Approve">
-                                                    <IconButton onClick={() => approve('withdrawals', w.id)} size="small" sx={{ color: '#00e701' }}>
-                                                        <CheckCircleIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Reject">
-                                                    <IconButton onClick={() => reject('withdrawals', w.id)} size="small" sx={{ color: '#f44336' }}>
-                                                        <CancelIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {withdrawals.length === 0 && (
-                                <TableRow><TableCell colSpan={7} align="center" sx={{ color: '#94a3b8' }}>No withdrawals yet</TableCell></TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </Box>
+                <Stack spacing={1.5}>
+                    {withdrawals.length === 0 && (
+                        <Box sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>No withdrawals yet</Box>
+                    )}
+                    {withdrawals.map((w) => (
+                        <Card key={w.id} sx={{
+                            p: 2, bgcolor: '#213743', borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: w.status === 'pending' ? 'rgba(255,193,7,0.3)'
+                                : w.status === 'success' ? 'rgba(0,231,1,0.2)'
+                                : 'rgba(244,67,54,0.2)'
+                        }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                                <Box>
+                                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                                        <Typography fontWeight={800} sx={{ color: '#f44336', fontSize: '1.1rem' }}>
+                                            - GHS {w.amount}
+                                        </Typography>
+                                        {statusChip(w.status)}
+                                    </Stack>
+                                    <Typography variant="caption" sx={{ color: '#fff', fontWeight: 700 }}>
+                                        👤 {w.username}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block">
+                                        📱 {w.method === 'crypto' ? '₿ Crypto' : '🇬🇭 MoMo'} • {new Date(w.timestamp).toLocaleString()}
+                                    </Typography>
+
+                                    {/* MoMo Number - ALWAYS VISIBLE & COPYABLE */}
+                                    {w.address && (
+                                        <Box sx={{
+                                            mt: 1, p: 1, borderRadius: 1,
+                                            bgcolor: 'rgba(0,186,230,0.1)',
+                                            border: '1px solid rgba(0,186,230,0.3)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 1
+                                        }}>
+                                            <Typography sx={{ color: '#00BAE6', fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
+                                                📲 {w.address}
+                                            </Typography>
+                                            <IconButton size="small" onClick={() => copyToClipboard(w.address)}
+                                                sx={{ p: 0.3, color: '#00BAE6' }}>
+                                                <ContentCopyIcon sx={{ fontSize: 14 }} />
+                                            </IconButton>
+                                        </Box>
+                                    )}
+
+                                    {w.network && (
+                                        <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                                            Network: {w.network}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                {w.status === 'pending' && (
+                                    <Stack direction="column" spacing={0.5}>
+                                        <Tooltip title="Approve — Send money then click">
+                                            <Button
+                                                onClick={() => approve('withdrawals', w.id)}
+                                                variant="contained"
+                                                size="small"
+                                                startIcon={<CheckCircleIcon />}
+                                                sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, fontSize: '0.7rem', whiteSpace: 'nowrap' }}
+                                            >
+                                                Sent ✓
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title="Reject & Refund user">
+                                            <Button
+                                                onClick={() => reject('withdrawals', w.id)}
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<CancelIcon />}
+                                                sx={{ color: '#f44336', borderColor: '#f44336', fontSize: '0.7rem' }}
+                                            >
+                                                Reject
+                                            </Button>
+                                        </Tooltip>
+                                    </Stack>
+                                )}
+                            </Stack>
+                        </Card>
+                    ))}
+                </Stack>
             )}
 
             {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
-                        <Typography variant="h6" fontWeight={700} mb={2}>🎮 Set Game Override</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                            One-shot: override applies to the user's NEXT bet only, then clears automatically.
+                        <Typography variant="h6" fontWeight={700} mb={1}>🎮 Set Game Override</Typography>
+                        <Typography variant="caption" sx={{ color: '#ffc107', display: 'block', mb: 2 }}>
+                            ⚠️ Override stays PERMANENT until you manually clear it below.
                         </Typography>
                         <Stack spacing={2}>
                             <Select value={selectedUser} onChange={(e) => { setSelectedUser(e.target.value); loadOverrides(e.target.value); }}
@@ -377,8 +431,8 @@ export default function AdminPanel() {
                                 {GAMES.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
                             </Select>
                             <Select value={overrideValue} onChange={(e) => setOverrideValue(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
-                                <MenuItem value="win">🏆 Force WIN</MenuItem>
-                                <MenuItem value="lose">💀 Force LOSE</MenuItem>
+                                <MenuItem value="win">🏆 Force WIN every game</MenuItem>
+                                <MenuItem value="lose">💀 Force LOSE every game</MenuItem>
                                 <MenuItem value="custom">🎯 Custom value (JSON)</MenuItem>
                             </Select>
                             {overrideValue === 'custom' && (
@@ -393,27 +447,44 @@ export default function AdminPanel() {
                             )}
                             <Button variant="contained" onClick={setOverride}
                                 sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, py: 1.5 }}>
-                                Set Override
+                                🎯 Apply Override
                             </Button>
                         </Stack>
                     </Box>
+
+                    {/* Active overrides */}
                     {selectedUser && Object.keys(userOverrides).length > 0 && (
                         <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
-                            <Typography variant="h6" fontWeight={700} mb={2}>Active Overrides for {selectedUser}</Typography>
+                            <Typography variant="h6" fontWeight={700} mb={2} sx={{ color: '#ffc107' }}>
+                                ⚡ Active Overrides — {selectedUser}
+                            </Typography>
                             <Stack spacing={1}>
                                 {Object.entries(userOverrides).map(([game, value]) => (
                                     <Stack key={game} direction="row" justifyContent="space-between" alignItems="center"
-                                        sx={{ bgcolor: '#0f212e', p: 1.5, borderRadius: 1 }}>
+                                        sx={{ bgcolor: '#0f212e', p: 1.5, borderRadius: 1, border: '1px solid rgba(255,193,7,0.2)' }}>
                                         <Box>
-                                            <Typography fontWeight={700} sx={{ textTransform: 'capitalize' }}>{game}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{JSON.stringify(value)}</Typography>
+                                            <Typography fontWeight={700} sx={{ textTransform: 'capitalize', color: '#ffc107' }}>{game}</Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {JSON.stringify(value) === '"win"' ? '🏆 Force WIN' :
+                                                 JSON.stringify(value) === '"lose"' ? '💀 Force LOSE' :
+                                                 JSON.stringify(value)}
+                                            </Typography>
                                         </Box>
-                                        <IconButton onClick={() => clearOverride(selectedUser, game)} size="small" sx={{ color: '#f44336' }}>
-                                            <CancelIcon />
-                                        </IconButton>
+                                        <Button size="small" variant="outlined" onClick={() => clearOverride(selectedUser, game)}
+                                            sx={{ color: '#f44336', borderColor: '#f44336', fontSize: '0.7rem' }}>
+                                            Clear
+                                        </Button>
                                     </Stack>
                                 ))}
                             </Stack>
+                        </Box>
+                    )}
+
+                    {selectedUser && Object.keys(userOverrides).length === 0 && (
+                        <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 2, textAlign: 'center' }}>
+                            <Typography color="text.secondary" variant="caption">
+                                No active overrides for {selectedUser}
+                            </Typography>
                         </Box>
                     )}
                 </Stack>
