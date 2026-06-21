@@ -84,9 +84,9 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
         }
         setMomoLoading(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('bethrob-accessToken');
             await axios.patch(
-                `${import.meta.env.VITE_API_BASE_URL}/wallet/momo`,
+                `${import.meta.env.VITE_HOST_API}/wallet/momo`,
                 { momoNetwork: selectedNetwork, momoNumber, momoName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
