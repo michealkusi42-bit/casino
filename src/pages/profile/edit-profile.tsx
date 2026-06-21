@@ -29,13 +29,13 @@ const networks = [
     {
         id: 'VOD',
         label: 'Telecel',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Telecel_Ghana_Logo.png/320px-Telecel_Ghana_Logo.png',
+        logo: 'https://www.telecelghana.com/wp-content/uploads/2023/10/Telecel-Logo.png',
         color: '#E30613',
     },
     {
         id: 'ATL',
         label: 'AirtelTigo',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/AirtelTigo_logo.svg/320px-AirtelTigo_logo.svg.png',
+        logo: 'https://airteltigo.com.gh/wp-content/uploads/2019/01/AirtelTigo-Logo.png',
         color: '#0066CC',
     }
 ];
@@ -47,6 +47,7 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
     const [momoLoading, setMomoLoading] = useState<boolean>(false);
     const [selectedNetwork, setSelectedNetwork] = useState<string>((user as any)?.momoNetwork || '');
     const [momoNumber, setMomoNumber] = useState<string>((user as any)?.momoNumber || '');
+    const [momoName, setMomoName] = useState<string>((user as any)?.momoName || '');
 
     const methods = useForm({
         defaultValues: {
@@ -73,6 +74,10 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
             enqueueSnackbar('Please select a network', { variant: 'error' });
             return;
         }
+        if (!momoName || momoName.trim().length < 3) {
+            enqueueSnackbar('Please enter your account name', { variant: 'error' });
+            return;
+        }
         if (!momoNumber || momoNumber.length < 10) {
             enqueueSnackbar('Please enter a valid MoMo number', { variant: 'error' });
             return;
@@ -82,10 +87,10 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
             const token = localStorage.getItem('token');
             await axios.patch(
                 `${import.meta.env.VITE_APP_API_URL}/wallet/momo`,
-                { momoNetwork: selectedNetwork, momoNumber },
+                { momoNetwork: selectedNetwork, momoNumber, momoName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            await updateUser({ momoNetwork: selectedNetwork, momoNumber } as any);
+            await updateUser({ momoNetwork: selectedNetwork, momoNumber, momoName } as any);
             enqueueSnackbar('MoMo number saved successfully!', { variant: 'success' });
         } catch (error: any) {
             enqueueSnackbar(error.message || 'Failed to save MoMo number', { variant: 'error' });
@@ -132,7 +137,7 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
                     💳 Bind MoMo for Withdrawals
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Save your MoMo number once for faster withdrawals
+                    Save your MoMo details once for faster withdrawals
                 </Typography>
 
                 <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
@@ -169,6 +174,29 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
                 </Box>
 
                 <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+                    Account Name
+                </Typography>
+                <Box
+                    component="input"
+                    value={momoName}
+                    onChange={(e: any) => setMomoName(e.target.value)}
+                    placeholder="e.g. John Mensah"
+                    type="text"
+                    sx={{
+                        width: '100%',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: '#fff',
+                        fontSize: 16,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        mb: 2
+                    }}
+                />
+
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
                     MoMo Number
                 </Typography>
                 <Box
@@ -201,7 +229,7 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
                 {(user as any)?.momoNumber && (
                     <Box sx={{ mt: 2, p: 1.5, borderRadius: 1, background: 'rgba(0,200,0,0.1)', border: '1px solid rgba(0,200,0,0.3)' }}>
                         <Typography variant="caption" sx={{ color: '#00C853' }}>
-                            ✅ Saved: {networks.find(n => n.id === (user as any).momoNetwork)?.label} - {(user as any).momoNumber}
+                            ✅ {networks.find(n => n.id === (user as any).momoNetwork)?.label} - {(user as any).momoNumber} - {(user as any).momoName}
                         </Typography>
                     </Box>
                 )}
