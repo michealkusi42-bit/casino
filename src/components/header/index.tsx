@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Box, Button, Stack, Typography, IconButton, Popover, Badge } from '@mui/material';
 import { usePathname, useRouter } from 'routes/hook';
+import { paths } from 'routes/paths';
 import { useAuth } from 'hooks/use-auth-context';
 import { useTranslate } from 'locales';
 import { SearchIcon, WorldIcon } from 'icons';
@@ -256,9 +257,11 @@ const Header = ({
                             </Popover>
                         )}
 
-                        {/* Deposit Button — shrinks to icon-friendly size on mobile so it doesn't push the profile icon out */}
+                        {/* Deposit Button — shrinks to icon-friendly size on mobile so it doesn't push the profile icon out.
+                            Navigates to the same /wallet/deposit page the profile menu uses (Paystack flow),
+                            instead of opening the old DEPOSIT modal. */}
                         <Button
-                            onClick={() => onToggleModal('DEPOSIT')}
+                            onClick={() => router.push(paths.wallet.deposit)}
                             startIcon={<Add sx={{ fontSize: { xs: 13, sm: 16 } }} />}
                             sx={{
                                 background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
