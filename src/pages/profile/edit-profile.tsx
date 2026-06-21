@@ -19,6 +19,8 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
     backgroundColor: theme.palette.background.paper
 }));
 
+const API_URL = 'https://foretell-backend-production-58a6.up.railway.app/api';
+
 const networks = [
     {
         id: 'MTN',
@@ -86,7 +88,7 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
         try {
             const token = localStorage.getItem('bethrob-accessToken');
             await axios.patch(
-                `${import.meta.env.VITE_HOST_API}/wallet/momo`,
+                `${API_URL}/wallet/momo`,
                 { momoNetwork: selectedNetwork, momoNumber, momoName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -131,7 +133,6 @@ const EditProfile = ({ setOpen }: { setOpen: (open: string | null) => void }) =>
                 </ColorButton>
             </FormProvider>
 
-            {/* MoMo Section */}
             <Box sx={{ mt: 4, p: 2, borderRadius: 2, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#fff', mb: 1 }}>
                     💳 Bind MoMo for Withdrawals
