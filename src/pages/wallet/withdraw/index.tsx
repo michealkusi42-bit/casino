@@ -1,52 +1,17 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Box, Button, Card, Chip, CircularProgress, IconButton,
-    Stack, Tab, Tabs, TextField, Typography
+    Box, Button, Chip, CircularProgress, IconButton,
+    Stack, Tab, Tabs, TextField, Typography, Switch, FormControlLabel
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import SaveIcon from '@mui/icons-material/Save';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useSnackbar } from 'notistack';
 import { useSelector } from 'store/store';
 
 const API = 'https://foretell-backend-production-58a6.up.railway.app';
-
 const MIN_WITHDRAWAL = 10;
 const MAX_WITHDRAWAL = 5000;
-
-const AnimatedUnderReview = () => {
-    const [dots, setDots] = useState('.');
-    useEffect(() => {
-        const id = setInterval(() => {
-            setDots(prev => prev.length >= 3 ? '.' : prev + '.');
-        }, 500);
-        return () => clearInterval(id);
-    }, []);
-
-    return (
-        <Chip
-            icon={<CircularProgress size={12} sx={{ color: '#00BAE6' }} />}
-            label={`Under Review${dots}`}
-            size="small"
-            sx={{
-                bgcolor: 'rgba(0,186,230,0.15)',
-                color: '#00BAE6',
-                fontWeight: 700,
-                fontSize: '0.65rem',
-                border: '1px solid #00BAE6',
-                animation: 'glowPulse 1.5s ease-in-out infinite',
-                '@keyframes glowPulse': {
-                    '0%, 100%': { boxShadow: '0 0 0 0 rgba(0,186,230,0.5)' },
-                    '50%': { boxShadow: '0 0 12px 4px rgba(0,186,230,0.3)' }
-                }
-            }}
-        />
-    );
-};
-
-type Stage = 'form';
 
 const WithdrawPage = () => {
     const { enqueueSnackbar } = useSnackbar();
@@ -59,42 +24,68 @@ const WithdrawPage = () => {
     const [cryptoAddress, setCryptoAddress] = useState('');
     const [network, setNetwork] = useState('');
     const [loading, setLoading] = useState(false);
+    const [savedMomo, setSavedMomo] = useState('');
+    const [savedCrypto, setSavedCrypto] = useState('');
+    const [savedNetwork, setSavedNetwork] = useState('');
+    const [saveForNext, setSaveForNext] = useState(false);
+    const [fetchingDetails, setFetchingDetails] = useState(true);
 
     const authHeader = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
     };
 
+    // Load saved payment details on mount
+    useEffect(() => {
+        const loadPaymentDetails = async () => {
+            try {
+                const res = await fetch(`${API}/api/auth/payment-details`, { headers: authHeader });
+                const data = await res.json();
+                if (data.momoNumber) {
+                    setSavedMomo(data.momoNumber);
+                    setMomoNumber(data.momoNumber);
+                }
+                if (data.cryptoAddress) {
+                    setSavedCrypto(data.cryptoAddress);
+                    setCryptoAddress(data.cryptoAddress);
+                }
+                if (data.cryptoNetwork) {
+                    setSavedNetwork(data.cryptoNetwork);
+                    setNetwork(data.cryptoNetwork);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setFetchingDetails(false);
+            }
+        };
+        loadPaymentDetails();
+    }, []);
+
     const handleSubmit = async () => {
         const amt = parseFloat(amount);
-
-        if (!amount || amt <= 0) {
-            enqueueSnackbar('Enter a valid amount', { variant: 'error' });
-            return;
-        }
-        if (amt < MIN_WITHDRAWAL) {
-            enqueueSnackbar(`Minimum withdrawal is GHS ${MIN_WITHDRAWAL}`, { variant: 'error' });
-            return;
-        }
-        if (amt > MAX_WITHDRAWAL) {
-            enqueueSnackbar(`Maximum withdrawal is GHS ${MAX_WITHDRAWAL}`, { variant: 'error' });
-            return;
-        }
-        if (amt > balance.amount) {
-            enqueueSnackbar('Insufficient balance', { variant: 'error' });
-            return;
-        }
-        if (tab === 0 && !momoNumber) {
-            enqueueSnackbar('Enter your MoMo number', { variant: 'error' });
-            return;
-        }
-        if (tab === 1 && (!cryptoAddress || !network)) {
-            enqueueSnackbar('Enter your wallet address and network', { variant: 'error' });
-            return;
-        }
+        if (!amount || amt <= 0) { enqueueSnackbar('Enter a valid amount', { variant: 'error' }); return; }
+        if (amt < MIN_WITHDRAWAL) { enqueueSnackbar(`Minimum withdrawal is GHS ${MIN_WITHDRAWAL}`, { variant: 'error' }); return; }
+        if (amt > MAX_WITHDRAWAL) { enqueueSnackbar(`Maximum withdrawal is GHS ${MAX_WITHDRAWAL}`, { variant: 'error' }); return; }
+        if (amt > balance.amount) { enqueueSnackbar('Insufficient balance', { variant: 'error' }); return; }
+        if (tab === 0 && !momoNumber) { enqueueSnackbar('Enter your MoMo number', { variant: 'error' }); return; }
+        if (tab === 1 && (!cryptoAddress || !network)) { enqueueSnackbar('Enter wallet address and network', { variant: 'error' }); return; }
 
         setLoading(true);
         try {
+            // Save payment details if user wants
+            if (saveForNext) {
+                await fetch(`${API}/api/auth/payment-details`, {
+                    method: 'POST',
+                    headers: authHeader,
+                    body: JSON.stringify({
+                        momoNumber: tab === 0 ? momoNumber : undefined,
+                        cryptoAddress: tab === 1 ? cryptoAddress : undefined,
+                        cryptoNetwork: tab === 1 ? network : undefined,
+                    })
+                });
+            }
+
             const res = await fetch(`${API}/api/wallet/withdraw`, {
                 method: 'POST',
                 headers: authHeader,
@@ -107,13 +98,10 @@ const WithdrawPage = () => {
             });
             const data = await res.json();
             if (data.success) {
-                enqueueSnackbar('✅ Withdrawal submitted! Processing within 24 hours.', { variant: 'success' });
+                enqueueSnackbar('Withdrawal submitted! Processing within 24 hours.', { variant: 'success' });
                 setAmount('');
-                setMomoNumber('');
-                setCryptoAddress('');
-                setNetwork('');
             } else {
-                enqueueSnackbar(data.error || 'Failed to submit withdrawal', { variant: 'error' });
+                enqueueSnackbar(data.error || 'Failed', { variant: 'error' });
             }
         } catch (e) {
             enqueueSnackbar('Network error. Please try again.', { variant: 'error' });
@@ -121,6 +109,14 @@ const WithdrawPage = () => {
             setLoading(false);
         }
     };
+
+    if (fetchingDetails) {
+        return (
+            <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 200 }}>
+                <CircularProgress sx={{ color: '#00e701' }} />
+            </Stack>
+        );
+    }
 
     return (
         <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }}>
@@ -137,7 +133,7 @@ const WithdrawPage = () => {
                     </Box>
                 </Stack>
 
-                <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'background.layer2', border: '1px solid rgba(0,231,1,0.2)' }}>
+                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'background.layer2', border: '1px solid rgba(0,231,1,0.2)' }}>
                     <Typography variant="caption" color="text.secondary">
                         Min: GHS {MIN_WITHDRAWAL} • Max: GHS {MAX_WITHDRAWAL}
                     </Typography>
@@ -158,22 +154,15 @@ const WithdrawPage = () => {
                 {/* Quick amount buttons */}
                 <Stack direction="row" spacing={1}>
                     {[50, 100, 200, 500].map(v => (
-                        <Button
-                            key={v}
-                            size="small"
-                            variant="outlined"
+                        <Button key={v} size="small" variant="outlined"
                             onClick={() => setAmount(String(Math.min(v, balance.amount)))}
-                            sx={{ flex: 1, fontSize: '0.75rem', borderColor: '#2f4553', color: '#94a3b8' }}
-                        >
+                            sx={{ flex: 1, fontSize: '0.75rem', borderColor: '#2f4553', color: '#94a3b8' }}>
                             {v}
                         </Button>
                     ))}
-                    <Button
-                        size="small"
-                        variant="outlined"
+                    <Button size="small" variant="outlined"
                         onClick={() => setAmount(String(balance.amount.toFixed(2)))}
-                        sx={{ flex: 1, fontSize: '0.75rem', borderColor: '#2f4553', color: '#00e701' }}
-                    >
+                        sx={{ flex: 1, fontSize: '0.75rem', borderColor: '#2f4553', color: '#00e701' }}>
                         Max
                     </Button>
                 </Stack>
@@ -184,26 +173,69 @@ const WithdrawPage = () => {
                     <Tab label="₿ Crypto" />
                 </Tabs>
 
+                {/* MoMo */}
                 {tab === 0 && (
-                    <Stack spacing={2}>
-                        <Typography variant="body2" color="text.secondary">
-                            Enter your MoMo number. Payment will be sent within 24 hours after approval.
-                        </Typography>
+                    <Stack spacing={1.5}>
+                        {savedMomo && (
+                            <Box sx={{
+                                p: 1.5, borderRadius: 2,
+                                bgcolor: 'rgba(0,231,1,0.07)',
+                                border: '1px solid rgba(0,231,1,0.25)',
+                                display: 'flex', alignItems: 'center', gap: 1
+                            }}>
+                                <CheckCircleIcon sx={{ color: '#00e701', fontSize: 18 }} />
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Saved MoMo Number</Typography>
+                                    <Typography fontWeight={700} sx={{ color: '#00e701' }}>{savedMomo}</Typography>
+                                </Box>
+                            </Box>
+                        )}
                         <TextField
-                            label="Your MoMo Number"
+                            label={savedMomo ? 'MoMo Number (pre-filled from profile)' : 'Your MoMo Number'}
                             value={momoNumber}
                             onChange={(e) => setMomoNumber(e.target.value)}
                             fullWidth size="small"
                             placeholder="e.g. 0244123456"
                         />
+                        {momoNumber !== savedMomo && (
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={saveForNext}
+                                        onChange={(e) => setSaveForNext(e.target.checked)}
+                                        size="small"
+                                        sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#00e701' } }}
+                                    />
+                                }
+                                label={
+                                    <Typography variant="caption" color="text.secondary">
+                                        Save this number for future withdrawals
+                                    </Typography>
+                                }
+                            />
+                        )}
                     </Stack>
                 )}
 
+                {/* Crypto */}
                 {tab === 1 && (
-                    <Stack spacing={2}>
-                        <Typography variant="body2" color="text.secondary">
-                            Enter your crypto wallet address and select network.
-                        </Typography>
+                    <Stack spacing={1.5}>
+                        {savedCrypto && (
+                            <Box sx={{
+                                p: 1.5, borderRadius: 2,
+                                bgcolor: 'rgba(0,186,230,0.07)',
+                                border: '1px solid rgba(0,186,230,0.25)',
+                                display: 'flex', alignItems: 'center', gap: 1
+                            }}>
+                                <CheckCircleIcon sx={{ color: '#00BAE6', fontSize: 18 }} />
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Saved Wallet</Typography>
+                                    <Typography fontWeight={700} sx={{ color: '#00BAE6', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                                        {savedCrypto} ({savedNetwork})
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
                         <TextField
                             label="Wallet Address"
                             value={cryptoAddress}
@@ -217,6 +249,23 @@ const WithdrawPage = () => {
                             onChange={(e) => setNetwork(e.target.value)}
                             fullWidth size="small"
                         />
+                        {(cryptoAddress !== savedCrypto || network !== savedNetwork) && (
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={saveForNext}
+                                        onChange={(e) => setSaveForNext(e.target.checked)}
+                                        size="small"
+                                        sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#00BAE6' } }}
+                                    />
+                                }
+                                label={
+                                    <Typography variant="caption" color="text.secondary">
+                                        Save wallet for future withdrawals
+                                    </Typography>
+                                }
+                            />
+                        )}
                     </Stack>
                 )}
 
@@ -232,8 +281,7 @@ const WithdrawPage = () => {
                     disabled={loading || !amount || parseFloat(amount) > balance.amount}
                     fullWidth
                     sx={{
-                        py: 1.5,
-                        fontWeight: 700,
+                        py: 1.5, fontWeight: 700,
                         background: 'linear-gradient(90deg, #00BAE6 0%, #58D6FF 100%)',
                         color: '#000',
                         '&:hover': { background: 'linear-gradient(90deg, #006C9C 0%, #00BAE6 100%)' }
