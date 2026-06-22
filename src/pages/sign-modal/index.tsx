@@ -42,6 +42,24 @@ const SignModal = () => {
         '&:focus': { outline: 'none' }
     }));
 
+    // Bold brand mark shown top-right of the sign-in/sign-up modal banner
+    const BrandMark = styled(Typography)(({ theme }) => ({
+        position: 'absolute',
+        right: 14,
+        top: 22,
+        zIndex: 2,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        color: theme.palette.common.white,
+        textShadow: '0 2px 6px rgba(0,0,0,0.5)',
+        fontSize: 18,
+        [theme.breakpoints.up('sm')]: {
+            fontSize: 20,
+            right: 18,
+            top: 25
+        }
+    }));
+
     useEffect(() => {
         if (referralCode) {
             localStorage.setItem('betthrob-r', referralCode);
@@ -79,28 +97,9 @@ const SignModal = () => {
                                 objectFit: { xs: 'unset' }
                             }}
                         />
-                        <Box
-                            component="img"
-                            src="/logo.svg"
-                            alt="bet-throb"
-                            sx={{
-                                position: 'absolute',
-                                left: 14,
-                                top: 25,
-                                height: { xs: 27, sm: 32 }
-                            }}
-                        />
-                        <Box
-                            component="img"
-                            src="/logo.svg"
-                            alt="bet-throb"
-                            sx={{
-                                position: 'absolute',
-                                left: 14,
-                                top: 25,
-                                height: { xs: 27, sm: 32 }
-                            }}
-                        />
+
+                        <BrandMark>FORTELL</BrandMark>
+
                         <Stack
                             width="100%"
                             direction="column"
