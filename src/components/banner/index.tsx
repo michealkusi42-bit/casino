@@ -89,6 +89,24 @@ const StyledButton = styled(ColorButton)(({ theme }) => ({
     }
 }));
 
+// Brand mark shown top-left of the unauthenticated hero banner
+const BrandMark = styled(Typography)(({ theme }) => ({
+    position: 'absolute',
+    top: theme.spacing(1.5),
+    left: theme.spacing(2),
+    zIndex: 6,
+    fontWeight: 800,
+    letterSpacing: '0.12em',
+    color: theme.palette.text.primary,
+    textShadow: '0 2px 6px rgba(0,0,0,0.45)',
+    fontSize: '0.875rem',
+    [theme.breakpoints.up('sm')]: {
+        fontSize: '1.125rem',
+        left: theme.spacing(3),
+        top: theme.spacing(2)
+    }
+}));
+
 const Banner = () => {
     const theme = useTheme();
     const { t } = useTranslate();
@@ -187,6 +205,9 @@ const Banner = () => {
                         src={isMobile ? '/assets/images/home/players-banner-mobile.webp' : '/assets/images/home/players-banner.webp'}
                         alt="Banner"
                     />
+
+                    <BrandMark>FORTELLBET</BrandMark>
+
                     <Stack
                         alignItems="start"
                         sx={{
@@ -231,7 +252,7 @@ const Banner = () => {
                                 {t('signUpGetUpTo')}
                             </Typography>
                             <GradientText fontSize={isMobile ? '1rem' : '1.5rem'} fontWeight={800}>
-                                $20,000.00
+                                GHS 50,000.00
                             </GradientText>
                             <Typography
                                 sx={{
