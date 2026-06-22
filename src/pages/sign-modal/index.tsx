@@ -42,22 +42,36 @@ const SignModal = () => {
         '&:focus': { outline: 'none' }
     }));
 
-    // Bold brand mark shown top-right of the sign-in/sign-up modal banner
-    const BrandMark = styled(Typography)(({ theme }) => ({
+    // Premium brand mark shown top-left of the sign-in/sign-up modal banner,
+    // in the empty space beside the trophy photo
+    const BrandMark = styled(Box)(({ theme }) => ({
         position: 'absolute',
-        right: 14,
-        top: 22,
+        left: 16,
+        top: 20,
         zIndex: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 4
+    }));
+
+    const BrandMarkText = styled(Typography)(({ theme }) => ({
         fontWeight: 800,
-        letterSpacing: '0.08em',
+        letterSpacing: '0.22em',
         color: theme.palette.common.white,
-        textShadow: '0 2px 6px rgba(0,0,0,0.5)',
-        fontSize: 18,
+        textShadow: '0 2px 8px rgba(0,0,0,0.55)',
+        fontSize: 16,
+        lineHeight: 1,
         [theme.breakpoints.up('sm')]: {
-            fontSize: 20,
-            right: 18,
-            top: 25
+            fontSize: 19
         }
+    }));
+
+    const BrandMarkAccent = styled(Box)(({ theme }) => ({
+        width: 28,
+        height: 3,
+        borderRadius: 2,
+        background: 'linear-gradient(90deg, #24EE89 0%, #9FE871 100%)'
     }));
 
     useEffect(() => {
@@ -98,7 +112,10 @@ const SignModal = () => {
                             }}
                         />
 
-                        <BrandMark>FORTELL</BrandMark>
+                        <BrandMark>
+                            <BrandMarkText>FORTELL</BrandMarkText>
+                            <BrandMarkAccent />
+                        </BrandMark>
 
                         <Stack
                             width="100%"
