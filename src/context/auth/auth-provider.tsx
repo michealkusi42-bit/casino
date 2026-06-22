@@ -127,10 +127,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                     login: username,
                     password
                 });
-                const { token, username: user, balance } = response.data;
+                // FIX: keep the full user object from the backend (avatar, name, etc.)
+                // instead of cherry-picking just `username` and `balance`.
+                const { token, ...userData } = response.data;
                 setSession(token);
-                dispatch(loginAction({ user: { username: user, balance }, accessToken: token }));
-                dispatch(balanceAction(formatBalance(balance || 0)));
+                dispatch(loginAction({ user: userData, accessToken: token }));
+                dispatch(balanceAction(formatBalance(userData.balance || 0)));
             } catch (error: any) {
                 throw new Error(error?.response?.data?.error || 'Login failed');
             }
