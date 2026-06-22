@@ -35,7 +35,7 @@ function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: stri
         <TableRow>
             <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{u.username}</TableCell>
             <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', sm: 'table-cell' } }}>{u.email}</TableCell>
-            <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {u.balance?.toFixed(2)}</TableCell>
+            <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {(u.balance ?? 0).toFixed(2)}</TableCell>
             <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                 <Chip label={u.suspended ? '🔴 Suspended' : '🟢 Active'} size="small"
                     sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }} />
@@ -86,6 +86,10 @@ export default function AdminPanel() {
     const [customValue, setCustomValue] = useState('');
     const [userOverrides, setUserOverrides] = useState<any>({});
 
+    // WIN RATE STATE
+    const [winRate, setWinRate] = useState(50);
+    const [winRateLoading, setWinRateLoading] = useState(false);
+
     useEffect(() => {
         const saved = sessionStorage.getItem(ADMIN_PASSWORD_KEY);
         if (saved) {
@@ -96,14 +100,40 @@ export default function AdminPanel() {
     }, []);
 
     useEffect(() => {
-        if (unlocked) load();
+        if (unlocked) {
+            load();
+            loadWinRate();
+        }
     }, [unlocked]);
+
+    const loadWinRate = async () => {
+        try {
+            const r = await axios.get(API + '/win-rate');
+            if (r.data && r.data.winRate !== undefined) {
+                setWinRate(r.data.winRate);
+            }
+        } catch (e) {
+            // default to 50 if not set yet
+        }
+    };
+
+    const applyWinRate = async () => {
+        setWinRateLoading(true);
+        try {
+            await axios.post(API + '/win-rate', { winRate });
+            setMsg('✅ Win rate set to ' + winRate + '%');
+        } catch (e: any) {
+            setMsg(e?.response?.data?.error || 'Failed to set win rate');
+        } finally {
+            setWinRateLoading(false);
+        }
+    };
 
     const handleUnlock = async () => {
         setAuthError('');
         setAuthLoading(true);
         try {
-            await axios.post(`${API}/login`, { password: passwordInput });
+            await axios.post(API + '/login', { password: passwordInput });
             sessionStorage.setItem(ADMIN_PASSWORD_KEY, passwordInput);
             axios.defaults.headers.common['x-admin-password'] = passwordInput;
             setUnlocked(true);
@@ -118,10 +148,10 @@ export default function AdminPanel() {
         setLoading(true);
         try {
             const [d, w, u, s] = await Promise.all([
-                axios.get(`${API}/deposits?status=all`),
-                axios.get(`${API}/withdrawals?status=all`),
-                axios.get(`${API}/users`),
-                axios.get(`${API}/stats`),
+                axios.get(API + '/deposits?status=all'),
+                axios.get(API + '/withdrawals?status=all'),
+                axios.get(API + '/users'),
+                axios.get(API + '/stats'),
             ]);
             setDeposits(d.data.data || []);
             setWithdrawals(w.data.data || []);
@@ -142,7 +172,7 @@ export default function AdminPanel() {
 
     const approve = async (type: string, id: string) => {
         try {
-            await axios.post(`${API}/${type}/${id}/approve`);
+            await axios.post(API + '/' + type + '/' + id + '/approve');
             setMsg('✅ Approved successfully');
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -150,7 +180,7 @@ export default function AdminPanel() {
 
     const reject = async (type: string, id: string) => {
         try {
-            await axios.post(`${API}/${type}/${id}/reject`);
+            await axios.post(API + '/' + type + '/' + id + '/reject');
             setMsg('❌ Rejected');
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -163,15 +193,15 @@ export default function AdminPanel() {
             if (overrideValue === 'custom') {
                 try { value = JSON.parse(customValue); } catch { value = customValue; }
             }
-            await axios.post(`${API}/overrides/${selectedUser}`, { game: selectedGame, value });
-            setMsg(`✅ Override set: ${selectedUser} → ${selectedGame} → ${JSON.stringify(value)}`);
+            await axios.post(API + '/overrides/' + selectedUser, { game: selectedGame, value });
+            setMsg('✅ Override set: ' + selectedUser + ' → ' + selectedGame + ' → ' + JSON.stringify(value));
             loadOverrides(selectedUser);
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const clearOverride = async (username: string, game: string) => {
         try {
-            await axios.delete(`${API}/overrides/${username}/${game}`);
+            await axios.delete(API + '/overrides/' + username + '/' + game);
             setMsg('Override cleared');
             loadOverrides(username);
         } catch (e) {}
@@ -180,30 +210,30 @@ export default function AdminPanel() {
     const loadOverrides = async (username: string) => {
         if (!username) return;
         try {
-            const r = await axios.get(`${API}/overrides/${username}`);
+            const r = await axios.get(API + '/overrides/' + username);
             setUserOverrides(r.data.data || {});
         } catch (e) {}
     };
 
     const adjustBalance = async (username: string, action: string, amount: string) => {
         try {
-            await axios.post(`${API}/users/${username}/adjust-balance`, { action, amount: parseFloat(amount) });
-            setMsg(`✅ Balance updated for ${username}`);
+            await axios.post(API + '/users/' + username + '/adjust-balance', { action, amount: parseFloat(amount) });
+            setMsg('✅ Balance updated for ' + username);
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
     };
 
     const suspend = async (username: string) => {
         try {
-            const r = await axios.post(`${API}/users/${username}/suspend`);
-            setMsg(`User ${r.data.suspended ? 'suspended' : 'unsuspended'}`);
+            const r = await axios.post(API + '/users/' + username + '/suspend');
+            setMsg('User ' + (r.data.suspended ? 'suspended' : 'unsuspended'));
             load();
         } catch (e) {}
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        setMsg(`📋 Copied: ${text}`);
+        setMsg('📋 Copied: ' + text);
     };
 
     if (checkingAuth) return null;
@@ -246,7 +276,7 @@ export default function AdminPanel() {
                         { label: 'Total Users', value: stats.totalUsers },
                         { label: 'Pending Deposits', value: stats.pendingDeposits, color: '#ffc107' },
                         { label: 'Pending Withdrawals', value: stats.pendingWithdrawals, color: '#ffc107' },
-                        { label: 'House Profit', value: `GHS ${stats.houseProfit?.toFixed(2)}`, color: stats.houseProfit >= 0 ? '#00e701' : '#f44336' },
+                        { label: 'House Profit', value: 'GHS ' + (stats.houseProfit ?? 0).toFixed(2), color: stats.houseProfit >= 0 ? '#00e701' : '#f44336' },
                     ].map((s) => (
                         <Box key={s.label} sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 1.5, md: 2 } }}>
                             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>{s.label}</Typography>
@@ -354,8 +384,6 @@ export default function AdminPanel() {
                                     <Typography variant="caption" color="text.secondary" display="block">
                                         📱 {w.method === 'crypto' ? '₿ Crypto' : '🇬🇭 MoMo'} • {new Date(w.timestamp).toLocaleString()}
                                     </Typography>
-
-                                    {/* MoMo Number - ALWAYS VISIBLE & COPYABLE */}
                                     {w.address && (
                                         <Box sx={{
                                             mt: 1, p: 1, borderRadius: 1,
@@ -374,7 +402,6 @@ export default function AdminPanel() {
                                             </IconButton>
                                         </Box>
                                     )}
-
                                     {w.network && (
                                         <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                                             Network: {w.network}
@@ -416,6 +443,55 @@ export default function AdminPanel() {
             {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
+
+                    {/* WIN RATE CONTROL */}
+                    <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+                        <Typography variant="h6" fontWeight={700} mb={1}>🎰 Global Win Rate</Typography>
+                        <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mb: 2 }}>
+                            Controls how often ALL players win across ALL games. Lower = house wins more.
+                        </Typography>
+                        <Stack spacing={2}>
+                            <Stack direction="row" alignItems="center" spacing={2}>
+                                <Typography sx={{ color: '#f44336', fontWeight: 700, minWidth: 35 }}>0%</Typography>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={100}
+                                    value={winRate}
+                                    onChange={(e) => setWinRate(Number(e.target.value))}
+                                    style={{ flex: 1, accentColor: '#00e701', height: 6, cursor: 'pointer' }}
+                                />
+                                <Typography sx={{ color: '#00e701', fontWeight: 700, minWidth: 40 }}>100%</Typography>
+                            </Stack>
+                            <Box sx={{ textAlign: 'center', py: 1 }}>
+                                <Typography sx={{
+                                    fontSize: '3rem',
+                                    fontWeight: 900,
+                                    color: winRate > 50 ? '#00e701' : winRate > 25 ? '#ffc107' : '#f44336'
+                                }}>
+                                    {winRate}%
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {winRate === 0 ? '💀 Players never win' :
+                                     winRate < 25 ? '🔴 House wins most' :
+                                     winRate < 50 ? '🟡 House favored' :
+                                     winRate === 50 ? '⚖️ Balanced' :
+                                     winRate < 75 ? '🟢 Players favored' :
+                                     '🏆 Players win most'}
+                                </Typography>
+                            </Box>
+                            <Button
+                                variant="contained"
+                                onClick={applyWinRate}
+                                disabled={winRateLoading}
+                                sx={{ bgcolor: '#00BAE6', color: '#000', fontWeight: 700, py: 1.5 }}
+                            >
+                                {winRateLoading ? <CircularProgress size={20} sx={{ color: '#000' }} /> : '💾 Save Win Rate'}
+                            </Button>
+                        </Stack>
+                    </Box>
+
+                    {/* GAME OVERRIDE */}
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                         <Typography variant="h6" fontWeight={700} mb={1}>🎮 Set Game Override</Typography>
                         <Typography variant="caption" sx={{ color: '#ffc107', display: 'block', mb: 2 }}>
@@ -425,7 +501,7 @@ export default function AdminPanel() {
                             <Select value={selectedUser} onChange={(e) => { setSelectedUser(e.target.value); loadOverrides(e.target.value); }}
                                 displayEmpty size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
                                 <MenuItem value="" disabled>Select User</MenuItem>
-                                {users.map(u => <MenuItem key={u.username} value={u.username}>{u.username} — GHS {u.balance?.toFixed(2)}</MenuItem>)}
+                                {users.map(u => <MenuItem key={u.username} value={u.username}>{u.username} — GHS {(u.balance ?? 0).toFixed(2)}</MenuItem>)}
                             </Select>
                             <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)} size="small" sx={{ bgcolor: '#0f212e', color: '#fff' }}>
                                 {GAMES.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
