@@ -89,11 +89,13 @@ const StyledButton = styled(ColorButton)(({ theme }) => ({
     }
 }));
 
-// Brand mark shown top-left of the unauthenticated hero banner
+// Brand mark shown top-right of the unauthenticated hero banner
+// (top-left collides with the "Stay Untamed" headline on mobile, so this
+// sits in the empty corner instead)
 const BrandMark = styled(Typography)(({ theme }) => ({
     position: 'absolute',
     top: theme.spacing(1.5),
-    left: theme.spacing(2),
+    right: theme.spacing(2),
     zIndex: 6,
     fontWeight: 800,
     letterSpacing: '0.12em',
@@ -102,7 +104,7 @@ const BrandMark = styled(Typography)(({ theme }) => ({
     fontSize: '0.875rem',
     [theme.breakpoints.up('sm')]: {
         fontSize: '1.125rem',
-        left: theme.spacing(3),
+        right: theme.spacing(3),
         top: theme.spacing(2)
     }
 }));
