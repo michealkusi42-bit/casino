@@ -67,7 +67,7 @@ const Icon = memo(({ path, x, y }: IconProps) => (
 
 Icon.displayName = 'Icon';
 
-// ✅ Extra menu items below casinoMenus
+// Extra menu items below casinoMenus
 const extraMenuItems = [
     { name: 'Sports', path: '/sports', emoji: '⚽' },
     { name: 'Store', path: '/store', emoji: '🛒' },
@@ -255,7 +255,7 @@ const MenuPage = () => {
                 <Stack direction="column" justifyContent="space-between" gap={0.5} sx={{ height: 1 }}>
                     <Stack direction="column" gap={0.5}>
 
-                        {/* ✅ Lucky Spin Button */}
+                        {/* Lucky Spin Button — navigates to /spin page */}
                         <ListItem
                             disablePadding
                             sx={{
@@ -264,12 +264,16 @@ const MenuPage = () => {
                             }}
                         >
                             <ListItemButton
-                                onClick={() => onToggleModal('SPIN')}
+                                onClick={() => handleNavigate('/spin')}
                                 sx={{
                                     px: 0.5,
                                     height: 40,
                                     borderRadius: 2,
                                     background: 'transparent',
+                                    ...(pathname === '/spin' && {
+                                        background: 'linear-gradient(90deg,#23ee8833,#23ee8800),rgba(255,255,255,.05)',
+                                        color: 'primary.main'
+                                    }),
                                     '&:hover': {
                                         background: 'linear-gradient(90deg,#23ee8833,#23ee8800),rgba(255,255,255,.05)'
                                     }
@@ -282,7 +286,7 @@ const MenuPage = () => {
                             </ListItemButton>
                         </ListItem>
 
-                        {/* ✅ Casino menus (with children) */}
+                        {/* Casino menus (with children) */}
                         {menuItems.map((item) => (
                             <NavItem
                                 key={item.path}
@@ -294,7 +298,7 @@ const MenuPage = () => {
                             />
                         ))}
 
-                        {/* ✅ Extra menu items */}
+                        {/* Extra menu items */}
                         {extraMenuItems.map((item) => (
                             <ListItem
                                 key={item.path}
