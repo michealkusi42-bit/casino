@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 
-const TELEGRAM_HANDLE = 'ALICEFTL07';
+const TELEGRAM_HANDLE = 'AliceFortellBet';
 
 const CustomerService = () => {
     const [position, setPosition] = useState({ x: 0, y: 0 });
