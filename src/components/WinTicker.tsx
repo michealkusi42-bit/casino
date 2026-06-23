@@ -71,7 +71,8 @@ const WinTicker = () => {
                     display: 'flex',
                     alignItems: 'center',
                     position: 'fixed',
-                    top: '70px',
+                    // ✅ FIXED: matches Header's actual height (60px), removing the gap
+                    top: '60px',
                     left: 0,
                     right: 0,
                     zIndex: 1200,
@@ -173,7 +174,8 @@ const WinTicker = () => {
                     height: 26,
                     bgcolor: '#0a141d',
                     position: 'fixed',
-                    top: '106px',
+                    // ✅ FIXED: 60px header + 36px ticker = 96px, sits directly under it now
+                    top: '96px',
                     left: 0,
                     right: 0,
                     zIndex: 1199,
