@@ -9,9 +9,23 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import DialpadIcon from '@mui/icons-material/Dialpad';
 import { useDispatch } from 'store/store';
 
 const API = 'https://foretell-backend-production-58a6.up.railway.app';
+
+// Brand colors used only within the Mobile Money flow (no global theme changes)
+const MOMO_GREEN = '#00a651';
+const MOMO_GREEN_DARK = '#007a3d';
+const MOMO_BLUE = '#1a3c6e';
+
+// Verified USSD code — confirmed via Telecel's own channels and independent
+// USSD-code listings: both Telecel Cash and AirtelTigo Money use *110#.
+const MOMO_USSD_CODE = '*110#';
+
+const PRESET_AMOUNTS = [20, 50, 100, 200, 500, 1000];
 
 const CRYPTO_ACCOUNTS = [
     { coin: 'BTC', network: 'Bitcoin', address: '134UEYef2Qb2LMqUEMjWem5bmdKPsKvhPp', icon: '₿' },
@@ -64,7 +78,58 @@ const MOMO_ACCOUNTS = [
     }
 ];
 
-type Stage = 'form' | 'details' | 'momo-confirm';
+type Stage = 'form' | 'details' | 'momo-confirm' | 'momo-success';
+
+// Small reusable "info row" — number / name / amount with a copy pill,
+// styled to match the cleaner mockup (icon chip + label + bold value).
+const InfoRow = ({
+    icon, iconBg, iconColor, label, value, onCopy
+}: {
+    icon: React.ReactNode; iconBg: string; iconColor: string;
+    label: string; value: string; onCopy?: () => void;
+}) => (
+    <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
+        sx={{
+            p: 1.5,
+            border: '1.5px solid',
+            borderColor: 'divider',
+            borderRadius: 2.5,
+            bgcolor: 'background.paper'
+        }}
+    >
+        <Box sx={{
+            width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            bgcolor: iconBg, color: iconColor
+        }}>
+            {icon}
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
+                {label}
+            </Typography>
+            <Typography fontWeight={800} fontSize={15} noWrap>
+                {value}
+            </Typography>
+        </Box>
+        {onCopy && (
+            <Button
+                size="small"
+                onClick={onCopy}
+                sx={{
+                    bgcolor: '#f5a623', color: '#fff', fontWeight: 700,
+                    px: 1.5, borderRadius: 1.5, flexShrink: 0,
+                    '&:hover': { bgcolor: '#d4880a' }
+                }}
+            >
+                Copy
+            </Button>
+        )}
+    </Stack>
+);
 
 const DepositPage = () => {
     const { t } = useTranslate();
@@ -81,6 +146,8 @@ const DepositPage = () => {
     const [selectedMoMo, setSelectedMoMo] = useState<{ network: string; name: string; number: string } | null>(null);
     const [momoRef, setMomoRef] = useState('');
     const [momoLoading, setMomoLoading] = useState(false);
+    const [networkFilter, setNetworkFilter] = useState<string | null>(null);
+    const [lastSubmittedMomoRef, setLastSubmittedMomoRef] = useState('');
 
     const authHeader = {
         'Content-Type': 'application/json',
@@ -113,6 +180,11 @@ const DepositPage = () => {
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
         enqueueSnackbar('Copied!', { variant: 'success' });
+    };
+
+    const handleDialUssd = () => {
+        // Standard tel: scheme USSD dial — works on mobile browsers
+        window.location.href = `tel:${MOMO_USSD_CODE.replace('#', '%23')}`;
     };
 
     const handlePaystackDeposit = async () => {
@@ -156,11 +228,8 @@ const DepositPage = () => {
             });
             const data = await res.json();
             if (data.success) {
-                enqueueSnackbar('✅ MoMo deposit submitted! Admin will confirm shortly.', { variant: 'success' });
-                setAmount('');
-                setMomoRef('');
-                setSelectedMoMo(null);
-                setStage('form');
+                setLastSubmittedMomoRef(momoRef);
+                setStage('momo-success');
             } else {
                 enqueueSnackbar(data.error || 'Failed to submit', { variant: 'error' });
             }
@@ -203,6 +272,58 @@ const DepositPage = () => {
         }
     };
 
+    const resetMomoFlow = () => {
+        setAmount('');
+        setMomoRef('');
+        setLastSubmittedMomoRef('');
+        setSelectedMoMo(null);
+        setNetworkFilter(null);
+        setStage('form');
+    };
+
+    // ── MoMo success screen ──
+    if (stage === 'momo-success' && selectedMoMo) {
+        return (
+            <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }} spacing={2.5} alignItems="center" textAlign="center">
+                <Box sx={{
+                    width: 80, height: 80, borderRadius: '50%',
+                    bgcolor: '#e6f7ed', border: '2px solid #a5d6a7',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <CheckCircleOutlineIcon sx={{ fontSize: 44, color: MOMO_GREEN }} />
+                </Box>
+                <Box>
+                    <Typography variant="h6" fontWeight={800}>Deposit Submitted!</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 320 }}>
+                        We've received your MoMo deposit request. Your account will be credited within 5–15 minutes after admin confirms.
+                    </Typography>
+                </Box>
+
+                <Stack spacing={1} sx={{ width: '100%', maxWidth: 360 }}>
+                    {[
+                        ['Amount', `GHS ${amount}`],
+                        ['Network', selectedMoMo.network],
+                        ['Number', selectedMoMo.number],
+                        ['Transaction ID', lastSubmittedMomoRef],
+                    ].map(([k, v]) => (
+                        <Stack key={k} direction="row" justifyContent="space-between" sx={{ py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+                            <Typography variant="body2" color="text.secondary">{k}</Typography>
+                            <Typography variant="body2" fontWeight={700}>{v}</Typography>
+                        </Stack>
+                    ))}
+                </Stack>
+
+                <Button
+                    variant="contained"
+                    onClick={resetMomoFlow}
+                    sx={{ bgcolor: MOMO_GREEN, '&:hover': { bgcolor: MOMO_GREEN_DARK }, px: 4, py: 1.25, fontWeight: 700 }}
+                >
+                    Make Another Deposit
+                </Button>
+            </Stack>
+        );
+    }
+
     // ── MoMo confirm screen ──
     if (stage === 'momo-confirm' && selectedMoMo) {
         return (
@@ -214,41 +335,81 @@ const DepositPage = () => {
                     <Typography variant="h6" fontWeight={700}>Send GHS {amount} via MoMo</Typography>
                 </Stack>
 
-                {/* Step 1 */}
+                {/* Step 1 — Send Money */}
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+                    <Typography variant="caption" sx={{ color: MOMO_GREEN }} fontWeight={700} textTransform="uppercase" letterSpacing={1}>
                         Step 1 — Send Money
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5 }}>
-                        Send <strong>GHS {amount}</strong> to this {selectedMoMo.network} number:
+                        Send the details below to this {selectedMoMo.network} number, exactly as you normally would via Mobile Money:
                     </Typography>
-                    <Box sx={{
-                        p: 2, borderRadius: 2,
-                        background: selectedMoMo.network === 'Telecel'
-                            ? 'linear-gradient(135deg, #E30613 0%, #ff4d4d 100%)'
-                            : 'linear-gradient(135deg, #E22117 0%, #FF6B35 100%)',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                    }}>
-                        <Box>
-                            <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
-                                {selectedMoMo.network.toUpperCase()} MONEY
-                            </Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>
-                                {selectedMoMo.number}
-                            </Typography>
-                            <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>
-                                {selectedMoMo.name}
-                            </Typography>
-                        </Box>
-                        <IconButton onClick={() => handleCopy(selectedMoMo.number)} sx={{ color: '#fff' }}>
-                            <ContentCopyIcon />
-                        </IconButton>
-                    </Box>
+
+                    <Stack spacing={1.25}>
+                        <InfoRow
+                            icon={<PhoneAndroidIcon fontSize="small" />}
+                            iconBg="#fff3e0" iconColor="#e65100"
+                            label={`${selectedMoMo.network} Number`}
+                            value={selectedMoMo.number}
+                            onCopy={() => handleCopy(selectedMoMo.number)}
+                        />
+                        <InfoRow
+                            icon={<PersonOutlineIcon fontSize="small" />}
+                            iconBg="#e3f2fd" iconColor="#1565c0"
+                            label="Account Name"
+                            value={selectedMoMo.name}
+                        />
+                        <InfoRow
+                            icon={<PaidOutlinedIcon fontSize="small" />}
+                            iconBg="#e8f5e9" iconColor="#2e7d32"
+                            label="Amount to Send"
+                            value={`GHS ${amount}`}
+                            onCopy={() => handleCopy(amount)}
+                        />
+                    </Stack>
                 </Box>
 
-                {/* Step 2 */}
+                {/* USSD instructions */}
+                <Box sx={{ p: 2, bgcolor: MOMO_BLUE, borderRadius: 2, color: '#fff' }}>
+                    <Typography variant="caption" fontWeight={700} textTransform="uppercase" letterSpacing={1} sx={{ opacity: 0.85 }}>
+                        How to send (USSD)
+                    </Typography>
+                    <Stack spacing={0.75} sx={{ mt: 1, mb: 1.5 }}>
+                        {[
+                            `Dial ${MOMO_USSD_CODE} on your phone`,
+                            'Select "Send Money" / "Transfer"',
+                            `Enter the recipient number: ${selectedMoMo.number}`,
+                            `Enter the amount: GHS ${amount}`,
+                            'Confirm with your Mobile Money PIN',
+                        ].map((step, i) => (
+                            <Stack key={i} direction="row" spacing={1.25} alignItems="flex-start">
+                                <Box sx={{
+                                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.2,
+                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 11, fontWeight: 700
+                                }}>
+                                    {i + 1}
+                                </Box>
+                                <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{step}</Typography>
+                            </Stack>
+                        ))}
+                    </Stack>
+                    <Button
+                        fullWidth
+                        startIcon={<DialpadIcon />}
+                        onClick={handleDialUssd}
+                        sx={{
+                            bgcolor: '#fff', color: MOMO_BLUE, fontWeight: 700,
+                            '&:hover': { bgcolor: '#e8eef5' }
+                        }}
+                    >
+                        Dial {MOMO_USSD_CODE}
+                    </Button>
+                </Box>
+
+                {/* Step 2 — Enter Transaction ID */}
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+                    <Typography variant="caption" sx={{ color: MOMO_GREEN }} fontWeight={700} textTransform="uppercase" letterSpacing={1}>
                         Step 2 — Enter Transaction ID
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5 }}>
@@ -268,9 +429,9 @@ const DepositPage = () => {
                     onClick={handleMoMoSubmit}
                     fullWidth
                     disabled={momoLoading}
-                    sx={{ py: 1.5, fontWeight: 700, fontSize: 15 }}
+                    sx={{ py: 1.5, fontWeight: 700, fontSize: 15, bgcolor: MOMO_GREEN, '&:hover': { bgcolor: MOMO_GREEN_DARK } }}
                 >
-                    {momoLoading ? <CircularProgress size={20} /> : '✅ I Have Sent the Money'}
+                    {momoLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : '✅ I Have Sent the Money'}
                 </Button>
 
                 <Typography variant="caption" color="text.secondary" textAlign="center">
@@ -297,6 +458,25 @@ const DepositPage = () => {
                         type="number"
                         fullWidth size="small" autoFocus
                     />
+
+                    {/* Quick amount presets */}
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+                        {PRESET_AMOUNTS.map((preset) => (
+                            <Chip
+                                key={preset}
+                                label={`GHS ${preset}`}
+                                onClick={() => setAmount(String(preset))}
+                                variant={amount === String(preset) ? 'filled' : 'outlined'}
+                                sx={{
+                                    fontWeight: 700,
+                                    ...(amount === String(preset)
+                                        ? { bgcolor: MOMO_GREEN, color: '#fff' }
+                                        : { borderColor: MOMO_GREEN, color: MOMO_GREEN })
+                                }}
+                            />
+                        ))}
+                    </Stack>
+
                     <Button
                         variant="contained"
                         onClick={() => {
@@ -329,68 +509,97 @@ const DepositPage = () => {
                         <Tab label="₿ Crypto" />
                     </Tabs>
 
-                    {/* ── TAB 0: Mobile Money ── */}
+                    {/* ── TAB 0: Mobile Money (redesigned) ── */}
                     {tab === 0 && (
                         <Stack spacing={2}>
                             <Typography variant="body2" color="text.secondary">
                                 Send money directly to any of our MoMo numbers below. Fast, simple, no internet needed.
                             </Typography>
 
-                            {MOMO_ACCOUNTS.map((group) => (
-                                <Box key={group.network}>
-                                    {/* Network header */}
-                                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
-                                        {group.logo}
-                                        <Box>
-                                            <Typography fontWeight={800} sx={{ color: group.color, fontSize: 15 }}>
-                                                {group.network} Money
+                            {/* Network quick-select grid */}
+                            <Stack direction="row" spacing={2}>
+                                {MOMO_ACCOUNTS.map((group) => {
+                                    const active = networkFilter === group.network;
+                                    return (
+                                        <Stack
+                                            key={group.network}
+                                            alignItems="center"
+                                            spacing={0.5}
+                                            onClick={() => setNetworkFilter(active ? null : group.network)}
+                                            sx={{
+                                                cursor: 'pointer',
+                                                p: 1, borderRadius: 2,
+                                                border: '2px solid',
+                                                borderColor: active ? group.color : 'transparent',
+                                                bgcolor: active ? group.bgColor : 'transparent'
+                                            }}
+                                        >
+                                            {group.logo}
+                                            <Typography variant="caption" fontWeight={700} sx={{ color: group.color }}>
+                                                {group.network}
                                             </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {group.accounts.length} number{group.accounts.length > 1 ? 's' : ''} available
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
+                                        </Stack>
+                                    );
+                                })}
+                            </Stack>
 
-                                    {/* Account cards */}
-                                    <Stack spacing={1} sx={{ pl: 1 }}>
-                                        {group.accounts.map((acc, i) => (
-                                            <Box
-                                                key={i}
-                                                onClick={() => {
-                                                    setSelectedMoMo({ network: group.network, name: acc.name, number: acc.number });
-                                                    setStage('momo-confirm');
-                                                }}
-                                                sx={{
-                                                    p: 2, borderRadius: 2, cursor: 'pointer',
-                                                    border: '1.5px solid', borderColor: group.borderColor,
-                                                    bgcolor: group.bgColor,
-                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                                    transition: 'all 0.15s',
-                                                    '&:hover': { transform: 'translateY(-1px)', boxShadow: `0 4px 12px ${group.color}30` }
-                                                }}
-                                            >
-                                                <Stack direction="row" alignItems="center" spacing={1.5}>
-                                                    <PhoneAndroidIcon sx={{ color: group.color, fontSize: 20 }} />
-                                                    <Box>
-                                                        <Typography fontWeight={700} fontSize={15}>{acc.number}</Typography>
-                                                        <Typography variant="caption" color="text.secondary">{acc.name}</Typography>
-                                                    </Box>
-                                                </Stack>
-                                                <Chip
-                                                    label="Send Here"
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: group.color, color: '#fff',
-                                                        fontWeight: 700, fontSize: 11
-                                                    }}
-                                                />
+                            {MOMO_ACCOUNTS
+                                .filter((group) => !networkFilter || group.network === networkFilter)
+                                .map((group) => (
+                                    <Box key={group.network}>
+                                        {/* Network header */}
+                                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                                            {group.logo}
+                                            <Box>
+                                                <Typography fontWeight={800} sx={{ color: group.color, fontSize: 15 }}>
+                                                    {group.network} Money
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {group.accounts.length} number{group.accounts.length > 1 ? 's' : ''} available
+                                                </Typography>
                                             </Box>
-                                        ))}
-                                    </Stack>
+                                        </Stack>
 
-                                    <Divider sx={{ mt: 2 }} />
-                                </Box>
-                            ))}
+                                        {/* Account cards */}
+                                        <Stack spacing={1} sx={{ pl: 1 }}>
+                                            {group.accounts.map((acc, i) => (
+                                                <Box
+                                                    key={i}
+                                                    onClick={() => {
+                                                        setSelectedMoMo({ network: group.network, name: acc.name, number: acc.number });
+                                                        setStage('momo-confirm');
+                                                    }}
+                                                    sx={{
+                                                        p: 2, borderRadius: 2.5, cursor: 'pointer',
+                                                        border: '1.5px solid', borderColor: group.borderColor,
+                                                        bgcolor: group.bgColor,
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        transition: 'all 0.15s',
+                                                        '&:hover': { transform: 'translateY(-1px)', boxShadow: `0 4px 12px ${group.color}30` }
+                                                    }}
+                                                >
+                                                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                                                        <PhoneAndroidIcon sx={{ color: group.color, fontSize: 20 }} />
+                                                        <Box>
+                                                            <Typography fontWeight={700} fontSize={15}>{acc.number}</Typography>
+                                                            <Typography variant="caption" color="text.secondary">{acc.name}</Typography>
+                                                        </Box>
+                                                    </Stack>
+                                                    <Chip
+                                                        label="Send Here"
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: group.color, color: '#fff',
+                                                            fontWeight: 700, fontSize: 11
+                                                        }}
+                                                    />
+                                                </Box>
+                                            ))}
+                                        </Stack>
+
+                                        <Divider sx={{ mt: 2 }} />
+                                    </Box>
+                                ))}
 
                             <Box sx={{ p: 1.5, bgcolor: 'info.lighter', borderRadius: 2, border: '1px solid', borderColor: 'info.light' }}>
                                 <Stack direction="row" spacing={1} alignItems="flex-start">
@@ -403,7 +612,7 @@ const DepositPage = () => {
                         </Stack>
                     )}
 
-                    {/* ── TAB 1: Paystack ── */}
+                    {/* ── TAB 1: Paystack — UNCHANGED ── */}
                     {tab === 1 && (
                         <Stack spacing={2}>
                             <Typography variant="body2" color="text.secondary">
@@ -422,7 +631,7 @@ const DepositPage = () => {
                         </Stack>
                     )}
 
-                    {/* ── TAB 2: Crypto ── */}
+                    {/* ── TAB 2: Crypto — UNCHANGED ── */}
                     {tab === 2 && (
                         <Stack spacing={2}>
                             <Typography variant="body2" color="text.secondary">
