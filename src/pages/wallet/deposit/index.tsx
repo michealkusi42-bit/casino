@@ -1,31 +1,14 @@
 import { useSnackbar } from 'notistack';
 import { useTranslate } from 'locales';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Box, Button, CircularProgress, IconButton,
-    Stack, Tab, Tabs, TextField, Typography, Chip, Divider
+    Stack, Typography, TextField
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
-import DialpadIcon from '@mui/icons-material/Dialpad';
-import { useDispatch } from 'store/store';
 
 const API = 'https://foretell-backend-production-58a6.up.railway.app';
-
-// Brand colors used only within the Mobile Money flow (no global theme changes)
-const MOMO_GREEN = '#00a651';
-const MOMO_GREEN_DARK = '#007a3d';
-const MOMO_BLUE = '#1a3c6e';
-
-// Verified USSD code — confirmed via Telecel's own channels and independent
-// USSD-code listings: both Telecel Cash and AirtelTigo Money use *110#.
-const MOMO_USSD_CODE = '*110#';
-
-const PRESET_AMOUNTS = [20, 50, 100, 200, 500, 1000];
 
 const CRYPTO_ACCOUNTS = [
     { coin: 'BTC', network: 'Bitcoin', address: '134UEYef2Qb2LMqUEMjWem5bmdKPsKvhPp', icon: '₿' },
@@ -33,158 +16,145 @@ const CRYPTO_ACCOUNTS = [
     { coin: 'USDT', network: 'Tron (TRC20)', address: 'TLqkvwEbTFhn8TVvPZffJVTDi2a3QW37yn', icon: '₮' },
 ];
 
-// MoMo accounts grouped by network
-const MOMO_ACCOUNTS = [
+const NETWORKS = [
     {
-        network: 'Telecel',
+        id: 'MTN',
+        name: 'MTN Money',
+        color: '#FFCC00',
+        textColor: '#000',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/9/93/New-mtn-logo.jpg',
+        disabled: true,
+        accounts: [],
+        ussd: [],
+    },
+    {
+        id: 'Telecel',
+        name: 'Telecel Vodafone',
         color: '#E30613',
-        bgColor: '#fff0f0',
-        borderColor: '#E30613',
-        logo: (
-            <Box sx={{
-                width: 48, height: 48, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #E30613, #ff4d4d)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(227,6,19,0.3)'
-            }}>
-                <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: -0.5 }}>TEL</Typography>
-            </Box>
-        ),
+        textColor: '#fff',
+        logo: 'https://www.telecelghana.com/wp-content/uploads/2023/10/Telecel-Logo.png',
+        disabled: false,
         accounts: [
             { name: 'Kotey Rudolph Glodean', number: '0507558973' },
             { name: 'Atoklo Christian', number: '0507210550' },
             { name: 'Tetteh Vida', number: '0508631503' },
+        ],
+        ussd: [
+            'Dial *110#',
+            'Select 1 [Send Money]',
+            'Select 1 [Telecel Cash User]',
+            'Enter recipient number: {number}',
+            'Re-enter recipient Number: {number}',
+            'Enter amount: {amount}',
+            'Enter any Reference',
+            'Enter PIN',
+            'Select 1 [Confirm]',
         ]
     },
     {
-        network: 'AirtelTigo',
+        id: 'AirtelTigo',
+        name: 'AirtelTigo Money',
         color: '#E22117',
-        bgColor: '#fff5f0',
-        borderColor: '#E22117',
-        logo: (
-            <Box sx={{
-                width: 48, height: 48, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #E22117, #FF6B35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(226,33,23,0.3)'
-            }}>
-                <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 11, letterSpacing: -0.5 }}>A·T</Typography>
-            </Box>
-        ),
+        textColor: '#fff',
+        logo: 'https://airteltigo.com.gh/wp-content/uploads/2019/01/AirtelTigo-Logo.png',
+        disabled: false,
         accounts: [
             { name: 'Fatima Iddrisu', number: '0560972009' },
             { name: 'Fatima Iddrisu', number: '0560190029' },
+        ],
+        ussd: [
+            'Dial *110#',
+            'Select 1 [Send Money]',
+            'Select 2 [AirtelTigo User]',
+            'Enter recipient number: {number}',
+            'Re-enter recipient Number: {number}',
+            'Enter amount: {amount}',
+            'Enter any Reference',
+            'Enter PIN',
+            'Select 1 [Confirm]',
         ]
     }
 ];
 
-type Stage = 'form' | 'details' | 'momo-confirm' | 'momo-success';
-
-// Small reusable "info row" — number / name / amount with a copy pill,
-// styled to match the cleaner mockup (icon chip + label + bold value).
-const InfoRow = ({
-    icon, iconBg, iconColor, label, value, onCopy
-}: {
-    icon: React.ReactNode; iconBg: string; iconColor: string;
-    label: string; value: string; onCopy?: () => void;
-}) => (
-    <Stack
-        direction="row"
-        alignItems="center"
-        spacing={1.5}
-        sx={{
-            p: 1.5,
-            border: '1.5px solid',
-            borderColor: 'divider',
-            borderRadius: 2.5,
-            bgcolor: 'background.paper'
-        }}
-    >
-        <Box sx={{
-            width: 40, height: 40, borderRadius: 2, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: iconBg, color: iconColor
-        }}>
-            {icon}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
-                {label}
-            </Typography>
-            <Typography fontWeight={800} fontSize={15} noWrap>
-                {value}
-            </Typography>
-        </Box>
-        {onCopy && (
-            <Button
-                size="small"
-                onClick={onCopy}
-                sx={{
-                    bgcolor: '#f5a623', color: '#fff', fontWeight: 700,
-                    px: 1.5, borderRadius: 1.5, flexShrink: 0,
-                    '&:hover': { bgcolor: '#d4880a' }
-                }}
-            >
-                Copy
-            </Button>
-        )}
-    </Stack>
-);
+type Stage = 'form' | 'network' | 'payment' | 'crypto';
 
 const DepositPage = () => {
     const { t } = useTranslate();
     const { enqueueSnackbar } = useSnackbar();
-    const dispatch = useDispatch();
     const token = localStorage.getItem('betthrob-accessToken') || sessionStorage.getItem('betthrob-accessToken');
 
     const [stage, setStage] = useState<Stage>('form');
-    const [tab, setTab] = useState(0);
     const [amount, setAmount] = useState('');
-    const [reference, setReference] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [paystackLoading, setPaystackLoading] = useState(false);
-    const [selectedMoMo, setSelectedMoMo] = useState<{ network: string; name: string; number: string } | null>(null);
+    const [selectedNetwork, setSelectedNetwork] = useState<typeof NETWORKS[0] | null>(null);
+    const [currentAccountIndex, setCurrentAccountIndex] = useState(0);
+    const [countdown, setCountdown] = useState(600); // 10 mins
     const [momoRef, setMomoRef] = useState('');
     const [momoLoading, setMomoLoading] = useState(false);
-    const [networkFilter, setNetworkFilter] = useState<string | null>(null);
-    const [lastSubmittedMomoRef, setLastSubmittedMomoRef] = useState('');
+    const [paystackLoading, setPaystackLoading] = useState(false);
+    const [reference, setReference] = useState('');
+    const [loading, setLoading] = useState(false);
+    const countdownRef = useRef<any>(null);
+    const rotateRef = useRef<any>(null);
 
     const authHeader = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
     };
 
+    // Countdown timer
+    useEffect(() => {
+        if (stage !== 'payment') return;
+        setCountdown(600);
+        countdownRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(countdownRef.current);
+    }, [stage]);
+
+    // Rotate account number every 3 mins
+    useEffect(() => {
+        if (stage !== 'payment' || !selectedNetwork) return;
+        setCurrentAccountIndex(0);
+        rotateRef.current = setInterval(() => {
+            setCurrentAccountIndex(prev =>
+                (prev + 1) % selectedNetwork.accounts.length
+            );
+        }, 180000); // 3 mins
+        return () => clearInterval(rotateRef.current);
+    }, [stage, selectedNetwork]);
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('reference') || params.get('trxref');
         if (!ref) return;
-
         fetch(`${API}/api/paystack/verify/${ref}`, { headers: authHeader })
-            .then((res) => res.json())
-            .then((data) => {
+            .then(res => res.json())
+            .then(data => {
                 if (data.status === 'success') {
                     enqueueSnackbar(`✅ Deposit of GHS ${data.amount} confirmed!`, { variant: 'success' });
-                } else if (data.status === 'pending') {
-                    enqueueSnackbar('Payment received, confirming shortly...', { variant: 'info' });
-                } else {
-                    enqueueSnackbar('Payment was not completed', { variant: 'warning' });
                 }
             })
             .catch(() => { })
             .finally(() => {
                 window.history.replaceState({}, '', window.location.pathname);
             });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const formatTime = (secs: number) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
         enqueueSnackbar('Copied!', { variant: 'success' });
-    };
-
-    const handleDialUssd = () => {
-        // Standard tel: scheme USSD dial — works on mobile browsers
-        window.location.href = `tel:${MOMO_USSD_CODE.replace('#', '%23')}`;
     };
 
     const handlePaystackDeposit = async () => {
@@ -215,6 +185,7 @@ const DepositPage = () => {
         }
         setMomoLoading(true);
         try {
+            const currentAcc = selectedNetwork!.accounts[currentAccountIndex];
             const res = await fetch(`${API}/api/wallet/deposit`, {
                 method: 'POST',
                 headers: authHeader,
@@ -222,14 +193,17 @@ const DepositPage = () => {
                     amount: parseFloat(amount),
                     reference: momoRef,
                     method: 'momo',
-                    momoNumber: selectedMoMo?.number,
-                    momoNetwork: selectedMoMo?.network,
+                    momoNumber: currentAcc.number,
+                    momoNetwork: selectedNetwork!.id,
                 })
             });
             const data = await res.json();
             if (data.success) {
-                setLastSubmittedMomoRef(momoRef);
-                setStage('momo-success');
+                enqueueSnackbar('✅ Deposit submitted! Admin will confirm shortly.', { variant: 'success' });
+                setAmount('');
+                setMomoRef('');
+                setSelectedNetwork(null);
+                setStage('form');
             } else {
                 enqueueSnackbar(data.error || 'Failed to submit', { variant: 'error' });
             }
@@ -250,11 +224,7 @@ const DepositPage = () => {
             const res = await fetch(`${API}/api/wallet/deposit`, {
                 method: 'POST',
                 headers: authHeader,
-                body: JSON.stringify({
-                    amount: parseFloat(amount),
-                    reference,
-                    method: 'crypto'
-                })
+                body: JSON.stringify({ amount: parseFloat(amount), reference, method: 'crypto' })
             });
             const data = await res.json();
             if (data.success) {
@@ -272,399 +242,406 @@ const DepositPage = () => {
         }
     };
 
-    const resetMomoFlow = () => {
-        setAmount('');
-        setMomoRef('');
-        setLastSubmittedMomoRef('');
-        setSelectedMoMo(null);
-        setNetworkFilter(null);
-        setStage('form');
-    };
-
-    // ── MoMo success screen ──
-    if (stage === 'momo-success' && selectedMoMo) {
+    // ── STAGE: form ──
+    if (stage === 'form') {
         return (
-            <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }} spacing={2.5} alignItems="center" textAlign="center">
-                <Box sx={{
-                    width: 80, height: 80, borderRadius: '50%',
-                    bgcolor: '#e6f7ed', border: '2px solid #a5d6a7',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: 44, color: MOMO_GREEN }} />
-                </Box>
-                <Box>
-                    <Typography variant="h6" fontWeight={800}>Deposit Submitted!</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 320 }}>
-                        We've received your MoMo deposit request. Your account will be credited within 5–15 minutes after admin confirms.
-                    </Typography>
-                </Box>
+            <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', p: 2 }}>
+                <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+                    {/* Header */}
+                    <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3, borderRadius: '12px 12px 0 0', textAlign: 'center' }}>
+                        <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 28, letterSpacing: 2 }}>
+                            $FORETELL
+                        </Typography>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, mt: 0.5 }}>
+                            Secure Payment Portal
+                        </Typography>
+                    </Box>
 
-                <Stack spacing={1} sx={{ width: '100%', maxWidth: 360 }}>
-                    {[
-                        ['Amount', `GHS ${amount}`],
-                        ['Network', selectedMoMo.network],
-                        ['Number', selectedMoMo.number],
-                        ['Transaction ID', lastSubmittedMomoRef],
-                    ].map(([k, v]) => (
-                        <Stack key={k} direction="row" justifyContent="space-between" sx={{ py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant="body2" color="text.secondary">{k}</Typography>
-                            <Typography variant="body2" fontWeight={700}>{v}</Typography>
-                        </Stack>
-                    ))}
-                </Stack>
-
-                <Button
-                    variant="contained"
-                    onClick={resetMomoFlow}
-                    sx={{ bgcolor: MOMO_GREEN, '&:hover': { bgcolor: MOMO_GREEN_DARK }, px: 4, py: 1.25, fontWeight: 700 }}
-                >
-                    Make Another Deposit
-                </Button>
-            </Stack>
-        );
-    }
-
-    // ── MoMo confirm screen ──
-    if (stage === 'momo-confirm' && selectedMoMo) {
-        return (
-            <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }} spacing={2}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                    <IconButton onClick={() => setStage('details')} size="small">
-                        <ArrowBackIcon />
-                    </IconButton>
-                    <Typography variant="h6" fontWeight={700}>Send GHS {amount} via MoMo</Typography>
-                </Stack>
-
-                {/* Step 1 — Send Money */}
-                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="caption" sx={{ color: MOMO_GREEN }} fontWeight={700} textTransform="uppercase" letterSpacing={1}>
-                        Step 1 — Send Money
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5 }}>
-                        Send the details below to this {selectedMoMo.network} number, exactly as you normally would via Mobile Money:
-                    </Typography>
-
-                    <Stack spacing={1.25}>
-                        <InfoRow
-                            icon={<PhoneAndroidIcon fontSize="small" />}
-                            iconBg="#fff3e0" iconColor="#e65100"
-                            label={`${selectedMoMo.network} Number`}
-                            value={selectedMoMo.number}
-                            onCopy={() => handleCopy(selectedMoMo.number)}
-                        />
-                        <InfoRow
-                            icon={<PersonOutlineIcon fontSize="small" />}
-                            iconBg="#e3f2fd" iconColor="#1565c0"
-                            label="Account Name"
-                            value={selectedMoMo.name}
-                        />
-                        <InfoRow
-                            icon={<PaidOutlinedIcon fontSize="small" />}
-                            iconBg="#e8f5e9" iconColor="#2e7d32"
-                            label="Amount to Send"
-                            value={`GHS ${amount}`}
-                            onCopy={() => handleCopy(amount)}
-                        />
-                    </Stack>
-                </Box>
-
-                {/* USSD instructions */}
-                <Box sx={{ p: 2, bgcolor: MOMO_BLUE, borderRadius: 2, color: '#fff' }}>
-                    <Typography variant="caption" fontWeight={700} textTransform="uppercase" letterSpacing={1} sx={{ opacity: 0.85 }}>
-                        How to send (USSD)
-                    </Typography>
-                    <Stack spacing={0.75} sx={{ mt: 1, mb: 1.5 }}>
-                        {[
-                            `Dial ${MOMO_USSD_CODE} on your phone`,
-                            'Select "Send Money" / "Transfer"',
-                            `Enter the recipient number: ${selectedMoMo.number}`,
-                            `Enter the amount: GHS ${amount}`,
-                            'Confirm with your Mobile Money PIN',
-                        ].map((step, i) => (
-                            <Stack key={i} direction="row" spacing={1.25} alignItems="flex-start">
-                                <Box sx={{
-                                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.2,
-                                    bgcolor: 'rgba(255,255,255,0.15)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 11, fontWeight: 700
-                                }}>
-                                    {i + 1}
-                                </Box>
-                                <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{step}</Typography>
-                            </Stack>
-                        ))}
-                    </Stack>
-                    <Button
-                        fullWidth
-                        startIcon={<DialpadIcon />}
-                        onClick={handleDialUssd}
-                        sx={{
-                            bgcolor: '#fff', color: MOMO_BLUE, fontWeight: 700,
-                            '&:hover': { bgcolor: '#e8eef5' }
-                        }}
-                    >
-                        Dial {MOMO_USSD_CODE}
-                    </Button>
-                </Box>
-
-                {/* Step 2 — Enter Transaction ID */}
-                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="caption" sx={{ color: MOMO_GREEN }} fontWeight={700} textTransform="uppercase" letterSpacing={1}>
-                        Step 2 — Enter Transaction ID
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5 }}>
-                        After sending, enter the transaction ID from your MoMo SMS confirmation.
-                    </Typography>
-                    <TextField
-                        label="MoMo Transaction ID"
-                        value={momoRef}
-                        onChange={(e) => setMomoRef(e.target.value)}
-                        fullWidth size="small"
-                        placeholder="e.g. 5678901234"
-                    />
-                </Box>
-
-                <Button
-                    variant="contained"
-                    onClick={handleMoMoSubmit}
-                    fullWidth
-                    disabled={momoLoading}
-                    sx={{ py: 1.5, fontWeight: 700, fontSize: 15, bgcolor: MOMO_GREEN, '&:hover': { bgcolor: MOMO_GREEN_DARK } }}
-                >
-                    {momoLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : '✅ I Have Sent the Money'}
-                </Button>
-
-                <Typography variant="caption" color="text.secondary" textAlign="center">
-                    Your account will be credited within 5–15 minutes after admin confirms.
-                </Typography>
-            </Stack>
-        );
-    }
-
-    return (
-        <Stack sx={{ pt: 3, px: { md: 3, xs: 1 }, minHeight: '400px', bgcolor: 'background.card', borderRadius: 3 }}>
-
-            {/* ─── FORM: enter amount ─── */}
-            {stage === 'form' && (
-                <Stack spacing={2}>
-                    <Typography variant="h6" fontWeight={700}>Make a Deposit</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Enter how much you'd like to deposit.
-                    </Typography>
-                    <TextField
-                        label="Amount (GHS)"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        type="number"
-                        fullWidth size="small" autoFocus
-                    />
-
-                    {/* Quick amount presets */}
-                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-                        {PRESET_AMOUNTS.map((preset) => (
-                            <Chip
-                                key={preset}
-                                label={`GHS ${preset}`}
-                                onClick={() => setAmount(String(preset))}
-                                variant={amount === String(preset) ? 'filled' : 'outlined'}
-                                sx={{
-                                    fontWeight: 700,
-                                    ...(amount === String(preset)
-                                        ? { bgcolor: MOMO_GREEN, color: '#fff' }
-                                        : { borderColor: MOMO_GREEN, color: MOMO_GREEN })
-                                }}
+                    {/* Amount input */}
+                    <Box sx={{ bgcolor: '#fff', p: 3, borderRadius: '0 0 12px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2, color: '#1a1a2e' }}>
+                            Enter Deposit Amount
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', border: '2px solid #e0e0e0', borderRadius: 2, p: 1.5, mb: 2 }}>
+                            <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mr: 1 }}>GHS</Typography>
+                            <input
+                                value={amount}
+                                onChange={e => setAmount(e.target.value)}
+                                type="number"
+                                placeholder="0.00"
+                                style={{ border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, width: '100%', background: 'transparent' }}
                             />
-                        ))}
-                    </Stack>
+                        </Box>
 
-                    <Button
-                        variant="contained"
-                        onClick={() => {
-                            if (!amount || Number(amount) <= 0) {
-                                enqueueSnackbar('Enter a valid amount', { variant: 'error' });
-                                return;
-                            }
-                            setStage('details');
-                        }}
-                        fullWidth sx={{ py: 1.5 }}
-                    >
-                        Continue
-                    </Button>
-                </Stack>
-            )}
+                        {/* Quick amounts */}
+                        <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+                            {[10, 20, 50, 100, 200, 500].map(v => (
+                                <Box key={v} onClick={() => setAmount(v.toString())}
+                                    sx={{ px: 2, py: 0.8, bgcolor: amount === v.toString() ? '#1a1a2e' : '#f0f0f0', color: amount === v.toString() ? '#fff' : '#333', borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+                                    {v}
+                                </Box>
+                            ))}
+                        </Box>
 
-            {/* ─── DETAILS: payment method ─── */}
-            {stage === 'details' && (
-                <Stack spacing={2}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <IconButton onClick={() => setStage('form')} size="small">
-                            <ArrowBackIcon />
-                        </IconButton>
-                        <Typography variant="h6" fontWeight={700}>Deposit — GHS {amount}</Typography>
-                    </Stack>
+                        <Button
+                            fullWidth variant="contained"
+                            onClick={() => {
+                                if (!amount || Number(amount) < 1) {
+                                    enqueueSnackbar('Enter a valid amount', { variant: 'error' });
+                                    return;
+                                }
+                                setStage('network');
+                            }}
+                            sx={{ py: 1.5, bgcolor: '#00d4aa', '&:hover': { bgcolor: '#00b894' }, fontWeight: 700, fontSize: 15, borderRadius: 2 }}
+                        >
+                            Continue →
+                        </Button>
 
-                    <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 1 }}>
-                        <Tab label="📱 Mobile Money" />
-                        <Tab label="🇬🇭 Card / Paystack" />
-                        <Tab label="₿ Crypto" />
-                    </Tabs>
+                        <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, mt: 2 }}>
+                            🔒 Your payment is protected with bank-grade security.
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+        );
+    }
 
-                    {/* ── TAB 0: Mobile Money (redesigned) ── */}
-                    {tab === 0 && (
-                        <Stack spacing={2}>
-                            <Typography variant="body2" color="text.secondary">
-                                Send money directly to any of our MoMo numbers below. Fast, simple, no internet needed.
-                            </Typography>
-
-                            {/* Network quick-select grid */}
-                            <Stack direction="row" spacing={2}>
-                                {MOMO_ACCOUNTS.map((group) => {
-                                    const active = networkFilter === group.network;
-                                    return (
-                                        <Stack
-                                            key={group.network}
-                                            alignItems="center"
-                                            spacing={0.5}
-                                            onClick={() => setNetworkFilter(active ? null : group.network)}
-                                            sx={{
-                                                cursor: 'pointer',
-                                                p: 1, borderRadius: 2,
-                                                border: '2px solid',
-                                                borderColor: active ? group.color : 'transparent',
-                                                bgcolor: active ? group.bgColor : 'transparent'
-                                            }}
-                                        >
-                                            {group.logo}
-                                            <Typography variant="caption" fontWeight={700} sx={{ color: group.color }}>
-                                                {group.network}
-                                            </Typography>
-                                        </Stack>
-                                    );
-                                })}
-                            </Stack>
-
-                            {MOMO_ACCOUNTS
-                                .filter((group) => !networkFilter || group.network === networkFilter)
-                                .map((group) => (
-                                    <Box key={group.network}>
-                                        {/* Network header */}
-                                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
-                                            {group.logo}
-                                            <Box>
-                                                <Typography fontWeight={800} sx={{ color: group.color, fontSize: 15 }}>
-                                                    {group.network} Money
-                                                </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {group.accounts.length} number{group.accounts.length > 1 ? 's' : ''} available
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-
-                                        {/* Account cards */}
-                                        <Stack spacing={1} sx={{ pl: 1 }}>
-                                            {group.accounts.map((acc, i) => (
-                                                <Box
-                                                    key={i}
-                                                    onClick={() => {
-                                                        setSelectedMoMo({ network: group.network, name: acc.name, number: acc.number });
-                                                        setStage('momo-confirm');
-                                                    }}
-                                                    sx={{
-                                                        p: 2, borderRadius: 2.5, cursor: 'pointer',
-                                                        border: '1.5px solid', borderColor: group.borderColor,
-                                                        bgcolor: group.bgColor,
-                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                                        transition: 'all 0.15s',
-                                                        '&:hover': { transform: 'translateY(-1px)', boxShadow: `0 4px 12px ${group.color}30` }
-                                                    }}
-                                                >
-                                                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                                                        <PhoneAndroidIcon sx={{ color: group.color, fontSize: 20 }} />
-                                                        <Box>
-                                                            <Typography fontWeight={700} fontSize={15}>{acc.number}</Typography>
-                                                            <Typography variant="caption" color="text.secondary">{acc.name}</Typography>
-                                                        </Box>
-                                                    </Stack>
-                                                    <Chip
-                                                        label="Send Here"
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: group.color, color: '#fff',
-                                                            fontWeight: 700, fontSize: 11
-                                                        }}
-                                                    />
-                                                </Box>
-                                            ))}
-                                        </Stack>
-
-                                        <Divider sx={{ mt: 2 }} />
-                                    </Box>
-                                ))}
-
-                            <Box sx={{ p: 1.5, bgcolor: 'info.lighter', borderRadius: 2, border: '1px solid', borderColor: 'info.light' }}>
-                                <Stack direction="row" spacing={1} alignItems="flex-start">
-                                    <CheckCircleOutlineIcon sx={{ color: 'info.main', fontSize: 18, mt: 0.2 }} />
-                                    <Typography variant="caption" color="info.dark">
-                                        After sending, you'll enter your MoMo transaction ID. Your account is credited within 5–15 minutes.
-                                    </Typography>
-                                </Stack>
+    // ── STAGE: network selection ──
+    if (stage === 'network') {
+        return (
+            <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', p: 2 }}>
+                <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+                    <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3, borderRadius: '12px 12px 0 0' }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <IconButton onClick={() => setStage('form')} sx={{ color: '#fff' }}>
+                                <ArrowBackIcon />
+                            </IconButton>
+                            <Box>
+                                <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 20 }}>$FORETELL</Typography>
+                                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Select Payment Method</Typography>
                             </Box>
                         </Stack>
-                    )}
+                    </Box>
 
-                    {/* ── TAB 1: Paystack — UNCHANGED ── */}
-                    {tab === 1 && (
+                    <Box sx={{ bgcolor: '#fff', p: 3, borderRadius: '0 0 12px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Amount: GHS {amount}</Typography>
+                        <Typography sx={{ color: '#999', fontSize: 13, mb: 3 }}>Choose how you want to pay</Typography>
+
                         <Stack spacing={2}>
-                            <Typography variant="body2" color="text.secondary">
-                                You'll be taken to a secure Paystack page to pay by card or mobile money.
-                                Your balance updates automatically the moment payment succeeds.
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                onClick={handlePaystackDeposit}
-                                fullWidth
-                                disabled={paystackLoading}
-                                sx={{ py: 1.5 }}
+                            {NETWORKS.map(net => (
+                                <Box
+                                    key={net.id}
+                                    onClick={() => {
+                                        if (net.disabled) return;
+                                        setSelectedNetwork(net);
+                                        setCurrentAccountIndex(0);
+                                        setStage('payment');
+                                    }}
+                                    sx={{
+                                        p: 2, borderRadius: 2, border: '2px solid',
+                                        borderColor: net.disabled ? '#e0e0e0' : net.color,
+                                        cursor: net.disabled ? 'default' : 'pointer',
+                                        opacity: net.disabled ? 0.5 : 1,
+                                        display: 'flex', alignItems: 'center', gap: 2,
+                                        transition: 'all 0.2s',
+                                        '&:hover': !net.disabled ? { transform: 'translateY(-2px)', boxShadow: `0 4px 12px ${net.color}30` } : {}
+                                    }}
+                                >
+                                    <img src={net.logo} alt={net.name} style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }}
+                                        onError={(e: any) => { e.target.style.display = 'none'; }} />
+                                    <Box flex={1}>
+                                        <Typography fontWeight={700} color={net.disabled ? '#999' : '#1a1a2e'}>{net.name}</Typography>
+                                        <Typography fontSize={12} color="#999">{net.disabled ? 'Coming Soon' : 'Available'}</Typography>
+                                    </Box>
+                                    {!net.disabled && <Typography sx={{ color: net.color, fontWeight: 700 }}>→</Typography>}
+                                </Box>
+                            ))}
+
+                            {/* Paystack */}
+                            <Box
+                                onClick={() => setStage('crypto')}
+                                sx={{
+                                    p: 2, borderRadius: 2, border: '2px solid #0070f3',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2,
+                                    transition: 'all 0.2s',
+                                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,112,243,0.3)' }
+                                }}
                             >
-                                {paystackLoading ? <CircularProgress size={20} /> : `Pay GHS ${amount} with Paystack`}
-                            </Button>
-                        </Stack>
-                    )}
+                                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: '#0070f3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 11 }}>PAY</Typography>
+                                </Box>
+                                <Box flex={1}>
+                                    <Typography fontWeight={700} color="#1a1a2e">Card / Paystack</Typography>
+                                    <Typography fontSize={12} color="#999">Instant — Visa, Mastercard, MoMo</Typography>
+                                </Box>
+                                <Typography sx={{ color: '#0070f3', fontWeight: 700 }}>→</Typography>
+                            </Box>
 
-                    {/* ── TAB 2: Crypto — UNCHANGED ── */}
-                    {tab === 2 && (
-                        <Stack spacing={2}>
-                            <Typography variant="body2" color="text.secondary">
-                                Send the crypto equivalent of GHS {amount} to the address below.
+                            {/* Crypto */}
+                            <Box
+                                onClick={() => setStage('crypto')}
+                                sx={{
+                                    p: 2, borderRadius: 2, border: '2px solid #F7931A',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2,
+                                    transition: 'all 0.2s',
+                                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(247,147,26,0.3)' }
+                                }}
+                            >
+                                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: '#F7931A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 18 }}>₿</Typography>
+                                </Box>
+                                <Box flex={1}>
+                                    <Typography fontWeight={700} color="#1a1a2e">Cryptocurrency</Typography>
+                                    <Typography fontSize={12} color="#999">BTC, ETH, USDT</Typography>
+                                </Box>
+                                <Typography sx={{ color: '#F7931A', fontWeight: 700 }}>→</Typography>
+                            </Box>
+                        </Stack>
+
+                        <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, mt: 3 }}>
+                            🔒 Your payment is protected with bank-grade security.
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+        );
+    }
+
+    // ── STAGE: payment (AfricaPay style) ──
+    if (stage === 'payment' && selectedNetwork) {
+        const currentAcc = selectedNetwork.accounts[currentAccountIndex];
+        const timeColor = countdown < 120 ? '#E30613' : countdown < 300 ? '#FF8C00' : '#00b894';
+
+        return (
+            <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', p: 2 }}>
+                <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+                    {/* Header */}
+                    <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3, borderRadius: '12px 12px 0 0' }}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <IconButton onClick={() => setStage('network')} sx={{ color: '#fff' }}>
+                                    <ArrowBackIcon />
+                                </IconButton>
+                                <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 20 }}>$FORETELL</Typography>
+                            </Stack>
+                            <Box sx={{
+                                bgcolor: countdown < 120 ? 'rgba(227,6,19,0.2)' : 'rgba(0,212,170,0.2)',
+                                border: `1px solid ${timeColor}`,
+                                borderRadius: 2, px: 2, py: 0.5
+                            }}>
+                                <Typography sx={{ color: timeColor, fontWeight: 800, fontSize: 16, fontFamily: 'monospace' }}>
+                                    {formatTime(countdown)}
+                                </Typography>
+                            </Box>
+                        </Stack>
+                    </Box>
+
+                    <Box sx={{ bgcolor: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+
+                        {/* Payment Info */}
+                        <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
+                            <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 2, fontSize: 15 }}>Payment Information</Typography>
+
+                            {/* Account Number */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, bgcolor: '#f9f9f9', borderRadius: 2, mb: 1.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    <img src={selectedNetwork.logo} alt={selectedNetwork.name}
+                                        style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 6 }}
+                                        onError={(e: any) => { e.target.style.display = 'none'; }} />
+                                    <Box>
+                                        <Typography sx={{ fontSize: 11, color: '#999' }}>Account Number</Typography>
+                                        <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1a1a2e' }}>{currentAcc.number}</Typography>
+                                    </Box>
+                                </Box>
+                                <Button onClick={() => handleCopy(currentAcc.number)}
+                                    sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 12, px: 2, borderRadius: 2, minWidth: 60, '&:hover': { bgcolor: '#e6b800' } }}>
+                                    Copy
+                                </Button>
+                            </Box>
+
+                            {/* Account Name */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, bgcolor: '#f9f9f9', borderRadius: 2, mb: 1.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Typography sx={{ fontWeight: 700, fontSize: 14 }}>👤</Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography sx={{ fontSize: 11, color: '#999' }}>Account Name</Typography>
+                                        <Typography sx={{ fontWeight: 800, fontSize: 15, color: '#1a1a2e' }}>{currentAcc.name.toUpperCase()}</Typography>
+                                    </Box>
+                                </Box>
+                                <Button onClick={() => handleCopy(currentAcc.name)}
+                                    sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 12, px: 2, borderRadius: 2, minWidth: 60, '&:hover': { bgcolor: '#e6b800' } }}>
+                                    Copy
+                                </Button>
+                            </Box>
+
+                            {/* Amount */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 11 }}>GHS</Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography sx={{ fontSize: 11, color: '#999' }}>Amount</Typography>
+                                        <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1a1a2e' }}>{amount}</Typography>
+                                    </Box>
+                                </Box>
+                                <Button onClick={() => handleCopy(amount)}
+                                    sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 12, px: 2, borderRadius: 2, minWidth: 60, '&:hover': { bgcolor: '#e6b800' } }}>
+                                    Copy
+                                </Button>
+                            </Box>
+                        </Box>
+
+                        {/* USSD Steps */}
+                        <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
+                            <Typography sx={{ fontWeight: 700, color: selectedNetwork.color, mb: 1.5, fontSize: 14 }}>
+                                {selectedNetwork.name.toUpperCase()} TO {selectedNetwork.name.toUpperCase()} STEPS
+                            </Typography>
+                            <Stack spacing={0.8}>
+                                {selectedNetwork.ussd.map((step, i) => (
+                                    <Typography key={i} sx={{ fontSize: 13, color: '#333' }}>
+                                        {i + 1}. {step.replace('{number}', currentAcc.number).replace('{amount}', amount)}
+                                    </Typography>
+                                ))}
+                            </Stack>
+                            <Button
+                                fullWidth
+                                sx={{ mt: 2, py: 1.2, bgcolor: selectedNetwork.color, color: selectedNetwork.textColor, fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: selectedNetwork.color, opacity: 0.9 } }}
+                                onClick={() => window.open(`tel:*110%23`)}
+                            >
+                                📞 Dial USSD
+                            </Button>
+                        </Box>
+
+                        {/* Confirmed Payment */}
+                        <Box sx={{ p: 3, bgcolor: '#f0fff8', borderLeft: '4px solid #00b894', mx: 2, my: 2, borderRadius: 1 }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                <Box>
+                                    <Typography sx={{ color: '#00b894', fontWeight: 800, fontSize: 14 }}>CONFIRMED PAYMENT</Typography>
+                                    <Typography sx={{ color: '#555', fontSize: 12 }}>Payment is typically processed within 5–15 minutes.</Typography>
+                                </Box>
+                                <Button onClick={() => window.location.reload()}
+                                    sx={{ bgcolor: '#0070f3', color: '#fff', fontWeight: 700, fontSize: 12, borderRadius: 2, '&:hover': { bgcolor: '#0060d3' } }}>
+                                    REFRESH
+                                </Button>
+                            </Stack>
+                        </Box>
+
+                        {/* Submit Transaction ID */}
+                        <Box sx={{ p: 3, mx: 2, mb: 2, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                            <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Submit Payment</Typography>
+                            <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>Txn ID</Typography>
+                            <input
+                                value={momoRef}
+                                onChange={e => setMomoRef(e.target.value)}
+                                placeholder="Paste your payment SMS or transaction ID"
+                                style={{
+                                    width: '100%', padding: '12px', border: '1px solid #e0e0e0',
+                                    borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12
+                                }}
+                            />
+                            <Button
+                                fullWidth
+                                onClick={handleMoMoSubmit}
+                                disabled={momoLoading}
+                                sx={{ py: 1.5, bgcolor: '#1a1a2e', color: '#fff', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#0d0d1a' } }}
+                            >
+                                {momoLoading ? <CircularProgress size={20} color="inherit" /> : 'Submit Payment'}
+                            </Button>
+                        </Box>
+
+                        {/* Phone Number */}
+                        <Box sx={{ p: 3, mx: 2, mb: 3, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                            <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 1.5 }}>Your Phone Number</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1.5, bgcolor: '#f9f9f9', borderRadius: 2 }}>
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    <Typography>🇬🇭</Typography>
+                                    <Box>
+                                        <Typography sx={{ fontSize: 11, color: '#999' }}>Phone Number</Typography>
+                                        <Typography sx={{ fontWeight: 700 }}>{currentAcc.number}</Typography>
+                                    </Box>
+                                </Stack>
+                                <Button onClick={() => setStage('network')}
+                                    sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 12, borderRadius: 2, '&:hover': { bgcolor: '#e6b800' } }}>
+                                    Edit
+                                </Button>
+                            </Box>
+                        </Box>
+
+                        <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, pb: 3 }}>
+                            🔒 Your payment is protected with bank-grade security.
+                        </Typography>
+                        <Typography sx={{ textAlign: 'center', color: '#ccc', fontSize: 10, pb: 2 }}>
+                            fortellbet.com
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+        );
+    }
+
+    // ── STAGE: crypto / paystack ──
+    if (stage === 'crypto') {
+        return (
+            <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', p: 2 }}>
+                <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+                    <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3, borderRadius: '12px 12px 0 0' }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <IconButton onClick={() => setStage('network')} sx={{ color: '#fff' }}>
+                                <ArrowBackIcon />
+                            </IconButton>
+                            <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 20 }}>$FORETELL</Typography>
+                        </Stack>
+                    </Box>
+
+                    <Box sx={{ bgcolor: '#fff', p: 3, borderRadius: '0 0 12px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 1, color: '#1a1a2e' }}>Pay via Paystack</Typography>
+                        <Typography sx={{ color: '#999', fontSize: 13, mb: 2 }}>
+                            You'll be redirected to a secure Paystack page. Pay by card or MoMo instantly.
+                        </Typography>
+                        <Button fullWidth variant="contained" onClick={handlePaystackDeposit} disabled={paystackLoading}
+                            sx={{ py: 1.5, bgcolor: '#0070f3', fontWeight: 700, borderRadius: 2, mb: 3 }}>
+                            {paystackLoading ? <CircularProgress size={20} color="inherit" /> : `Pay GHS ${amount} with Paystack →`}
+                        </Button>
+
+                        <Box sx={{ borderTop: '1px solid #f0f0f0', pt: 3 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 1, color: '#1a1a2e' }}>₿ Crypto Deposit</Typography>
+                            <Typography sx={{ color: '#999', fontSize: 13, mb: 2 }}>
+                                Send the crypto equivalent of GHS {amount} to any address below.
                             </Typography>
                             {CRYPTO_ACCOUNTS.map((acc, i) => (
-                                <Box key={i} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                                <Box key={i} sx={{ p: 2, border: '1px solid #f0f0f0', borderRadius: 2, mb: 1.5 }}>
                                     <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                                        <Typography fontWeight={700}>{acc.icon} {acc.coin} — {acc.network}</Typography>
-                                        <IconButton onClick={() => handleCopy(acc.address)}>
-                                            <ContentCopyIcon />
-                                        </IconButton>
+                                        <Typography fontWeight={700} fontSize={14}>{acc.icon} {acc.coin} — {acc.network}</Typography>
+                                        <Button onClick={() => handleCopy(acc.address)}
+                                            sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 11, px: 1.5, borderRadius: 2, minWidth: 50 }}>
+                                            Copy
+                                        </Button>
                                     </Stack>
-                                    <Typography variant="body2" sx={{ wordBreak: 'break-all', bgcolor: 'background.paper', p: 1, borderRadius: 1 }}>
+                                    <Typography variant="body2" sx={{ wordBreak: 'break-all', bgcolor: '#f9f9f9', p: 1, borderRadius: 1, fontSize: 11 }}>
                                         {acc.address}
                                     </Typography>
                                 </Box>
                             ))}
-                            <TextField
-                                label="Transaction Hash/ID"
-                                value={reference}
-                                onChange={(e) => setReference(e.target.value)}
-                                fullWidth size="small"
-                            />
-                            <Button variant="contained" onClick={handleCryptoSubmit} fullWidth disabled={loading} sx={{ py: 1.5 }}>
-                                {loading ? <CircularProgress size={20} /> : 'Submit Deposit'}
+                            <TextField label="Transaction Hash/ID" value={reference} onChange={e => setReference(e.target.value)} fullWidth size="small" sx={{ mb: 2 }} />
+                            <Button variant="contained" onClick={handleCryptoSubmit} fullWidth disabled={loading}
+                                sx={{ py: 1.5, bgcolor: '#F7931A', fontWeight: 700, borderRadius: 2 }}>
+                                {loading ? <CircularProgress size={20} color="inherit" /> : 'Submit Crypto Deposit'}
                             </Button>
-                        </Stack>
-                    )}
-                </Stack>
-            )}
-        </Stack>
-    );
+                        </Box>
+
+                        <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, mt: 3 }}>
+                            🔒 Your payment is protected with bank-grade security.
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+        );
+    }
+
+    return null;
 };
 
 export default DepositPage;
