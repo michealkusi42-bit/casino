@@ -547,7 +547,7 @@ const DepositPage = () => {
                         className="momo-ref"
                         value={momoRef}
                         onChange={e => setMomoRef(e.target.value)}
-                        placeholder="Paste your MoMo SMS or enter your Transaction ID here"
+                        placeholder=""
                         rows={3}
                         autoComplete="on"
                         spellCheck={false}
