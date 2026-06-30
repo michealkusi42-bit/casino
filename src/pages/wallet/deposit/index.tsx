@@ -28,6 +28,7 @@ const NETWORKS = [
         clickable: false,
         accounts: [] as { name: string; number: string }[],
         ussd: [] as string[],
+        dialCode: '*170#',
     },
     {
         id: 'Telecel',
@@ -53,7 +54,8 @@ const NETWORKS = [
             'Enter any Reference',
             'Enter PIN',
             'Select 1 [Confirm]',
-        ]
+        ],
+        dialCode: '*110#',
     },
     {
         id: 'AirtelTigo',
@@ -78,7 +80,8 @@ const NETWORKS = [
             'Enter any Reference',
             'Enter PIN',
             'Select 1 [Confirm]',
-        ]
+        ],
+        dialCode: '*500#',
     }
 ];
 
@@ -515,15 +518,9 @@ const DepositPage = () => {
                             </Typography>
                         ))}
                     </Stack>
+                    {/* EDIT: dial button now uses selectedNetwork.dialCode instead of hardcoded *110# */}
                     <Button fullWidth sx={{ mt: 2, py: 1.2, bgcolor: selectedNetwork.color, color: selectedNetwork.textColor, fontWeight: 700, borderRadius: 2, '&:hover': { opacity: 0.9 } }}
-                        onClick={() => {
-    const ussdCode =
-        selectedNetwork.id === 'MTN'
-            ? '*170#'
-            : '*110#';
-
-    window.open(tel:${encodeURIComponent(ussdCode)});
-}}
+                        onClick={() => window.open(`tel:${encodeURIComponent(selectedNetwork.dialCode)}`)}>
                         📞 Dial USSD
                     </Button>
                 </Box>
@@ -544,12 +541,14 @@ const DepositPage = () => {
                 <Box sx={{ p: 3, mx: 2, mb: 2, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Submit Payment</Typography>
                     <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>
-                        Paste your MoMo SMS or type your  ID
-                    </Typography>Transaction
+                        Paste your MoMo SMS or type your Transaction ID
+                    </Typography>
+                    {/* EDIT: placeholder changed to a clean, faded, readable instruction
+                        (no longer a fake example value users could mistake for real input) */}
                     <textarea
                         value={momoRef}
                         onChange={e => setMomoRef(e.target.value)}
-                        placeholder="Paste your Momo confirmation message or transaction ID here"
+                        placeholder="Paste your MoMo SMS or enter your Transaction ID here"
                         rows={3}
                         autoComplete="on"
                         spellCheck={false}
