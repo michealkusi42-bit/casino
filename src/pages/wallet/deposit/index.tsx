@@ -25,7 +25,7 @@ const NETWORKS = [
         badgeText: 'MTN',
         badgeBg: '#FFCC00',
         badgeFg: '#000',
-        clickable: false, // visible, arrow shown, but tapping does nothing
+        clickable: false,
         accounts: [],
         ussd: [],
     },
@@ -82,11 +82,10 @@ const NETWORKS = [
     }
 ];
 
-// 3 landing-screen payment methods — stacked vertically, full-screen flow on tap
 const PAYMENT_METHODS = [
-    { id: 'momo',     label: 'Pay with MoMo',     desc: 'MTN, Telecel, AirtelTigo',        icon: '📱', color: '#00d4aa' },
-    { id: 'paystack', label: 'Pay with Paystack',  desc: 'Card, Bank, Instant transfer',    icon: '💳', color: '#0070f3' },
-    { id: 'crypto',   label: 'Pay with Crypto',    desc: 'BTC, ETH, USDT',                  icon: '₿',  color: '#F7931A' },
+    { id: 'momo',     label: 'Pay with MoMo',     desc: 'MTN, Telecel, AirtelTigo',     icon: '📱', color: '#00d4aa' },
+    { id: 'paystack', label: 'Pay with Paystack',  desc: 'Card, Bank, Instant transfer', icon: '💳', color: '#0070f3' },
+    { id: 'crypto',   label: 'Pay with Crypto',    desc: 'BTC, ETH, USDT',               icon: '₿',  color: '#F7931A' },
 ];
 
 type View  = 'landing' | 'momo' | 'paystack' | 'crypto';
@@ -240,22 +239,63 @@ const DepositPage = () => {
         </Box>
     );
 
+    // Persistent "amount so far" banner — shown on Network and Payment
+    // screens so the user always sees how much they're depositing as they
+    // move through the steps, instead of it disappearing after step 1.
+    const AmountBanner = ({ value }: { value: string }) => (
+        <Box sx={{
+            mx: 3, mt: 2, mb: 1, p: 2,
+            bgcolor: '#0d1f1a',
+            borderRadius: 2.5,
+            border: '1px solid #00d4aa55'
+        }}>
+            <Typography sx={{ color: '#9fe8d4', fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, mb: 0.3 }}>
+                DEPOSIT AMOUNT
+            </Typography>
+            <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 26, letterSpacing: 0.5 }}>
+                GHS {value}
+            </Typography>
+        </Box>
+    );
+
     const QuickAmounts = () => (
         <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
             {[10, 20, 50, 100, 200, 500].map(v => (
                 <Box key={v} onClick={() => setAmount(v.toString())}
-                    sx={{ px: 2, py: 0.8, bgcolor: amount === v.toString() ? '#1a1a2e' : '#f0f0f0', color: amount === v.toString() ? '#fff' : '#333', borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+                    sx={{ px: 2.2, py: 1, bgcolor: amount === v.toString() ? '#1a1a2e' : '#f0f0f0', color: amount === v.toString() ? '#fff' : '#333', borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>
                     {v}
                 </Box>
             ))}
         </Box>
     );
 
+    // Amount entry field — bigger, bolder, clearly editable, dark text on
+    // white so it's always legible no matter the device theme.
     const AmountInput = () => (
-        <Box sx={{ display: 'flex', alignItems: 'center', border: '2px solid #e0e0e0', borderRadius: 2, p: 1.5, mb: 2 }}>
-            <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mr: 1 }}>GHS</Typography>
-            <input value={amount} onChange={e => setAmount(e.target.value)} type="number" placeholder="0.00"
-                style={{ border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, width: '100%', background: 'transparent', color: '#1a1a2e', caretColor: '#1a1a2e' }} />
+        <Box sx={{
+            display: 'flex', alignItems: 'center',
+            border: '2px solid #d8d8d8', borderRadius: 2.5, p: 2, mb: 2,
+            bgcolor: '#fff',
+            '&:focus-within': { borderColor: '#00d4aa' }
+        }}>
+            <Typography sx={{ fontWeight: 800, color: '#1a1a2e', mr: 1.2, fontSize: 18 }}>GHS</Typography>
+            <input
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                style={{
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: 26,
+                    fontWeight: 800,
+                    width: '100%',
+                    background: 'transparent',
+                    color: '#1a1a2e',
+                    caretColor: '#00d4aa',
+                }}
+            />
         </Box>
     );
 
@@ -265,9 +305,6 @@ const DepositPage = () => {
         </Typography>
     );
 
-    // Full-bleed page wrapper — genuinely fills the screen at every size.
-    // No maxWidth cap: on phones it's edge-to-edge, on tablets/desktop the
-    // content stretches with the viewport instead of sitting in a narrow column.
     const PageShell = ({ children }: { children: React.ReactNode }) => (
         <Box sx={{ minHeight: '100vh', width: '100%', bgcolor: '#fff' }}>
             {children}
@@ -275,7 +312,7 @@ const DepositPage = () => {
     );
 
     // ══════════════════════════════════════
-    // LANDING — 3 vertically stacked method cards, full screen
+    // LANDING
     // ══════════════════════════════════════
     if (view === 'landing') {
         return (
@@ -355,20 +392,20 @@ const DepositPage = () => {
     }
 
     // ══════════════════════════════════════
-    // MOMO — network selection
+    // MOMO — network selection (amount banner now stays visible here)
     // ══════════════════════════════════════
     if (view === 'momo' && stage === 'network') {
         return (
             <PageShell>
                 <Header showBack onBack={() => setStage('form')} subtitle="Select Network" />
-                <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Amount: GHS {amount}</Typography>
-                    <Typography sx={{ color: '#999', fontSize: 13, mb: 3 }}>Choose your mobile money network</Typography>
+                <AmountBanner value={amount} />
+                <Box sx={{ p: 3, pt: 1 }}>
+                    <Typography sx={{ color: '#999', fontSize: 13, mb: 2 }}>Choose your mobile money network</Typography>
                     <Stack spacing={2}>
                         {NETWORKS.map(net => (
                             <Box key={net.id}
                                 onClick={() => {
-                                    if (!net.clickable) return; // MTN: visible, but tapping does nothing
+                                    if (!net.clickable) return;
                                     setSelectedNetwork(net);
                                     setCurrentAccountIndex(0);
                                     setStage('payment');
@@ -436,6 +473,8 @@ const DepositPage = () => {
                     </Stack>
                 </Box>
 
+                <AmountBanner value={amount} />
+
                 <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 2, fontSize: 15 }}>Payment Information</Typography>
                     {[
@@ -489,12 +528,55 @@ const DepositPage = () => {
                     </Stack>
                 </Box>
 
+                {/*
+                  ── Transaction ID field — FIXED ──
+                  Switched from a single-line <input> to a real <textarea>:
+                  pasted MoMo SMS confirmations are often multi-line, and some
+                  mobile browsers swallow paste/typing into single-line inputs
+                  sitting inside heavily-styled MUI trees due to inherited
+                  pointer-events or overlay stacking. A plain, explicitly
+                  editable, auto-focusable textarea avoids that entirely and
+                  also makes it obviously usable for the user (visible border,
+                  clear placeholder, generous tap target).
+                */}
                 <Box sx={{ p: 3, mx: 2, mb: 2, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Submit Payment</Typography>
-                    <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>Txn ID</Typography>
-                    <input value={momoRef} onChange={e => setMomoRef(e.target.value)}
-                        placeholder="Paste your payment SMS or transaction ID"
-                        style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12, color: '#1a1a2e', caretColor: '#1a1a2e', background: '#fff' }} />
+                    <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>
+                        Paste your MoMo SMS or type your Transaction ID
+                    </Typography>
+                    <textarea
+                        value={momoRef}
+                        onChange={e => setMomoRef(e.target.value)}
+                        onPaste={e => {
+                            // Let the native paste happen, then sync state on next tick
+                            // in case any parent handler tries to intercept it.
+                            const pasted = e.clipboardData.getData('text');
+                            if (pasted) {
+                                setTimeout(() => setMomoRef(prev => prev || pasted), 0);
+                            }
+                        }}
+                        placeholder="e.g. You have received GHS 100.00 from... Trans ID: 5678901234"
+                        rows={3}
+                        autoComplete="on"
+                        spellCheck={false}
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            border: '1.5px solid #d8d8d8',
+                            borderRadius: 8,
+                            fontSize: 14,
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            marginBottom: 12,
+                            color: '#1a1a2e',
+                            caretColor: '#00d4aa',
+                            background: '#fff',
+                            fontFamily: 'inherit',
+                            resize: 'vertical',
+                            userSelect: 'text',
+                            WebkitUserSelect: 'text',
+                        }}
+                    />
                     <Button fullWidth onClick={handleMoMoSubmit} disabled={momoLoading}
                         sx={{ py: 1.5, bgcolor: '#1a1a2e', color: '#fff', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#0d0d1a' } }}>
                         {momoLoading ? <CircularProgress size={20} color="inherit" /> : 'Submit Payment'}
@@ -605,10 +687,10 @@ const DepositPage = () => {
         return (
             <PageShell>
                 <Header showBack onBack={() => setStage('form')} subtitle="Pay with Crypto" />
-                <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 1, color: '#1a1a2e' }}>₿ Crypto Deposit</Typography>
+                <AmountBanner value={amount} />
+                <Box sx={{ p: 3, pt: 1 }}>
                     <Typography sx={{ color: '#999', fontSize: 13, mb: 2 }}>
-                        Send the crypto equivalent of GHS {amount} to any address below.
+                        Send the crypto equivalent to any address below.
                     </Typography>
                     {CRYPTO_ACCOUNTS.map((acc, i) => (
                         <Box key={i} sx={{ p: 2, border: '1px solid #f0f0f0', borderRadius: 2, mb: 1.5 }}>
@@ -624,7 +706,15 @@ const DepositPage = () => {
                             </Typography>
                         </Box>
                     ))}
-                    <TextField label="Transaction Hash/ID" value={reference} onChange={e => setReference(e.target.value)} fullWidth size="small" sx={{ mb: 2 }} />
+                    <TextField
+                        label="Transaction Hash/ID"
+                        value={reference}
+                        onChange={e => setReference(e.target.value)}
+                        fullWidth size="small" sx={{ mb: 2 }}
+                        multiline
+                        minRows={2}
+                        InputProps={{ style: { color: '#1a1a2e' } }}
+                    />
                     <Button variant="contained" onClick={handleCryptoSubmit} fullWidth disabled={loading}
                         sx={{ py: 1.5, bgcolor: '#F7931A', fontWeight: 700, borderRadius: 2 }}>
                         {loading ? <CircularProgress size={20} color="inherit" /> : 'Submit Crypto Deposit'}
