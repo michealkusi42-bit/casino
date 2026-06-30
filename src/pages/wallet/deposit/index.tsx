@@ -255,7 +255,7 @@ const DepositPage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', border: '2px solid #e0e0e0', borderRadius: 2, p: 1.5, mb: 2 }}>
             <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mr: 1 }}>GHS</Typography>
             <input value={amount} onChange={e => setAmount(e.target.value)} type="number" placeholder="0.00"
-                style={{ border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, width: '100%', background: 'transparent' }} />
+                style={{ border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, width: '100%', background: 'transparent', color: '#1a1a2e', caretColor: '#1a1a2e' }} />
         </Box>
     );
 
@@ -494,7 +494,7 @@ const DepositPage = () => {
                     <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>Txn ID</Typography>
                     <input value={momoRef} onChange={e => setMomoRef(e.target.value)}
                         placeholder="Paste your payment SMS or transaction ID"
-                        style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+                        style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12, color: '#1a1a2e', caretColor: '#1a1a2e', background: '#fff' }} />
                     <Button fullWidth onClick={handleMoMoSubmit} disabled={momoLoading}
                         sx={{ py: 1.5, bgcolor: '#1a1a2e', color: '#fff', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#0d0d1a' } }}>
                         {momoLoading ? <CircularProgress size={20} color="inherit" /> : 'Submit Payment'}
