@@ -28,7 +28,7 @@ const Wrapper = ({ open }: { open: boolean }) => {
             }}
         >
             {isFullBleedPage ? (
-                <Box sx={{ pt: { xs: '7.2rem', sm: '4.5rem' } }}>
+                <Box sx={{ pt: { xs: '7.2rem', sm: '4.5rem' }, px: 0 }}>
                     <Outlet />
                 </Box>
             ) : (
