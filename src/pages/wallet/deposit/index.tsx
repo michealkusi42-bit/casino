@@ -22,7 +22,9 @@ const NETWORKS = [
         name: 'MTN Mobile Money',
         color: '#FFCC00',
         textColor: '#000',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/9/93/New-mtn-logo.jpg',
+        badgeText: 'MTN',
+        badgeBg: '#FFCC00',
+        badgeFg: '#000',
         clickable: false, // visible, arrow shown, but tapping does nothing
         accounts: [],
         ussd: [],
@@ -32,7 +34,9 @@ const NETWORKS = [
         name: 'Telecel Vodafone',
         color: '#E30613',
         textColor: '#fff',
-        logo: 'https://logos-world.net/wp-content/uploads/2022/05/Vodafone-Symbol.png',
+        badgeText: 'Telecel',
+        badgeBg: '#E30613',
+        badgeFg: '#fff',
         clickable: true,
         accounts: [
             { name: 'Kotey Rudolph Glodean', number: '0507558973' },
@@ -56,7 +60,9 @@ const NETWORKS = [
         name: 'AirtelTigo Money',
         color: '#E22117',
         textColor: '#fff',
-        logo: 'https://airteltigo.com.gh/wp-content/uploads/2019/01/AirtelTigo-Logo.png',
+        badgeText: 'AirtelTigo',
+        badgeBg: '#E22117',
+        badgeFg: '#fff',
         clickable: true,
         accounts: [
             { name: 'Fatima Iddrisu', number: '0560972009' },
@@ -259,12 +265,12 @@ const DepositPage = () => {
         </Typography>
     );
 
-    // Full-bleed page wrapper — fills the entire viewport, no floating card
+    // Full-bleed page wrapper — genuinely fills the screen at every size.
+    // No maxWidth cap: on phones it's edge-to-edge, on tablets/desktop the
+    // content stretches with the viewport instead of sitting in a narrow column.
     const PageShell = ({ children }: { children: React.ReactNode }) => (
-        <Box sx={{ minHeight: '100vh', bgcolor: '#fff', width: '100%' }}>
-            <Box sx={{ maxWidth: 480, mx: 'auto' }}>
-                {children}
-            </Box>
+        <Box sx={{ minHeight: '100vh', width: '100%', bgcolor: '#fff' }}>
+            {children}
         </Box>
     );
 
@@ -377,14 +383,20 @@ const DepositPage = () => {
                                     '&:hover': net.clickable ? { transform: 'translateY(-2px)', boxShadow: `0 6px 16px ${net.color}30` } : {}
                                 }}>
                                 <Box sx={{
-                                    width: 56, height: 56, borderRadius: 2, overflow: 'hidden',
-                                    flexShrink: 0, bgcolor: '#fafafa',
+                                    width: 56, height: 56, borderRadius: 2,
+                                    flexShrink: 0,
+                                    bgcolor: net.badgeBg,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    border: '1px solid #f0f0f0'
+                                    border: '1px solid #f0f0f0',
+                                    px: 0.5,
                                 }}>
-                                    <img src={net.logo} alt={net.name}
-                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                        onError={(e: any) => { e.target.style.display = 'none'; }} />
+                                    <Typography sx={{
+                                        color: net.badgeFg, fontWeight: 900,
+                                        fontSize: net.badgeText.length > 4 ? 10 : 14,
+                                        letterSpacing: 0.3, textAlign: 'center', lineHeight: 1.1,
+                                    }}>
+                                        {net.badgeText}
+                                    </Typography>
                                 </Box>
                                 <Box flex={1}>
                                     <Typography fontWeight={700} color="#1a1a2e" fontSize={15.5}>{net.name}</Typography>
@@ -427,7 +439,7 @@ const DepositPage = () => {
                 <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 2, fontSize: 15 }}>Payment Information</Typography>
                     {[
-                        { label: 'Account Number', value: currentAcc.number, icon: <img src={selectedNetwork.logo} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 6 }} onError={(e: any) => { e.target.style.display = 'none'; }} /> },
+                        { label: 'Account Number', value: currentAcc.number, icon: <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: selectedNetwork.badgeBg, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 0.3 }}><Typography sx={{ color: selectedNetwork.badgeFg, fontWeight: 900, fontSize: selectedNetwork.badgeText.length > 4 ? 7 : 10, lineHeight: 1 }}>{selectedNetwork.badgeText}</Typography></Box> },
                         { label: 'Account Name', value: currentAcc.name.toUpperCase(), icon: <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography sx={{ fontWeight: 700, fontSize: 14 }}>👤</Typography></Box> },
                         { label: 'Amount', value: amount, icon: <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 11 }}>GHS</Typography></Box> },
                     ].map((row, i) => (
