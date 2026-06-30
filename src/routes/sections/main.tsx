@@ -77,13 +77,20 @@ export const mainRoutes = [
                 element: <WalletPage />,
                 children: [
                     { path: 'balance', element: <BallancePage /> },
-                    { path: 'deposit', element: <DepositPage /> },
                     { path: 'withdraw', element: <WithdrawPage /> },
                     { path: 'bonus', element: <PlayerBonusPage /> },
                     { path: 'transaction', element: <TransactionPage /> },
                     { path: 'bet-history', element: <BetHistoryPage /> }
+                    // 'deposit' moved OUT of here — see sibling route below.
+                    // It now renders full-screen instead of inside the
+                    // wallet sidebar grid (Balance/Deposit/Withdraw layout).
                 ]
             },
+            // Deposit is now a standalone, full-screen route.
+            // Same URL as before (/wallet/deposit), so nothing else changes
+            // for the user — it just no longer renders inside WalletPage's
+            // 9/12-column sidebar grid, so it can fill the entire screen.
+            { path: 'wallet/deposit', element: <DepositPage /> },
             { path: 'vip', element: <VipPage /> },
             {
                 path: 'settings',
