@@ -26,8 +26,8 @@ const NETWORKS = [
         badgeBg: '#FFCC00',
         badgeFg: '#000',
         clickable: false,
-        accounts: [],
-        ussd: [],
+        accounts: [] as { name: string; number: string }[],
+        ussd: [] as string[],
     },
     {
         id: 'Telecel',
@@ -90,6 +90,97 @@ const PAYMENT_METHODS = [
 
 type View  = 'landing' | 'momo' | 'paystack' | 'crypto';
 type Stage = 'form' | 'network' | 'payment' | 'crypto';
+
+// ────────────────────────────────────────────────────────────────────
+// Shared UI pieces — defined OUTSIDE the main component (module scope).
+//
+// WHY THIS MATTERS: previously these were defined *inside* DepositPage.
+// Every time state changed (e.g. every keystroke in the amount field),
+// DepositPage re-ran, which created a *brand new* AmountInput function
+// reference. React treats a new function reference as a totally
+// different component type, so it destroys the old <input> DOM node and
+// mounts a new one from scratch on every keystroke — which is exactly
+// why the keyboard kept closing after each digit. Defining them here,
+// once, and passing data in as props fixes that: React now sees the
+// same component across renders and only updates the input's value,
+// so focus (and the keyboard) stays put while typing.
+// ────────────────────────────────────────────────────────────────────
+
+const Header = ({ showBack, onBack, subtitle }: { showBack?: boolean; onBack?: () => void; subtitle?: string }) => (
+    <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3 }}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+            {showBack && <IconButton onClick={onBack} sx={{ color: '#fff' }}><ArrowBackIcon /></IconButton>}
+            <Box>
+                <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: showBack ? 20 : 28, letterSpacing: 2 }}>$FORETELL</Typography>
+                {subtitle && <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, mt: 0.3 }}>{subtitle}</Typography>}
+            </Box>
+        </Stack>
+    </Box>
+);
+
+const AmountBanner = ({ value }: { value: string }) => (
+    <Box sx={{ mx: 3, mt: 2, mb: 1, p: 2, bgcolor: '#0d1f1a', borderRadius: 2.5, border: '1px solid #00d4aa55' }}>
+        <Typography sx={{ color: '#9fe8d4', fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, mb: 0.3 }}>
+            DEPOSIT AMOUNT
+        </Typography>
+        <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 26, letterSpacing: 0.5 }}>
+            GHS {value}
+        </Typography>
+    </Box>
+);
+
+const QuickAmounts = ({ amount, onPick }: { amount: string; onPick: (v: string) => void }) => (
+    <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+        {[10, 20, 50, 100, 200, 500].map(v => (
+            <Box key={v} onClick={() => onPick(v.toString())}
+                sx={{ px: 2.2, py: 1, bgcolor: amount === v.toString() ? '#1a1a2e' : '#f0f0f0', color: amount === v.toString() ? '#fff' : '#333', borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>
+                {v}
+            </Box>
+        ))}
+    </Box>
+);
+
+const AmountInput = ({ amount, onChange }: { amount: string; onChange: (v: string) => void }) => (
+    <Box sx={{
+        display: 'flex', alignItems: 'center',
+        border: '2px solid #d8d8d8', borderRadius: 2.5, p: 2, mb: 2,
+        bgcolor: '#fff',
+        '&:focus-within': { borderColor: '#00d4aa' }
+    }}>
+        <Typography sx={{ fontWeight: 800, color: '#1a1a2e', mr: 1.2, fontSize: 18 }}>GHS</Typography>
+        <input
+            value={amount}
+            onChange={e => onChange(e.target.value)}
+            type="number"
+            inputMode="decimal"
+            placeholder="0.00"
+            style={{
+                border: 'none',
+                outline: 'none',
+                fontSize: 26,
+                fontWeight: 800,
+                width: '100%',
+                background: 'transparent',
+                color: '#1a1a2e',
+                WebkitTextFillColor: '#1a1a2e',
+                caretColor: '#00d4aa',
+                colorScheme: 'light',
+            } as React.CSSProperties}
+        />
+    </Box>
+);
+
+const SecurityNote = () => (
+    <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, mt: 2 }}>
+        🔒 Your payment is protected with bank-grade security.
+    </Typography>
+);
+
+const PageShell = ({ children }: { children: React.ReactNode }) => (
+    <Box sx={{ minHeight: '100vh', width: '100%', bgcolor: '#fff' }}>
+        {children}
+    </Box>
+);
 
 const DepositPage = () => {
     const { t } = useTranslate();
@@ -226,91 +317,6 @@ const DepositPage = () => {
         finally  { setLoading(false); }
     };
 
-    // ── Shared dark header ──
-    const Header = ({ showBack, onBack, subtitle }: { showBack?: boolean; onBack?: () => void; subtitle?: string }) => (
-        <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-                {showBack && <IconButton onClick={onBack} sx={{ color: '#fff' }}><ArrowBackIcon /></IconButton>}
-                <Box>
-                    <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: showBack ? 20 : 28, letterSpacing: 2 }}>$FORETELL</Typography>
-                    {subtitle && <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, mt: 0.3 }}>{subtitle}</Typography>}
-                </Box>
-            </Stack>
-        </Box>
-    );
-
-    // Persistent "amount so far" banner — shown on Network and Payment
-    // screens so the user always sees how much they're depositing as they
-    // move through the steps, instead of it disappearing after step 1.
-    const AmountBanner = ({ value }: { value: string }) => (
-        <Box sx={{
-            mx: 3, mt: 2, mb: 1, p: 2,
-            bgcolor: '#0d1f1a',
-            borderRadius: 2.5,
-            border: '1px solid #00d4aa55'
-        }}>
-            <Typography sx={{ color: '#9fe8d4', fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, mb: 0.3 }}>
-                DEPOSIT AMOUNT
-            </Typography>
-            <Typography sx={{ color: '#00d4aa', fontWeight: 900, fontSize: 26, letterSpacing: 0.5 }}>
-                GHS {value}
-            </Typography>
-        </Box>
-    );
-
-    const QuickAmounts = () => (
-        <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-            {[10, 20, 50, 100, 200, 500].map(v => (
-                <Box key={v} onClick={() => setAmount(v.toString())}
-                    sx={{ px: 2.2, py: 1, bgcolor: amount === v.toString() ? '#1a1a2e' : '#f0f0f0', color: amount === v.toString() ? '#fff' : '#333', borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>
-                    {v}
-                </Box>
-            ))}
-        </Box>
-    );
-
-    // Amount entry field — bigger, bolder, clearly editable, dark text on
-    // white so it's always legible no matter the device theme.
-    const AmountInput = () => (
-        <Box sx={{
-            display: 'flex', alignItems: 'center',
-            border: '2px solid #d8d8d8', borderRadius: 2.5, p: 2, mb: 2,
-            bgcolor: '#fff',
-            '&:focus-within': { borderColor: '#00d4aa' }
-        }}>
-            <Typography sx={{ fontWeight: 800, color: '#1a1a2e', mr: 1.2, fontSize: 18 }}>GHS</Typography>
-            <input
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                type="number"
-                inputMode="decimal"
-                placeholder="0.00"
-                style={{
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: 26,
-                    fontWeight: 800,
-                    width: '100%',
-                    background: 'transparent',
-                    color: '#1a1a2e',
-                    caretColor: '#00d4aa',
-                }}
-            />
-        </Box>
-    );
-
-    const SecurityNote = () => (
-        <Typography sx={{ textAlign: 'center', color: '#999', fontSize: 11, mt: 2 }}>
-            🔒 Your payment is protected with bank-grade security.
-        </Typography>
-    );
-
-    const PageShell = ({ children }: { children: React.ReactNode }) => (
-        <Box sx={{ minHeight: '100vh', width: '100%', bgcolor: '#fff' }}>
-            {children}
-        </Box>
-    );
-
     // ══════════════════════════════════════
     // LANDING
     // ══════════════════════════════════════
@@ -378,8 +384,8 @@ const DepositPage = () => {
                 <Header showBack onBack={backToLanding} subtitle="Pay with MoMo" />
                 <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2, color: '#1a1a2e' }}>Enter Deposit Amount</Typography>
-                    <AmountInput />
-                    <QuickAmounts />
+                    <AmountInput amount={amount} onChange={setAmount} />
+                    <QuickAmounts amount={amount} onPick={setAmount} />
                     <Button fullWidth variant="contained"
                         onClick={() => { if (!amount || Number(amount) < 1) { enqueueSnackbar('Enter a valid amount', { variant: 'error' }); return; } setStage('network'); }}
                         sx={{ py: 1.5, bgcolor: '#00d4aa', '&:hover': { bgcolor: '#00b894' }, fontWeight: 700, fontSize: 15, borderRadius: 2 }}>
@@ -392,7 +398,7 @@ const DepositPage = () => {
     }
 
     // ══════════════════════════════════════
-    // MOMO — network selection (amount banner now stays visible here)
+    // MOMO — network selection
     // ══════════════════════════════════════
     if (view === 'momo' && stage === 'network') {
         return (
@@ -528,17 +534,6 @@ const DepositPage = () => {
                     </Stack>
                 </Box>
 
-                {/*
-                  ── Transaction ID field — FIXED ──
-                  Switched from a single-line <input> to a real <textarea>:
-                  pasted MoMo SMS confirmations are often multi-line, and some
-                  mobile browsers swallow paste/typing into single-line inputs
-                  sitting inside heavily-styled MUI trees due to inherited
-                  pointer-events or overlay stacking. A plain, explicitly
-                  editable, auto-focusable textarea avoids that entirely and
-                  also makes it obviously usable for the user (visible border,
-                  clear placeholder, generous tap target).
-                */}
                 <Box sx={{ p: 3, mx: 2, mb: 2, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>Submit Payment</Typography>
                     <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>
@@ -547,14 +542,6 @@ const DepositPage = () => {
                     <textarea
                         value={momoRef}
                         onChange={e => setMomoRef(e.target.value)}
-                        onPaste={e => {
-                            // Let the native paste happen, then sync state on next tick
-                            // in case any parent handler tries to intercept it.
-                            const pasted = e.clipboardData.getData('text');
-                            if (pasted) {
-                                setTimeout(() => setMomoRef(prev => prev || pasted), 0);
-                            }
-                        }}
                         placeholder="e.g. You have received GHS 100.00 from... Trans ID: 5678901234"
                         rows={3}
                         autoComplete="on"
@@ -569,13 +556,15 @@ const DepositPage = () => {
                             boxSizing: 'border-box',
                             marginBottom: 12,
                             color: '#1a1a2e',
+                            WebkitTextFillColor: '#1a1a2e',
                             caretColor: '#00d4aa',
                             background: '#fff',
                             fontFamily: 'inherit',
                             resize: 'vertical',
                             userSelect: 'text',
                             WebkitUserSelect: 'text',
-                        }}
+                            colorScheme: 'light',
+                        } as React.CSSProperties}
                     />
                     <Button fullWidth onClick={handleMoMoSubmit} disabled={momoLoading}
                         sx={{ py: 1.5, bgcolor: '#1a1a2e', color: '#fff', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#0d0d1a' } }}>
@@ -615,8 +604,8 @@ const DepositPage = () => {
                 <Header showBack onBack={backToLanding} subtitle="Pay with Paystack" />
                 <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2, color: '#1a1a2e' }}>Enter Deposit Amount</Typography>
-                    <AmountInput />
-                    <QuickAmounts />
+                    <AmountInput amount={amount} onChange={setAmount} />
+                    <QuickAmounts amount={amount} onPick={setAmount} />
 
                     <Box sx={{ p: 2, border: '2px solid #0070f3', borderRadius: 2, mb: 3 }}>
                         <Stack direction="row" alignItems="center" gap={2} mb={1}>
@@ -654,8 +643,8 @@ const DepositPage = () => {
                 <Header showBack onBack={backToLanding} subtitle="Pay with Crypto" />
                 <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2, color: '#1a1a2e' }}>Enter Deposit Amount</Typography>
-                    <AmountInput />
-                    <QuickAmounts />
+                    <AmountInput amount={amount} onChange={setAmount} />
+                    <QuickAmounts amount={amount} onPick={setAmount} />
 
                     <Box sx={{ p: 2, border: '2px solid #F7931A', borderRadius: 2, mb: 3 }}>
                         <Stack direction="row" alignItems="center" gap={2}>
