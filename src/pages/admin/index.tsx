@@ -11,9 +11,9 @@ import LockIcon from '@mui/icons-material/Lock';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import axios from 'utils/axios';
+import axios from 'axios';
 
-const API = '/api/admin';
+const API = 'https://foretell-backend-production-58a6.up.railway.app/api/admin';
 const ADMIN_PASSWORD_KEY = 'adminPanelPassword';
 
 const GAMES = ['coinflip', 'dice', 'hilo', 'mines', 'roulette', 'updown', 'crash', 'lottery', 'racing', 'bingo', 'poker'];
@@ -30,7 +30,6 @@ const statusChip = (status: string) => {
     return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.7rem' }} />;
 };
 
-// ── EDIT: UserRow now shows expandable detail panel with all user info ──
 function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: string, action: string, amount: string) => void; onSuspend: (username: string) => void; }) {
     const [adjAmt, setAdjAmt] = useState('');
     const [adjAction, setAdjAction] = useState('add');
@@ -39,7 +38,6 @@ function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: stri
     return (
         <>
             <TableRow sx={{ '& > *': { borderBottom: open ? 'unset' : undefined } }}>
-                {/* toggle arrow */}
                 <TableCell sx={{ p: 0.5, width: 32 }}>
                     <IconButton size="small" onClick={() => setOpen(!open)} sx={{ color: '#94a3b8' }}>
                         {open ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
@@ -75,7 +73,6 @@ function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: stri
                 </TableCell>
             </TableRow>
 
-            {/* Expandable detail row */}
             <TableRow>
                 <TableCell colSpan={7} sx={{ p: 0, bgcolor: '#0f212e' }}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
@@ -85,20 +82,20 @@ function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: stri
                             </Typography>
                             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' }, gap: 1.5 }}>
                                 {[
-                                    { label: 'Email',            value: u.email || '—' },
-                                    { label: 'Phone / MoMo',    value: u.phone || '—' },
-                                    { label: 'Network',          value: u.momoNetwork || '—' },
-                                    { label: 'Joined',           value: u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' },
-                                    { label: 'Total Deposited',  value: 'GHS ' + (u.totalDeposited ?? 0).toFixed(2), color: '#00e701' },
-                                    { label: 'Deposit Count',    value: (u.depositCount ?? 0) + ' deposits' },
-                                    { label: 'Total Withdrawn',  value: 'GHS ' + (u.totalWithdrawn ?? 0).toFixed(2), color: '#f44336' },
+                                    { label: 'Email', value: u.email || '—' },
+                                    { label: 'Phone / MoMo', value: u.phone || '—' },
+                                    { label: 'Network', value: u.momoNetwork || '—' },
+                                    { label: 'Joined', value: u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' },
+                                    { label: 'Total Deposited', value: 'GHS ' + (u.totalDeposited ?? 0).toFixed(2), color: '#00e701' },
+                                    { label: 'Deposit Count', value: (u.depositCount ?? 0) + ' deposits' },
+                                    { label: 'Total Withdrawn', value: 'GHS ' + (u.totalWithdrawn ?? 0).toFixed(2), color: '#f44336' },
                                     { label: 'Withdrawal Count', value: (u.withdrawalCount ?? 0) + ' withdrawals' },
-                                    { label: 'Total Bets',       value: (u.totalBets ?? 0) + ' bets', color: '#ffc107' },
-                                    { label: 'Total Wagered',    value: 'GHS ' + (u.totalWagered ?? 0).toFixed(2) },
-                                    { label: 'Referral Code',    value: u.referralCode || '—' },
-                                    { label: 'Referred By',      value: u.referredBy || 'None' },
-                                    { label: 'Referral Count',   value: (u.referralCount ?? 0) + ' users' },
-                                    { label: 'Referral Earnings',value: 'GHS ' + (u.referralEarnings ?? 0).toFixed(2) },
+                                    { label: 'Total Bets', value: (u.totalBets ?? 0) + ' bets', color: '#ffc107' },
+                                    { label: 'Total Wagered', value: 'GHS ' + (u.totalWagered ?? 0).toFixed(2) },
+                                    { label: 'Referral Code', value: u.referralCode || '—' },
+                                    { label: 'Referred By', value: u.referredBy || 'None' },
+                                    { label: 'Referral Count', value: (u.referralCount ?? 0) + ' users' },
+                                    { label: 'Referral Earnings', value: 'GHS ' + (u.referralEarnings ?? 0).toFixed(2) },
                                 ].map((item) => (
                                     <Box key={item.label} sx={{ bgcolor: '#213743', borderRadius: 1.5, p: 1.2 }}>
                                         <Typography sx={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, mb: 0.3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -142,10 +139,12 @@ export default function AdminPanel() {
     const [winRate, setWinRate] = useState(50);
     const [winRateLoading, setWinRateLoading] = useState(false);
 
+    const [adminPassword, setAdminPassword] = useState('');
+
     useEffect(() => {
         const saved = sessionStorage.getItem(ADMIN_PASSWORD_KEY);
         if (saved) {
-            axios.defaults.headers.common['x-admin-password'] = saved;
+            setAdminPassword(saved);
             setUnlocked(true);
         }
         setCheckingAuth(false);
@@ -158,9 +157,14 @@ export default function AdminPanel() {
         }
     }, [unlocked]);
 
+    const getHeaders = () => ({
+        'x-admin-password': adminPassword || sessionStorage.getItem(ADMIN_PASSWORD_KEY) || '',
+        'Content-Type': 'application/json'
+    });
+
     const loadWinRate = async () => {
         try {
-            const r = await axios.get(API + '/win-rate');
+            const r = await axios.get(API + '/win-rate', { headers: getHeaders() });
             if (r.data && r.data.winRate !== undefined) setWinRate(r.data.winRate);
         } catch (e) {}
     };
@@ -168,7 +172,7 @@ export default function AdminPanel() {
     const applyWinRate = async () => {
         setWinRateLoading(true);
         try {
-            await axios.post(API + '/win-rate', { winRate });
+            await axios.post(API + '/win-rate', { winRate }, { headers: getHeaders() });
             setMsg('✅ Win rate set to ' + winRate + '%');
         } catch (e: any) {
             setMsg(e?.response?.data?.error || 'Failed to set win rate');
@@ -183,7 +187,7 @@ export default function AdminPanel() {
         try {
             await axios.post(API + '/login', { password: passwordInput });
             sessionStorage.setItem(ADMIN_PASSWORD_KEY, passwordInput);
-            axios.defaults.headers.common['x-admin-password'] = passwordInput;
+            setAdminPassword(passwordInput);
             setUnlocked(true);
         } catch (e: any) {
             setAuthError(e?.response?.data?.error || 'Incorrect password');
@@ -195,11 +199,12 @@ export default function AdminPanel() {
     const load = async () => {
         setLoading(true);
         try {
+            const headers = getHeaders();
             const [d, w, u, s] = await Promise.all([
-                axios.get(API + '/deposits?status=all'),
-                axios.get(API + '/withdrawals?status=all'),
-                axios.get(API + '/users'),
-                axios.get(API + '/stats'),
+                axios.get(API + '/deposits?status=all', { headers }),
+                axios.get(API + '/withdrawals?status=all', { headers }),
+                axios.get(API + '/users', { headers }),
+                axios.get(API + '/stats', { headers }),
             ]);
             setDeposits(d.data.data || []);
             setWithdrawals(w.data.data || []);
@@ -220,7 +225,7 @@ export default function AdminPanel() {
 
     const approve = async (type: string, id: string) => {
         try {
-            await axios.post(API + '/' + type + '/' + id + '/approve');
+            await axios.post(API + '/' + type + '/' + id + '/approve', {}, { headers: getHeaders() });
             setMsg('✅ Approved successfully');
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -228,7 +233,7 @@ export default function AdminPanel() {
 
     const reject = async (type: string, id: string) => {
         try {
-            await axios.post(API + '/' + type + '/' + id + '/reject');
+            await axios.post(API + '/' + type + '/' + id + '/reject', {}, { headers: getHeaders() });
             setMsg('❌ Rejected');
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -241,7 +246,7 @@ export default function AdminPanel() {
             if (overrideValue === 'custom') {
                 try { value = JSON.parse(customValue); } catch { value = customValue; }
             }
-            await axios.post(API + '/overrides/' + selectedUser, { game: selectedGame, value });
+            await axios.post(API + '/overrides/' + selectedUser, { game: selectedGame, value }, { headers: getHeaders() });
             setMsg('✅ Override set: ' + selectedUser + ' → ' + selectedGame + ' → ' + JSON.stringify(value));
             loadOverrides(selectedUser);
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -249,7 +254,7 @@ export default function AdminPanel() {
 
     const clearOverride = async (username: string, game: string) => {
         try {
-            await axios.delete(API + '/overrides/' + username + '/' + game);
+            await axios.delete(API + '/overrides/' + username + '/' + game, { headers: getHeaders() });
             setMsg('Override cleared');
             loadOverrides(username);
         } catch (e) {}
@@ -258,14 +263,14 @@ export default function AdminPanel() {
     const loadOverrides = async (username: string) => {
         if (!username) return;
         try {
-            const r = await axios.get(API + '/overrides/' + username);
+            const r = await axios.get(API + '/overrides/' + username, { headers: getHeaders() });
             setUserOverrides(r.data.data || {});
         } catch (e) {}
     };
 
     const adjustBalance = async (username: string, action: string, amount: string) => {
         try {
-            await axios.post(API + '/users/' + username + '/adjust-balance', { action, amount: parseFloat(amount) });
+            await axios.post(API + '/users/' + username + '/adjust-balance', { action, amount: parseFloat(amount) }, { headers: getHeaders() });
             setMsg('✅ Balance updated for ' + username);
             load();
         } catch (e: any) { setMsg(e?.response?.data?.error || 'Failed'); }
@@ -273,7 +278,7 @@ export default function AdminPanel() {
 
     const suspend = async (username: string) => {
         try {
-            const r = await axios.post(API + '/users/' + username + '/suspend');
+            const r = await axios.post(API + '/users/' + username + '/suspend', {}, { headers: getHeaders() });
             setMsg('User ' + (r.data.suspended ? 'suspended' : 'unsuspended'));
             load();
         } catch (e) {}
@@ -317,7 +322,6 @@ export default function AdminPanel() {
 
             {msg && <Alert severity="info" onClose={() => setMsg('')} sx={{ mb: 2, fontSize: '0.8rem' }}>{msg}</Alert>}
 
-            {/* Stats */}
             {stats && (
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: { xs: 1, md: 2 }, mb: 2 }}>
                     {[
@@ -334,7 +338,6 @@ export default function AdminPanel() {
                 </Box>
             )}
 
-            {/* Tabs */}
             <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
                 sx={{ mb: 2, bgcolor: '#213743', borderRadius: 2, '& .MuiTab-root': { color: '#fff', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: { xs: 'auto', sm: 90 }, px: { xs: 1, sm: 2 } } }}>
                 <Tab label="💰 Deposits" />
@@ -345,7 +348,6 @@ export default function AdminPanel() {
 
             {loading && <CircularProgress sx={{ color: '#00e701', display: 'block', mx: 'auto', my: 4 }} />}
 
-            {/* DEPOSITS */}
             {tab === 0 && !loading && (
                 <Stack spacing={1.5}>
                     {deposits.length === 0 && (
@@ -404,7 +406,6 @@ export default function AdminPanel() {
                 </Stack>
             )}
 
-            {/* WITHDRAWALS */}
             {tab === 1 && !loading && (
                 <Stack spacing={1.5}>
                     {withdrawals.length === 0 && (
@@ -480,7 +481,6 @@ export default function AdminPanel() {
                 </Stack>
             )}
 
-            {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
@@ -587,7 +587,6 @@ export default function AdminPanel() {
                 </Stack>
             )}
 
-            {/* USERS — EDIT: expandable rows with full user details */}
             {tab === 3 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
                     <Table size="small">
