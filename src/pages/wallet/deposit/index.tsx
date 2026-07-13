@@ -28,7 +28,6 @@ const NETWORKS = [
         clickable: false,
         accounts: [] as { name: string; number: string }[],
         ussd: [] as string[],
-        dialCode: '*170#',
     },
     {
         id: 'Telecel',
@@ -40,7 +39,7 @@ const NETWORKS = [
         badgeFg: '#fff',
         clickable: true,
         accounts: [
-            { name: 'Kotey Rudolph Glodean', number: '0507558973' },
+            { name: 'SIMON AYREE', number: '0507558973' },
             { name: 'Atoklo Christian', number: '0507210550' },
             { name: 'Tetteh Vida', number: '0508631503' },
         ],
@@ -54,8 +53,7 @@ const NETWORKS = [
             'Enter any Reference',
             'Enter PIN',
             'Select 1 [Confirm]',
-        ],
-        dialCode: '*110#',
+        ]
     },
     {
         id: 'AirtelTigo',
@@ -80,8 +78,7 @@ const NETWORKS = [
             'Enter any Reference',
             'Enter PIN',
             'Select 1 [Confirm]',
-        ],
-        dialCode: '*500#',
+        ]
     }
 ];
 
@@ -93,6 +90,21 @@ const PAYMENT_METHODS = [
 
 type View  = 'landing' | 'momo' | 'paystack' | 'crypto';
 type Stage = 'form' | 'network' | 'payment' | 'crypto';
+
+// ────────────────────────────────────────────────────────────────────
+// Shared UI pieces — defined OUTSIDE the main component (module scope).
+//
+// WHY THIS MATTERS: previously these were defined *inside* DepositPage.
+// Every time state changed (e.g. every keystroke in the amount field),
+// DepositPage re-ran, which created a *brand new* AmountInput function
+// reference. React treats a new function reference as a totally
+// different component type, so it destroys the old <input> DOM node and
+// mounts a new one from scratch on every keystroke — which is exactly
+// why the keyboard kept closing after each digit. Defining them here,
+// once, and passing data in as props fixes that: React now sees the
+// same component across renders and only updates the input's value,
+// so focus (and the keyboard) stays put while typing.
+// ────────────────────────────────────────────────────────────────────
 
 const Header = ({ showBack, onBack, subtitle }: { showBack?: boolean; onBack?: () => void; subtitle?: string }) => (
     <Box sx={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', p: 3 }}>
@@ -155,8 +167,6 @@ const AmountInput = ({ amount, onChange }: { amount: string; onChange: (v: strin
                 colorScheme: 'light',
             } as React.CSSProperties}
         />
-        {/* CHANGE 1: faded gray placeholder */}
-        <style>{`input[type="number"]::placeholder { color: #bbb; opacity: 1; }`}</style>
     </Box>
 );
 
@@ -188,8 +198,6 @@ const DepositPage = () => {
     const [paystackLoading, setPaystackLoading]   = useState(false);
     const [reference, setReference]               = useState('');
     const [loading, setLoading]                   = useState(false);
-    // CHANGE 2: user's own phone number fetched from their profile
-    const [userPhone, setUserPhone]               = useState('');
     const countdownRef = useRef<any>(null);
     const rotateRef    = useRef<any>(null);
 
@@ -197,16 +205,6 @@ const DepositPage = () => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
     };
-
-    // CHANGE 2: fetch the logged-in user's own phone number on mount
-    useEffect(() => {
-        fetch(`${API}/api/auth/me`, { headers: authHeader })
-            .then(res => res.json())
-            .then(data => {
-                if (data.momoNumber) setUserPhone(data.momoNumber);
-            })
-            .catch(() => {});
-    }, []);
 
     const goToMethod = (methodId: View) => {
         setView(methodId);
@@ -518,7 +516,7 @@ const DepositPage = () => {
                         ))}
                     </Stack>
                     <Button fullWidth sx={{ mt: 2, py: 1.2, bgcolor: selectedNetwork.color, color: selectedNetwork.textColor, fontWeight: 700, borderRadius: 2, '&:hover': { opacity: 0.9 } }}
-                        onClick={() => window.open(`tel:${encodeURIComponent(selectedNetwork.dialCode)}`)}>
+                        onClick={() => window.open(`tel:*110%23`)}>
                         📞 Dial USSD
                     </Button>
                 </Box>
@@ -541,13 +539,10 @@ const DepositPage = () => {
                     <Typography sx={{ color: '#999', fontSize: 12, mb: 1.5 }}>
                         Paste your MoMo SMS or type your Transaction ID
                     </Typography>
-                    {/* CHANGE 1: placeholder is now faded gray */}
-                    <style>{`textarea.momo-ref::placeholder { color: #bbb; opacity: 1; }`}</style>
                     <textarea
-                        className="momo-ref"
                         value={momoRef}
                         onChange={e => setMomoRef(e.target.value)}
-                        placeholder=""
+                        placeholder="e.g. You have received GHS 100.00 from... Trans ID: 5678901234"
                         rows={3}
                         autoComplete="on"
                         spellCheck={false}
@@ -577,7 +572,6 @@ const DepositPage = () => {
                     </Button>
                 </Box>
 
-                {/* CHANGE 2: shows the user's own phone number from their profile, not the agent's number */}
                 <Box sx={{ p: 3, mx: 2, mb: 3, bgcolor: '#fff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a2e', mb: 1.5 }}>Your Phone Number</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1.5, bgcolor: '#f9f9f9', borderRadius: 2 }}>
@@ -585,13 +579,10 @@ const DepositPage = () => {
                             <Typography>🇬🇭</Typography>
                             <Box>
                                 <Typography sx={{ fontSize: 11, color: '#999' }}>Phone Number</Typography>
-                                <Typography sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: 15 }}>
-                                    {userPhone || 'Not set'}
-                                </Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{currentAcc.number}</Typography>
                             </Box>
                         </Stack>
-                        <Button
-                            onClick={() => window.location.href = '/settings/account-info'}
+                        <Button onClick={() => setStage('network')}
                             sx={{ bgcolor: '#FFCC00', color: '#000', fontWeight: 700, fontSize: 12, borderRadius: 2, '&:hover': { bgcolor: '#e6b800' } }}>
                             Edit
                         </Button>
