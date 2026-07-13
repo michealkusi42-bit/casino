@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import {
     Box, Stack, Typography, Button, Chip, Tab, Tabs, Table, TableBody,
     TableCell, TableHead, TableRow, TextField, Select, MenuItem,
-    CircularProgress, Alert, IconButton, Tooltip, Card
+    CircularProgress, Alert, IconButton, Tooltip, Card, Collapse
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import LockIcon from '@mui/icons-material/Lock';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import axios from 'utils/axios';
 
 const API = '/api/admin';
@@ -28,40 +30,91 @@ const statusChip = (status: string) => {
     return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.7rem' }} />;
 };
 
+// ── EDIT: UserRow now shows expandable detail panel with all user info ──
 function UserRow({ u, onAdjust, onSuspend }: { u: any; onAdjust: (username: string, action: string, amount: string) => void; onSuspend: (username: string) => void; }) {
     const [adjAmt, setAdjAmt] = useState('');
     const [adjAction, setAdjAction] = useState('add');
+    const [open, setOpen] = useState(false);
+
     return (
-        <TableRow>
-            <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{u.username}</TableCell>
-            <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', sm: 'table-cell' } }}>{u.email}</TableCell>
-            <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {(u.balance ?? 0).toFixed(2)}</TableCell>
-            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
-                <Chip label={u.suspended ? '🔴 Suspended' : '🟢 Active'} size="small"
-                    sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }} />
-            </TableCell>
-            <TableCell>
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small"
-                        sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: { xs: 60, sm: 80 }, fontSize: '0.75rem' }}>
-                        <MenuItem value="add">Add</MenuItem>
-                        <MenuItem value="deduct">Deduct</MenuItem>
-                        <MenuItem value="set">Set</MenuItem>
-                    </Select>
-                    <TextField size="small" value={adjAmt} onChange={(e) => setAdjAmt(e.target.value)}
-                        placeholder="Amt" type="number"
-                        sx={{ width: { xs: 60, sm: 90 }, input: { color: '#fff', fontSize: '0.75rem', p: '6px' }, bgcolor: '#0f212e' }} />
-                    <Button size="small" variant="contained" onClick={() => onAdjust(u.username, adjAction, adjAmt)}
-                        sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto', px: 1, fontSize: '0.7rem' }}>Go</Button>
-                </Stack>
-            </TableCell>
-            <TableCell>
-                <Button size="small" variant="outlined" onClick={() => onSuspend(u.username)}
-                    sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336', fontSize: '0.7rem', px: { xs: 0.5, sm: 1 } }}>
-                    {u.suspended ? 'Unsuspend' : 'Suspend'}
-                </Button>
-            </TableCell>
-        </TableRow>
+        <>
+            <TableRow sx={{ '& > *': { borderBottom: open ? 'unset' : undefined } }}>
+                {/* toggle arrow */}
+                <TableCell sx={{ p: 0.5, width: 32 }}>
+                    <IconButton size="small" onClick={() => setOpen(!open)} sx={{ color: '#94a3b8' }}>
+                        {open ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
+                    </IconButton>
+                </TableCell>
+                <TableCell sx={{ color: '#fff', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{u.username}</TableCell>
+                <TableCell sx={{ color: '#94a3b8', fontSize: '0.75rem', display: { xs: 'none', sm: 'table-cell' } }}>{u.email}</TableCell>
+                <TableCell sx={{ color: '#00e701', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>GHS {(u.balance ?? 0).toFixed(2)}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                    <Chip label={u.suspended ? '🔴 Suspended' : '🟢 Active'} size="small"
+                        sx={{ bgcolor: u.suspended ? 'rgba(244,67,54,0.12)' : 'rgba(0,231,1,0.12)', color: u.suspended ? '#f44336' : '#00e701', fontWeight: 700 }} />
+                </TableCell>
+                <TableCell>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Select value={adjAction} onChange={(e) => setAdjAction(e.target.value)} size="small"
+                            sx={{ bgcolor: '#0f212e', color: '#fff', minWidth: { xs: 60, sm: 80 }, fontSize: '0.75rem' }}>
+                            <MenuItem value="add">Add</MenuItem>
+                            <MenuItem value="deduct">Deduct</MenuItem>
+                            <MenuItem value="set">Set</MenuItem>
+                        </Select>
+                        <TextField size="small" value={adjAmt} onChange={(e) => setAdjAmt(e.target.value)}
+                            placeholder="Amt" type="number"
+                            sx={{ width: { xs: 60, sm: 90 }, input: { color: '#fff', fontSize: '0.75rem', p: '6px' }, bgcolor: '#0f212e' }} />
+                        <Button size="small" variant="contained" onClick={() => onAdjust(u.username, adjAction, adjAmt)}
+                            sx={{ bgcolor: '#00BAE6', color: '#fff', minWidth: 'auto', px: 1, fontSize: '0.7rem' }}>Go</Button>
+                    </Stack>
+                </TableCell>
+                <TableCell>
+                    <Button size="small" variant="outlined" onClick={() => onSuspend(u.username)}
+                        sx={{ color: u.suspended ? '#00e701' : '#f44336', borderColor: u.suspended ? '#00e701' : '#f44336', fontSize: '0.7rem', px: { xs: 0.5, sm: 1 } }}>
+                        {u.suspended ? 'Unsuspend' : 'Suspend'}
+                    </Button>
+                </TableCell>
+            </TableRow>
+
+            {/* Expandable detail row */}
+            <TableRow>
+                <TableCell colSpan={7} sx={{ p: 0, bgcolor: '#0f212e' }}>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                        <Box sx={{ p: 2, borderLeft: '3px solid #00BAE6' }}>
+                            <Typography sx={{ color: '#00BAE6', fontWeight: 800, fontSize: 13, mb: 1.5, letterSpacing: 1 }}>
+                                USER DETAILS — {u.username.toUpperCase()}
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' }, gap: 1.5 }}>
+                                {[
+                                    { label: 'Email',            value: u.email || '—' },
+                                    { label: 'Phone / MoMo',    value: u.phone || '—' },
+                                    { label: 'Network',          value: u.momoNetwork || '—' },
+                                    { label: 'Joined',           value: u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' },
+                                    { label: 'Total Deposited',  value: 'GHS ' + (u.totalDeposited ?? 0).toFixed(2), color: '#00e701' },
+                                    { label: 'Deposit Count',    value: (u.depositCount ?? 0) + ' deposits' },
+                                    { label: 'Total Withdrawn',  value: 'GHS ' + (u.totalWithdrawn ?? 0).toFixed(2), color: '#f44336' },
+                                    { label: 'Withdrawal Count', value: (u.withdrawalCount ?? 0) + ' withdrawals' },
+                                    { label: 'Total Bets',       value: (u.totalBets ?? 0) + ' bets', color: '#ffc107' },
+                                    { label: 'Total Wagered',    value: 'GHS ' + (u.totalWagered ?? 0).toFixed(2) },
+                                    { label: 'Referral Code',    value: u.referralCode || '—' },
+                                    { label: 'Referred By',      value: u.referredBy || 'None' },
+                                    { label: 'Referral Count',   value: (u.referralCount ?? 0) + ' users' },
+                                    { label: 'Referral Earnings',value: 'GHS ' + (u.referralEarnings ?? 0).toFixed(2) },
+                                ].map((item) => (
+                                    <Box key={item.label} sx={{ bgcolor: '#213743', borderRadius: 1.5, p: 1.2 }}>
+                                        <Typography sx={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, mb: 0.3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                            {item.label}
+                                        </Typography>
+                                        <Typography sx={{ fontSize: 13, fontWeight: 700, color: (item as any).color || '#fff', wordBreak: 'break-all' }}>
+                                            {item.value}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Box>
+                    </Collapse>
+                </TableCell>
+            </TableRow>
+        </>
     );
 }
 
@@ -86,7 +139,6 @@ export default function AdminPanel() {
     const [customValue, setCustomValue] = useState('');
     const [userOverrides, setUserOverrides] = useState<any>({});
 
-    // WIN RATE STATE
     const [winRate, setWinRate] = useState(50);
     const [winRateLoading, setWinRateLoading] = useState(false);
 
@@ -109,12 +161,8 @@ export default function AdminPanel() {
     const loadWinRate = async () => {
         try {
             const r = await axios.get(API + '/win-rate');
-            if (r.data && r.data.winRate !== undefined) {
-                setWinRate(r.data.winRate);
-            }
-        } catch (e) {
-            // default to 50 if not set yet
-        }
+            if (r.data && r.data.winRate !== undefined) setWinRate(r.data.winRate);
+        } catch (e) {}
     };
 
     const applyWinRate = async () => {
@@ -411,24 +459,16 @@ export default function AdminPanel() {
                                 {w.status === 'pending' && (
                                     <Stack direction="column" spacing={0.5}>
                                         <Tooltip title="Approve — Send money then click">
-                                            <Button
-                                                onClick={() => approve('withdrawals', w.id)}
-                                                variant="contained"
-                                                size="small"
+                                            <Button onClick={() => approve('withdrawals', w.id)} variant="contained" size="small"
                                                 startIcon={<CheckCircleIcon />}
-                                                sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, fontSize: '0.7rem', whiteSpace: 'nowrap' }}
-                                            >
+                                                sx={{ bgcolor: '#00e701', color: '#000', fontWeight: 700, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
                                                 Sent ✓
                                             </Button>
                                         </Tooltip>
                                         <Tooltip title="Reject & Refund user">
-                                            <Button
-                                                onClick={() => reject('withdrawals', w.id)}
-                                                variant="outlined"
-                                                size="small"
+                                            <Button onClick={() => reject('withdrawals', w.id)} variant="outlined" size="small"
                                                 startIcon={<CancelIcon />}
-                                                sx={{ color: '#f44336', borderColor: '#f44336', fontSize: '0.7rem' }}
-                                            >
+                                                sx={{ color: '#f44336', borderColor: '#f44336', fontSize: '0.7rem' }}>
                                                 Reject
                                             </Button>
                                         </Tooltip>
@@ -443,8 +483,6 @@ export default function AdminPanel() {
             {/* GAME CONTROL */}
             {tab === 2 && !loading && (
                 <Stack spacing={3}>
-
-                    {/* WIN RATE CONTROL */}
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                         <Typography variant="h6" fontWeight={700} mb={1}>🎰 Global Win Rate</Typography>
                         <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mb: 2 }}>
@@ -453,22 +491,13 @@ export default function AdminPanel() {
                         <Stack spacing={2}>
                             <Stack direction="row" alignItems="center" spacing={2}>
                                 <Typography sx={{ color: '#f44336', fontWeight: 700, minWidth: 35 }}>0%</Typography>
-                                <input
-                                    type="range"
-                                    min={0}
-                                    max={100}
-                                    value={winRate}
+                                <input type="range" min={0} max={100} value={winRate}
                                     onChange={(e) => setWinRate(Number(e.target.value))}
-                                    style={{ flex: 1, accentColor: '#00e701', height: 6, cursor: 'pointer' }}
-                                />
+                                    style={{ flex: 1, accentColor: '#00e701', height: 6, cursor: 'pointer' }} />
                                 <Typography sx={{ color: '#00e701', fontWeight: 700, minWidth: 40 }}>100%</Typography>
                             </Stack>
                             <Box sx={{ textAlign: 'center', py: 1 }}>
-                                <Typography sx={{
-                                    fontSize: '3rem',
-                                    fontWeight: 900,
-                                    color: winRate > 50 ? '#00e701' : winRate > 25 ? '#ffc107' : '#f44336'
-                                }}>
+                                <Typography sx={{ fontSize: '3rem', fontWeight: 900, color: winRate > 50 ? '#00e701' : winRate > 25 ? '#ffc107' : '#f44336' }}>
                                     {winRate}%
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
@@ -480,18 +509,13 @@ export default function AdminPanel() {
                                      '🏆 Players win most'}
                                 </Typography>
                             </Box>
-                            <Button
-                                variant="contained"
-                                onClick={applyWinRate}
-                                disabled={winRateLoading}
-                                sx={{ bgcolor: '#00BAE6', color: '#000', fontWeight: 700, py: 1.5 }}
-                            >
+                            <Button variant="contained" onClick={applyWinRate} disabled={winRateLoading}
+                                sx={{ bgcolor: '#00BAE6', color: '#000', fontWeight: 700, py: 1.5 }}>
                                 {winRateLoading ? <CircularProgress size={20} sx={{ color: '#000' }} /> : '💾 Save Win Rate'}
                             </Button>
                         </Stack>
                     </Box>
 
-                    {/* GAME OVERRIDE */}
                     <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                         <Typography variant="h6" fontWeight={700} mb={1}>🎮 Set Game Override</Typography>
                         <Typography variant="caption" sx={{ color: '#ffc107', display: 'block', mb: 2 }}>
@@ -528,7 +552,6 @@ export default function AdminPanel() {
                         </Stack>
                     </Box>
 
-                    {/* Active overrides */}
                     {selectedUser && Object.keys(userOverrides).length > 0 && (
                         <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: { xs: 2, md: 3 } }}>
                             <Typography variant="h6" fontWeight={700} mb={2} sx={{ color: '#ffc107' }}>
@@ -558,20 +581,19 @@ export default function AdminPanel() {
 
                     {selectedUser && Object.keys(userOverrides).length === 0 && (
                         <Box sx={{ bgcolor: '#213743', borderRadius: 2, p: 2, textAlign: 'center' }}>
-                            <Typography color="text.secondary" variant="caption">
-                                No active overrides for {selectedUser}
-                            </Typography>
+                            <Typography color="text.secondary" variant="caption">No active overrides for {selectedUser}</Typography>
                         </Box>
                     )}
                 </Stack>
             )}
 
-            {/* USERS */}
+            {/* USERS — EDIT: expandable rows with full user details */}
             {tab === 3 && !loading && (
                 <Box sx={{ overflowX: 'auto' }}>
                     <Table size="small">
                         <TableHead>
                             <TableRow>
+                                <TableCell sx={{ width: 32 }} />
                                 <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Username</TableCell>
                                 <TableCell sx={{ color: '#94a3b8', fontWeight: 700, display: { xs: 'none', sm: 'table-cell' } }}>Email</TableCell>
                                 <TableCell sx={{ color: '#94a3b8', fontWeight: 700 }}>Balance</TableCell>
