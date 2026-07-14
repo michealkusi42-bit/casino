@@ -542,7 +542,7 @@ const DepositPage = () => {
                     <textarea
                         value={momoRef}
                         onChange={e => setMomoRef(e.target.value)}
-                        placeholder="e.g. You have received GHS 100.00 from... Trans ID: 5678901234"
+                        placeholder=""
                         rows={3}
                         autoComplete="on"
                         spellCheck={false}
